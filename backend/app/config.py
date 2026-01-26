@@ -53,7 +53,7 @@ class Settings(BaseSettings):
             "allergies": ["땅콩"],
             "dislikes": ["고수", "파"],
             "cooking_tools": ["가스레인지", "냄비", "프라이팬", "오븐", "믹서기"]
-        },
+        }, 
         "아빠": {
             "role": "아버지",
             "allergies": [],
