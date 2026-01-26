@@ -1,0 +1,64 @@
+/* src/pages/Loading/LoadingPage.css */
+.loading-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading-container {
+  text-align: center;
+  color: white;
+  padding: 40px;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 8px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 30px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-container h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+.recipe-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 12px 0;
+  opacity: 0.95;
+}
+
+.loading-info {
+  font-size: 16px;
+  margin-top: 8px;
+  opacity: 0.8;
+  font-weight: 300;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .loading-container h2 {
+    font-size: 20px;
+  }
+  
+  .recipe-title {
+    font-size: 18px;
+  }
+  
+  .loading-info {
+    font-size: 14px;
+  }
+}

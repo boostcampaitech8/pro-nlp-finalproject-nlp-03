@@ -1,0 +1,19 @@
+/* src/pages/Recipes/RecipeResultPage.css */
+.recipe-result-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #ffb27d 0%, #ffa562 100%);
+}
+
+.result-header {
+  flex-shrink: 0;
+  padding: 16px 20px;
+}
+
+.result-modal {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
