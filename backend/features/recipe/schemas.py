@@ -10,8 +10,7 @@ class ChatMessage(BaseModel):
     content: str
 
 class RecipeGenerateRequest(BaseModel):
-    recipe_title: str
-    chat_history: List[Dict[str, str]]  # Dict로 받기
+    chat_history: List[Dict[str, str]] 
     member_info: Optional[Dict[str, Any]] = None
 
 class RecipeResponse(BaseModel):
