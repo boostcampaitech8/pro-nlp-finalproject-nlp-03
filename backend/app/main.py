@@ -49,7 +49,7 @@ app.add_middleware(
 
 app.include_router(user_router, prefix="/api/user", tags=["User"])
 app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
-app.include_router(recipe_router, prefix="/api/recipes", tags=["Recipe"])
+app.include_router(recipe_router, prefix="/api/recipe", tags=["Recipe"])
 app.include_router(cooking_router, prefix="/api/cook", tags=["Cooking"])
 
 
