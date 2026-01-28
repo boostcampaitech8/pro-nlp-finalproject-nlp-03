@@ -1,20 +1,20 @@
-# features/chat/router.py
+# backend/features/chat/router.py
 """
-Chat Agent WebSocket 라우터
+Chat Agent WebSocket 라우터 - Adaptive RAG
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from typing import Dict
+import json
+import asyncio
+import time
 
 from core.websocket import manager
 from core.dependencies import get_rag_system, get_user_profile
-from core.exceptions import RAGNotAvailableError
 from features.chat.agent import create_chat_agent
-from features.chat.schemas import ChatMessage
-
 
 router = APIRouter()
 
-# 세션별 상태 저장
+# 세션별 대화 기록 저장
 chat_sessions: Dict[str, dict] = {}
 
 
@@ -25,98 +25,195 @@ async def chat_websocket(
     rag_system = Depends(get_rag_system),
     user_profile = Depends(get_user_profile)
 ):
-    """채팅 Agent WebSocket"""
+    """채팅 Agent WebSocket - Adaptive RAG"""
     
+    # 1. Accept
+    await websocket.accept()
+    print(f"[WS] Connected: {session_id}")
+    
+    # 2. RAG 검증
     if not rag_system:
-        await websocket.close(code=1011, reason="RAG system not available")
+        print("[WS] RAG 시스템 없음")
+        await websocket.send_json({
+            "type": "error",
+            "message": "RAG 시스템을 사용할 수 없습니다."
+        })
+        await websocket.close()
         return
     
-    await manager.connect(websocket, session_id)
+    # 3. Agent 생성
+    try:
+        agent = create_chat_agent(rag_system)
+        if not agent:
+            raise ValueError("Agent 생성 실패")
+        print("[WS] Adaptive RAG Agent 생성 완료")
+    except Exception as e:
+        print(f"[WS] Agent 생성 에러: {e}")
+        import traceback
+        traceback.print_exc()
+        await websocket.send_json({
+            "type": "error",
+            "message": f"Agent 생성 실패: {str(e)}"
+        })
+        await websocket.close()
+        return
     
-    # Agent 생성
-    agent = create_chat_agent(rag_system)
+    # 4. 연결 등록
+    manager.active_connections[session_id] = websocket
     
-    # 초기 상태
+    # 5. 초기 상태
     if session_id not in chat_sessions:
         chat_sessions[session_id] = {
-            "messages": [],
-            "user_constraints": {
-                "allergies": user_profile["allergies"],
-                "dislike": user_profile["dislike"]
-            },
-            "search_query": "",
-            "retrieved_recipes": [],
-            "filtered_recipes": [],
-            "selected_recipe": {},
-            "response": "",
-            "step": "start"
+            "messages": [],           # 대화 기록
+            "user_constraints": {},   # 가족 정보
         }
     
-    await manager.send_message(session_id, {
-        "type": "agent_message",
-    })
-    
+    # 6. 메시지 처리 루프
     try:
         while True:
-            data = await websocket.receive_json()
+            data = await websocket.receive_text()
+            message = json.loads(data)
             
-            if data["type"] == "user_message":
-                user_message = data["content"]
+            msg_type = message.get("type")
+            print(f"[WS] 메시지 수신: {msg_type}")
+            
+            # ===== 컨텍스트 초기화 =====
+            if msg_type == "init_context":
+                member_info = message.get("member_info", {})
+                chat_sessions[session_id]["user_constraints"] = member_info
+                print(f"[WS] 컨텍스트 설정: {member_info.get('names', [])}")
+                continue
+            
+            # ===== 사용자 메시지 =====
+            elif msg_type == "user_message":
+                content = message.get("content", "")
+                print(f"[WS] 사용자 메시지: {content}")
                 
-                # 상태에 메시지 추가
+                # 시작 시간
+                start_time = time.time()
+                
+                # 대화 기록 추가
                 chat_sessions[session_id]["messages"].append({
                     "role": "user",
-                    "content": user_message
+                    "content": content
                 })
                 
-                # Agent 실행 (스트리밍)
-                await manager.send_message(session_id, {
+                # 대화 히스토리 포맷
+                chat_history = [
+                    f"{msg['role']}: {msg['content']}"
+                    for msg in chat_sessions[session_id]["messages"]
+                ]
+                
+                # Thinking 전송
+                await websocket.send_json({
                     "type": "thinking",
                     "message": "생각 중..."
                 })
                 
-                # 각 노드의 진행 상황 전송
-                async for event in agent.astream_events(
-                    chat_sessions[session_id],
-                    version="v1"
-                ):
-                    if event["event"] == "on_chain_start":
-                        node_name = event["name"]
-                        status_msg = {
-                            "understand": "의도 파악 중...",
-                            "search": "레시피 검색 중...",
-                            "filter": "제약 조건 필터링 중...",
-                            "generate": "응답 생성 중..."
-                        }.get(node_name, "처리 중...")
-                        
-                        await manager.send_message(session_id, {
-                            "type": "progress",
-                            "step": node_name,
-                            "message": status_msg
-                        })
+                # ===== Agent 상태 준비 =====
+                agent_state = {
+                    "question": content,
+                    "original_question": content,
+                    "chat_history": chat_history,
+                    "documents": [],
+                    "generation": "",
+                    "web_search_needed": "no",
+                    "user_constraints": chat_sessions[session_id]["user_constraints"],  
+                    "constraint_warning": "",
+                }
+
+                print(f"[WS] user_constraints: {chat_sessions[session_id]['user_constraints']}")
                 
-                # 최종 상태
-                final_state = await agent.ainvoke(chat_sessions[session_id])
-                chat_sessions[session_id] = final_state
+                # ===== 진행 상황 알림 태스크 =====
+                elapsed = 0
+                async def progress_notifier():
+                    nonlocal elapsed
+                    steps = [
+                        (0, "쿼리 재작성 중..."),
+                        (3, "레시피 검색 중..."),
+                        (6, "관련성 평가 중..."),
+                        (10, "답변 생성 중..."),
+                        (15, "거의 완료..."),
+                    ]
+                    
+                    for delay, msg in steps:
+                        await asyncio.sleep(delay if delay == 0 else 3)
+                        elapsed_now = time.time() - start_time
+                        if elapsed_now < 20:
+                            await websocket.send_json({
+                                "type": "progress",
+                                "message": f"{msg} ({int(elapsed_now)}초)"
+                            })
+                        else:
+                            break
                 
-                # 응답 파싱
-                from utils.parser import parse_recommendation
+                notifier_task = asyncio.create_task(progress_notifier())
                 
-                response = final_state["response"]
-                recipe = final_state.get("selected_recipe", {})
-                recipe_info = parse_recommendation(response)
+                try:
+                    # ===== Agent 실행 (타임아웃 20초) =====
+                    async def run_agent():
+                        """동기 invoke를 비동기로 래핑"""
+                        import asyncio
+                        loop = asyncio.get_event_loop()
+                        return await loop.run_in_executor(None, agent.invoke, agent_state)
+                    
+                    result = await asyncio.wait_for(run_agent(), timeout=20.0)
+                    
+                    # 소요 시간
+                    elapsed = time.time() - start_time
+                    print(f"[WS] ✅ Agent 완료 ({elapsed:.1f}초)")
+                    
+                    # 응답 추출
+                    response = result.get("generation", "답변을 생성할 수 없습니다.")
+                    
+                    # 대화 기록에 추가
+                    chat_sessions[session_id]["messages"].append({
+                        "role": "assistant",
+                        "content": response
+                    })
+                    
+                    # 응답 전송
+                    await websocket.send_json({
+                        "type": "agent_message",
+                        "content": response
+                    })
                 
-                # 응답 전송
-                await manager.send_message(session_id, {
-                    "type": "agent_message",
-                    "content": response,
-                    "recipe_info": recipe_info
-                })
+                except asyncio.TimeoutError:
+                    elapsed = time.time() - start_time
+                    print(f"[WS] ⏱️ Agent 타임아웃 ({elapsed:.1f}초)")
+                    
+                    await websocket.send_json({
+                        "type": "agent_message",
+                        "content": f"죄송합니다. 응답 시간이 너무 오래 걸렸어요 ({int(elapsed)}초). 다시 시도해주세요."
+                    })
+                
+                except Exception as e:
+                    elapsed = time.time() - start_time
+                    print(f"[WS] ⚠️ Agent 실행 에러 ({elapsed:.1f}초): {e}")
+                    import traceback
+                    traceback.print_exc()
+                    
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": f"오류가 발생했습니다 ({int(elapsed)}초). 다시 시도해주세요."
+                    })
+                
+                finally:
+                    # 진행 상황 알림 태스크 취소
+                    notifier_task.cancel()
+                    try:
+                        await notifier_task
+                    except asyncio.CancelledError:
+                        pass
     
     except WebSocketDisconnect:
-        manager.disconnect(session_id)
+        print(f"[WS] Disconnected: {session_id}")
     except Exception as e:
-        print(f"Chat WebSocket 오류: {e}")
+        print(f"[WS] 에러: {e}")
         import traceback
         traceback.print_exc()
+    finally:
         manager.disconnect(session_id)
+        if session_id in chat_sessions:
+            del chat_sessions[session_id]
+        print(f"[WS] Closed: {session_id}")
