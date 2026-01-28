@@ -129,18 +129,31 @@ class RecipeRAGLangChain:
         print("[OK] Chat 모델 초기화 완료")
 
         # 3. Reranker 초기화 (옵션)
-        self.reranker = None
-        if use_reranker:
-            print(f"\n[3/4] Reranker 모델 로딩 중 (model: {reranker_model})")
-            try:
-                self.reranker = HuggingFaceCrossEncoder(model_name=reranker_model)
-                print("[OK] Reranker 로딩 완료")
-            except Exception as e:
-                print(f"[WARNING] Reranker 로딩 실패: {e}")
-                print("          Reranker 없이 계속 진행합니다.")
-                self.use_reranker = False
-        else:
-            print("\n[3/4] Reranker 사용 안 함 (use_reranker=False)")
+        print("[3/4] Reranker 모델 로딩 중 (model: BAAI/bge-reranker-v2-m3)")
+        try:
+            from langchain_community.document_compressors import CrossEncoderReranker
+            from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+            
+            # Reranker 모델 로드
+            model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-v2-m3")
+            
+            # Reranker 생성
+            self.reranker = CrossEncoderReranker(
+                model=model,
+                top_n=5  # 상위 5개만 선택
+            )
+            
+            print("[OK] Reranker 초기화 완료")
+            
+        except ImportError as e:
+            print(f"[WARNING] Reranker 로딩 실패: {e}")
+            print("          sentence-transformers 설치 필요: pip install sentence-transformers")
+            print("          Reranker 없이 계속 진행합니다.")
+            self.reranker = None
+        except Exception as e:
+            print(f"[WARNING] Reranker 로딩 실패: {e}")
+            print("          Reranker 없이 계속 진행합니다.")
+            self.reranker = None
 
         # 4. Milvus Vectorstore 연결
         print(f"\n[4/4] Milvus 연결 중 ({self.milvus_uri})")
@@ -341,66 +354,29 @@ class RecipeRAGLangChain:
         context_docs: List[Dict],
         system_prompt: Optional[str] = None
     ) -> str:
-        """LangChain 체인을 사용한 답변 생성"""
+        """LangChain을 사용한 답변 생성"""
         if system_prompt is None:
             system_prompt = """당신은 한국 요리 전문가이자 친절한 레시피 어시스턴트입니다.
 
-# 당신의 역할
-- 주어진 레시피 정보(context)를 바탕으로 사용자의 질문에 정확하고 상세하게 답변합니다.
-- 검색된 레시피가 질문과 완전히 일치하지 않더라도, 관련성이 있다면 적극적으로 활용하여 답변합니다.
-- 사용자가 원하는 요리를 만들 수 있도록 실질적이고 구체적인 정보를 제공합니다.
+    # 🚨 절대 규칙 (위반 시 심각한 오류!)
+    1. **반드시 하나의 요리만 추천하세요!**
+    2. **여러 요리를 리스트로 나열하지 마세요!** (1., 2., 3. 형식 금지!)
+    3. **조리법은 1~2줄로 간단히!**
 
-# 답변 작성 규칙
+    # 필수 답변 형식
 
-## 1. 레시피를 찾은 경우
-반드시 다음 형식으로 답변하세요:
+    오늘의 추천 요리는 [요리명] 입니다.
 
-### [요리 이름]
-**소개:** 간단한 한 줄 설명
+    **재료 (N인분, 조리시간):**
+    - 주요 재료 5~7개만 간단히 나열
 
-**재료 (N인분, 조리시간):**
-- 주재료: 구체적인 양
-- 부재료: 구체적인 양
-- 양념: 구체적인 양
+    **조리법:**
+    1~2줄로 핵심만 요약
 
-**조리법:**
-1. 첫 번째 단계 - 구체적인 설명 (불 세기, 시간 등 포함)
-2. 두 번째 단계 - 구체적인 설명
-3. 세 번째 단계 - 구체적인 설명
-...
-(마지막 단계까지 빠짐없이 모두 작성)
+    **특징:**
+    한 줄로 이 요리의 매력 설명
 
-**팁:**
-- 맛을 더 좋게 하는 방법
-- 실패하지 않는 주의사항
-- 응용 방법
-
-## 2. 조리법 설명 시 주의사항
-- **중요**: 조리법은 반드시 1., 2., 3., ... 형식의 번호 리스트로 작성
-- 각 단계는 구체적이고 명확하게 설명 (예: "중불에서 5분간 볶는다")
-- 중간에 끊기지 않고 완성까지 모든 단계를 순서대로 설명
-- 불 세기, 시간, 양 등 구체적인 수치 포함
-- "~한다", "~합니다" 등 명확한 서술어 사용
-
-## 3. 검색된 레시피가 질문과 정확히 일치하지 않는 경우
-- 유사한 레시피를 찾았다면 그것을 바탕으로 답변
-- 예: "고등어조림" 질문에 "생선조림"이 검색된 경우 → 생선조림 레시피를 고등어에 맞게 설명
-- 예: "안 맵게" 요청에 일반 레시피가 검색된 경우 → 고춧가루 양을 줄이는 방법 추가 설명
-- 예: "간단하게" 요청에 복잡한 레시피가 검색된 경우 → 생략 가능한 단계나 간소화 방법 제시
-
-## 4. 사용자의 특수 요구사항 반영
-다음과 같은 요청이 있을 때 반드시 반영하세요:
-- 맵기 조절: "안 맵게", "덜 맵게", "매운맛 빼고"
-- 재료 대체: "고기 없이", "간장 없이", "OO 대신"
-- 조리 방법: "간단하게", "빨리", "에어프라이어로"
-- 난이도: "초보도", "쉽게"
-- 건강: "저염식", "다이어트", "칼로리 낮게"
-
-## 5. 관련 레시피가 없는 경우
-검색된 레시피가 질문과 전혀 관련이 없을 때만 다음과 같이 답변:
-"죄송하지만, 주어진 레시피 정보에서 [요청하신 요리]에 대한 정보를 찾을 수 없습니다. 다른 요리나 더 구체적인 질문을 해주시면 도움을 드리겠습니다."
-
-{context}"""
+    {context}"""
 
         # Document 객체로 변환
         documents = []
@@ -414,8 +390,7 @@ class RecipeRAGLangChain:
                 }
             )
             documents.append(doc)
-
-        # 프롬프트 생성
+        
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("human", "{input}"),
@@ -433,6 +408,8 @@ class RecipeRAGLangChain:
             return result
         except Exception as e:
             print(f"답변 생성 오류: {e}")
+            import traceback
+            traceback.print_exc()
             return f"답변 생성 중 오류가 발생했습니다: {str(e)}"
 
     def generate_recipe_json(
