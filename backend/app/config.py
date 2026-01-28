@@ -3,7 +3,7 @@
 설정 및 환경변수 관리
 """
 from pydantic_settings import BaseSettings
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 class Settings(BaseSettings):
@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     CLOVA_SECRET_KEY: str = ""
     CLOVA_TTS_CLIENT_ID: str = ""
     CLOVA_TTS_CLIENT_SECRET: str = ""
+
+    # NAVER
+    NAVER_CLIENT_ID: Optional[str] = None
+    NAVER_CLIENT_SECRET: Optional[str] = None
     
     # Milvus
     MILVUS_HOST: str = "34.158.218.209"
@@ -51,9 +55,9 @@ class Settings(BaseSettings):
         "엄마": {
             "role": "어머니",
             "allergies": ["땅콩"],
-            "dislikes": ["고수", "파"],
+            "dislikes": ["고수"],
             "cooking_tools": ["가스레인지", "냄비", "프라이팬", "오븐", "믹서기"]
-        }, 
+        },
         "아빠": {
             "role": "아버지",
             "allergies": [],
@@ -71,6 +75,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"
 
 
 settings = Settings()
