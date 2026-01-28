@@ -13,7 +13,7 @@ LIST_URL = "https://www.10000recipe.com/recipe/list.html"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 
 REQUEST_DELAY = 0.7
-MAX_PAGES = 5
+MAX_PAGES = 100
 
 MONGO_URI = "mongodb://root:RootPassword123@mongodb:27017/admin"
 DB_NAME = "recipe_db"
@@ -130,23 +130,25 @@ def crawl_recipe_detail(recipe_id: str):
             for dl in cont_ingre.select("dl"):
                 dt = dl.select_one("dt")
                 dd = dl.select_one("dd")
-                
+
                 if not dd:
                     continue
-                
+
                 category = dt.get_text(strip=True) if dt else "재료"
                 text = dd.get_text(" ", strip=True)
-                
+
                 items = [item.strip() for item in text.split(",") if item.strip()]
-                
+
                 for item in items:
                     # 마지막 2개 단어만 체크
                     words = item.split()
-                    
+
                     # 마지막 단어에 숫자가 있으면 수량으로 간주
                     if len(words) >= 2 and any(char.isdigit() for char in words[-1]):
                         # "마늘 2톨" 또는 "요구르트 300 g" 처리
-                        if len(words) >= 3 and any(char.isdigit() for char in words[-2]):
+                        if len(words) >= 3 and any(
+                            char.isdigit() for char in words[-2]
+                        ):
                             # "크림치즈 200 g" → name="크림치즈", amount="200 g"
                             name = " ".join(words[:-2])
                             amount = " ".join(words[-2:])
@@ -154,21 +156,25 @@ def crawl_recipe_detail(recipe_id: str):
                             # "마늘 2톨" → name="마늘", amount="2톨"
                             name = " ".join(words[:-1])
                             amount = words[-1]
-                        
-                        ingredients.append({
-                            "name": name,
-                            "desc": None,
-                            "amount": amount,
-                            "category": category,
-                        })
+
+                        ingredients.append(
+                            {
+                                "name": name,
+                                "desc": None,
+                                "amount": amount,
+                                "category": category,
+                            }
+                        )
                     else:
                         # 숫자 없으면 전체를 name으로
-                        ingredients.append({
-                            "name": item,
-                            "desc": None,
-                            "amount": None,
-                            "category": category,
-                        })
+                        ingredients.append(
+                            {
+                                "name": item,
+                                "desc": None,
+                                "amount": None,
+                                "category": category,
+                            }
+                        )
 
     # 조리 단계
     steps = []
@@ -209,13 +215,13 @@ def crawl_incremental():
     for page in range(1, MAX_PAGES + 1):
         recipe_ids = get_recipe_ids_by_page(page)
         logger.info(f"PAGE {page} | {len(recipe_ids)} recipes")
-        
+
         should_stop = False
 
         for rid in recipe_ids:
             try:
                 data = crawl_recipe_detail(rid)
-                
+
                 # 데이터가 없으면 스킵
                 if not data:
                     logger.info(f"SKIP | no data | {rid}")
@@ -255,7 +261,7 @@ def crawl_incremental():
             except Exception as e:
                 logger.error(f"FAIL | {rid} | {e}")
                 time.sleep(REQUEST_DELAY)
-        
+
         if should_stop:
             break
 
