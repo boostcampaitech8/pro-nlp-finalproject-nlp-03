@@ -1,18 +1,19 @@
-FROM openjdk:17-jdk-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Gradle 빌드를 위한 파일 복사
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle .
-COPY settings.gradle .
-COPY src src
+# Git 설치 (MeloTTS 설치를 위해 필요)
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# 빌드 권한 부여 및 빌드
-RUN chmod +x ./gradlew
-RUN ./gradlew bootJar
+# 필요한 패키지 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# JAR 파일 실행
+# 소스 코드 복사
+COPY . .
+
+# 포트 노출
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "build/libs/*.jar"]
+
+# 실행
+CMD ["python", "run.py"]
