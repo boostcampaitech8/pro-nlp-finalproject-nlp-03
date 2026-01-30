@@ -2,6 +2,7 @@
 """
 Chat Agent - Adaptive RAG (네이버 검색 API 사용)
 """
+import os
 from typing import TypedDict, List, Literal
 from langgraph.graph import StateGraph, END
 from langchain_core.documents import Document
@@ -9,6 +10,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 # prompts.py에서 프롬프트 import
 from .prompts import REWRITE_PROMPT, GRADE_PROMPT, GENERATE_PROMPT
+from services.search import get_search_service
 
 
 class ChatAgentState(TypedDict):
@@ -25,6 +27,10 @@ class ChatAgentState(TypedDict):
 
 def create_chat_agent(rag_system):
     """Chat Agent 생성 - Adaptive RAG + 네이버 검색"""
+
+    search_engine = os.getenv("SEARCH_ENGINE", "naver")
+    search_service = get_search_service(search_engine)
+    print(f"[Agent] 검색 엔진: {search_engine}")
     
     # ===== 노드 함수 =====
     
@@ -185,140 +191,21 @@ def create_chat_agent(rag_system):
             return {"web_search_needed": "yes"}
     
     def web_search(state: ChatAgentState) -> ChatAgentState:
-        """4. 네이버 검색 API (블로그)"""
-        print("[Agent] 4. 네이버 검색 API 실행 중...")
+        """4. 웹 검색 (검색 엔진 추상화)"""
+        print("[Agent] 4. 웹 검색 실행 중...")
         
         question = state["question"]
         
-        try:
-            import os
-            import requests
-            
-            client_id = os.getenv("NAVER_CLIENT_ID")
-            client_secret = os.getenv("NAVER_CLIENT_SECRET")
-            
-            if not client_id or not client_secret:
-                print("   네이버 API 키 없음")
-                return {
-                    "documents": [Document(
-                        page_content="웹 검색을 위해 네이버 API 키가 필요합니다.",
-                        metadata={"source": "config_error"}
-                    )]
-                }
-            
-            url = "https://openapi.naver.com/v1/search/blog.json"
-            headers = {
-                "X-Naver-Client-Id": client_id,
-                "X-Naver-Client-Secret": client_secret
-            }
-            params = {
-                "query": f"{question} 레시피 재료",
-                "display": 10,
-                "sort": "sim"
-            }
-            
-            print(f"   검색 쿼리: {params['query']}")
-            
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                items = data.get("items", [])
-                
-                print(f"   검색 성공: {len(items)}개")
-                
-                if items:
-                    def clean_html(text):
-                        import re
-                        text = re.sub('<[^<]+?>', '', text)
-                        text = text.replace('&quot;', '"')
-                        text = text.replace('&apos;', "'")
-                        text = text.replace('&amp;', '&')
-                        text = text.replace('&lt;', '<')
-                        text = text.replace('&gt;', '>')
-                        return text
-                    
-                    # 검색 결과 상세 로깅
-                    web_content_parts = []
-                    for i, item in enumerate(items[:5], 1):
-                        title = clean_html(item.get('title', ''))
-                        description = clean_html(item.get('description', ''))
-                        link = item.get('link', '')
-                        
-                        print(f"\n   [검색 결과 {i}]")
-                        print(f"   제목: {title}")
-                        print(f"   내용: {description}...")
-                        print(f"   링크: {link}")
-                        
-                        web_content_parts.append(
-                            f"[검색 결과 {i}]\n제목: {title}\n\n상세 내용:\n{description}\n\n링크: {link}"
-                        )
-                    
-                    web_content = "\n\n".join(web_content_parts)
-                    
-                    # 전체 내용도 출력 (파일로 저장 가능)
-                    print(f"\n   전체 검색 결과 ({len(web_content)}자):")
-                    print("="*80)
-                    print(web_content)
-                    print("="*80 + "\n")
-                    
-                    return {
-                        "documents": [Document(
-                            page_content=web_content,
-                            metadata={"source": "naver_blog_api"}
-                        )]
-                    }
-                else:
-                    print("   검색 결과 없음")
-                    return {
-                        "documents": [Document(
-                            page_content=f"'{question}'에 대한 검색 결과가 없습니다.",
-                            metadata={"source": "naver_blog_empty"}
-                        )]
-                    }
-            
-            elif response.status_code == 429:
-                print("   API 호출 제한 초과")
-                return {
-                    "documents": [Document(
-                        page_content="API 호출 제한을 초과했습니다. 잠시 후 다시 시도해주세요.",
-                        metadata={"source": "rate_limit"}
-                    )]
-                }
-            
-            else:
-                print(f"   API 에러: {response.status_code}")
-                error_data = response.json() if response.text else {}
-                error_msg = error_data.get('errorMessage', '알 수 없는 오류')
-                print(f"   에러 내용: {error_msg}")
-                
-                return {
-                    "documents": [Document(
-                        page_content=f"검색 중 오류가 발생했습니다: {error_msg}",
-                        metadata={"source": "api_error"}
-                    )]
-                }
+        # 검색 서비스 호출
+        documents = search_service.search(query=question, max_results=5)
         
-        except requests.Timeout:
-            print("   ⏱️ 검색 타임아웃")
-            return {
-                "documents": [Document(
-                    page_content="검색 시간이 초과되었습니다. 다시 시도해주세요.",
-                    metadata={"source": "timeout"}
-                )]
-            }
+        # 로깅
+        for i, doc in enumerate(documents, 1):
+            print(f"\n   [검색 결과 {i}]")
+            print(f"   제목: {doc.metadata.get('title', '')}")
+            print(f"   내용: {doc.page_content[:200]}...")
         
-        except Exception as e:
-            print(f"   검색 실패: {e}")
-            import traceback
-            traceback.print_exc()
-            
-            return {
-                "documents": [Document(
-                    page_content=f"웹 검색 중 오류가 발생했습니다: {str(e)}",
-                    metadata={"source": "exception"}
-                )]
-            }
+        return {"documents": documents}
     
     def generate(state: ChatAgentState) -> ChatAgentState:
         """5. 답변 생성 (대화 히스토리 반영)"""
