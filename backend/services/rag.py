@@ -727,7 +727,7 @@ class RecipeRAGLangChain:
 
 def main():
     """메인 함수"""
-    MILVUS_HOST = "34.158.218.209"
+    MILVUS_HOST = "136.113.251.237"
     MILVUS_PORT = "19530"
     COLLECTION_NAME = "recipe_docs"
 
