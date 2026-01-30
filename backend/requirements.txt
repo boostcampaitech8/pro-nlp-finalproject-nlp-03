@@ -12,7 +12,7 @@ langchain-community==0.0.13
 langgraph==0.0.20
 
 # CLOVA
-langchain-naver==0.0.3
+langchain-naver==0.1.1
 
 # Vector DB
 pymilvus==2.3.5
