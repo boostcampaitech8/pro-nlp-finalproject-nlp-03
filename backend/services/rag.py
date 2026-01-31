@@ -171,7 +171,7 @@ class RecipeRAGLangChain:
             )
 
             # Sanity check
-            sanity_docs = self.vectorstore.similarity_search("조리법", k=1)
+            sanity_docs = self.vectorstore.similarity_search("조리법", k=1, search_params={"ef": 50})
             if len(sanity_docs) > 0:
                 print(f"[OK] Milvus 연결 성공 (Collection: {self.collection_name})")
                 print(f"     Sanity check: {sanity_docs[0].metadata.get('title', 'N/A')[:50]}...")
@@ -229,6 +229,46 @@ class RecipeRAGLangChain:
         
         return reranked
 
+    def _milvus_search(self, query: str, k: int) -> List[tuple]:
+        """pymilvus 직접 호출로 ef 설정"""
+        from pymilvus import Collection
+        
+        # 쿼리 벡터화
+        query_embedding = self.embeddings.embed_query(query)
+        
+        # Collection 가져오기
+        collection = self.vectorstore.col
+        
+        # ef를 k보다 크게 설정
+        ef = max(k * 2, 50)
+        search_params = {"metric_type": "L2", "params": {"ef": ef}}
+        
+        # 검색 (실제 필드: recipe_id, title, level, cook_time, source, text, vector)
+        results = collection.search(
+            data=[query_embedding],
+            anns_field="vector",
+            param=search_params,
+            limit=k,
+            output_fields=["text", "title", "level", "cook_time", "source", "recipe_id"]
+        )
+        
+        # Document 형태로 변환
+        docs_with_scores = []
+        for hit in results[0]:
+            doc = Document(
+                page_content=hit.entity.get("text", ""),
+                metadata={
+                    "title": hit.entity.get("title", "N/A"),
+                    "level": hit.entity.get("level", "N/A"),
+                    "cook_time": hit.entity.get("cook_time", "N/A"),
+                    "source": hit.entity.get("source", "N/A"),
+                    "recipe_id": hit.entity.get("recipe_id", "N/A"),
+                }
+            )
+            docs_with_scores.append((doc, hit.score))
+        
+        return docs_with_scores
+
     def search_recipes(
         self,
         query: str,
@@ -238,24 +278,15 @@ class RecipeRAGLangChain:
         """레시피 검색 (with optional CLOVA Studio reranking)"""
         use_rerank = use_rerank if use_rerank is not None else self.use_reranker
 
-        # 벡터 검색
         if use_rerank and self.reranker:
-            # Reranker 사용 시 더 많이 검색 후 rerank
-            search_k = min(k * 3, 20)  # 최대 20개
-            docs_with_scores = self.vectorstore.similarity_search_with_score(
-                query,
-                k=search_k,
-                ef=max(search_k * 2, 50)  # ef는 항상 k보다 커야 함
-            )
+            search_k = min(k * 3, 20)
+            docs_with_scores = self._milvus_search(query, search_k)
             
-            # Document 객체와 점수 분리
             docs = [doc for doc, score in docs_with_scores]
             vector_scores = {id(doc): float(score) for doc, score in docs_with_scores}
             
-            # CLOVA Studio Reranking
             reranked_results = self._rerank_documents(query, docs, top_n=k)
             
-            # 결과 포맷팅
             results = []
             for doc, rerank_score in reranked_results:
                 results.append({
@@ -268,14 +299,8 @@ class RecipeRAGLangChain:
                     "cook_time": doc.metadata.get("cook_time", "N/A"),
                     "level": doc.metadata.get("level", "N/A"),
                 })
-
         else:
-            # 일반 벡터 검색만
-            docs_with_scores = self.vectorstore.similarity_search_with_score(
-                query,
-                k=k,
-                ef=max(k * 2, 50)  # ef는 항상 k보다 커야 함
-            )
+            docs_with_scores = self._milvus_search(query, k)
 
             results = []
             for doc, score in docs_with_scores:
