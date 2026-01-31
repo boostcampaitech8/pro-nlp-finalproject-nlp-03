@@ -8,7 +8,7 @@ export default function LoadingPage() {
   const location = useLocation();
   const { memberInfo, chatHistory } = location.state || {};
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
   useEffect(() => {
     // 데이터 검증

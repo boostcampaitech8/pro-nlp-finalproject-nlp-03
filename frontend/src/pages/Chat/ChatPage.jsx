@@ -19,8 +19,8 @@ export default function ChatPage() {
   const wsRef = useRef(null);
   const sessionId = useRef(crypto.randomUUID()).current;
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-  const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
+  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
+  const WS_URL = import.meta.env.VITE_WS_URL || "ws://211.188.62.72:8080";
 
   // 가족 정보 불러오기
   useEffect(() => {

@@ -21,7 +21,7 @@ function StarRating({ rating = 0, size = 11 }) {
 }
 
 export default function MyRecipesPage() {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
