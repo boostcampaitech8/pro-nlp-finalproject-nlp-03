@@ -8,6 +8,7 @@ import LoadingPage from "@/pages/Loading/LoadingPage";
 import RecipeResultPage from "@/pages/Recipes/RecipeResultPage";
 // import RecipeDetailPage from "@/pages/Recipes/RecipeDetailPage";
 import CookModePage from "@/pages/Cook/CookModePage";
+import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 // import CookCompletePage from "@/pages/Cook/CookCompletePage";
 
 import FixedLayout from "@/layouts/FixedLayout";
@@ -78,14 +79,13 @@ export default function Router() {
           }
         />
 
-        {/* 마이 레시피 - 스크롤 화면 */}
+        {/* 마이 레시피 - 고정 화면 (내부 스크롤) */}
         <Route
           path="/recipes/my"
           element={
-            <ScrollLayout>
-              {/* TODO: MyRecipesPage 컴포넌트 생성 */}
-              <div>마이 레시피 페이지</div>
-            </ScrollLayout>
+            <FixedLayout>
+              <MyRecipesPage />
+            </FixedLayout>
           }
         />
 

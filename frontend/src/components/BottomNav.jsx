@@ -19,7 +19,7 @@ export default function BottomNav() {
       inactiveIcon: "/nav-cook-non.png",
     },
     {
-      path: "/my",
+      path: "/recipes/my",
       label: "마이 레시피",
       activeIcon: "/nav-my-click.png",
       inactiveIcon: "/nav-my-non.png",
