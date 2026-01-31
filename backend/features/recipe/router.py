@@ -2,7 +2,8 @@
 """
 Recipe REST API 라우터
 """
-from fastapi import APIRouter, Depends, HTTPException
+import json
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from core.dependencies import get_rag_system, get_recipe_db, get_user_profile
 from core.exceptions import RAGNotAvailableError, DatabaseNotAvailableError
@@ -50,3 +51,47 @@ async def generate_recipe(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/list")
+async def list_recipes(
+    user_id: str = Query(default=None),
+    limit: int = Query(default=50),
+    recipe_db=Depends(get_recipe_db),
+):
+    """저장된 레시피 목록 조회"""
+    if not recipe_db:
+        return {"recipes": []}
+
+    rows = recipe_db.get_recent(user_id, limit)
+    recipes = []
+    for row in rows:
+        recipes.append({
+            "id": row[0],
+            "title": row[1],
+            "created_at": row[2],
+        })
+    return {"recipes": recipes}
+
+
+@router.get("/{recipe_id}")
+async def get_recipe(
+    recipe_id: int,
+    recipe_db=Depends(get_recipe_db),
+):
+    """레시피 상세 조회"""
+    if not recipe_db:
+        raise HTTPException(status_code=503, detail="DB 사용 불가")
+
+    row = recipe_db.get_recipe_by_id(recipe_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="레시피를 찾을 수 없습니다")
+
+    return {
+        "id": row[0],
+        "user_id": row[1],
+        "title": row[2],
+        "recipe_json": json.loads(row[3]) if row[3] else {},
+        "constraints_json": json.loads(row[4]) if row[4] else {},
+        "created_at": row[5],
+    }
