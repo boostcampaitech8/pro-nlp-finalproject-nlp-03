@@ -1,6 +1,6 @@
 // src/pages/RecipeResult/RecipeResultPage.jsx
-import { useLocation, useNavigate } from 'react-router-dom';
-import './RecipeResultPage.css';
+import { useLocation, useNavigate } from "react-router-dom";
+import "./RecipeResultPage.css";
 
 export default function RecipeResultPage() {
   const location = useLocation();
@@ -11,7 +11,7 @@ export default function RecipeResultPage() {
     return (
       <div className="error-page">
         <h2>레시피 정보가 없습니다</h2>
-        <button onClick={() => navigate('/chat')}>돌아가기</button>
+        <button onClick={() => navigate("/chat")}>돌아가기</button>
       </div>
     );
   }
@@ -19,7 +19,7 @@ export default function RecipeResultPage() {
   return (
     <div className="recipe-result-page">
       <div className="recipe-header">
-        <button className="back-button" onClick={() => navigate('/chat')}>
+        <button className="back-button" onClick={() => navigate("/chat")}>
           ← 돌아가기
         </button>
         <h1>{recipe.title}</h1>
@@ -92,27 +92,32 @@ export default function RecipeResultPage() {
         <details className="debug-info">
           <summary>적용된 정보</summary>
           <div className="debug-content">
-            <p><strong>대상:</strong> {memberInfo?.names?.join(', ')}</p>
-            <p><strong>알레르기:</strong> {memberInfo?.allergies?.join(', ')}</p>
-            <p><strong>비선호:</strong> {memberInfo?.dislikes?.join(', ')}</p>
-            <p><strong>대화 수:</strong> {chatHistory?.length}개</p>
+            <p>
+              <strong>대상:</strong> {memberInfo?.names?.join(", ")}
+            </p>
+            <p>
+              <strong>알레르기:</strong> {memberInfo?.allergies?.join(", ")}
+            </p>
+            <p>
+              <strong>비선호:</strong> {memberInfo?.dislikes?.join(", ")}
+            </p>
+            <p>
+              <strong>대화 수:</strong> {chatHistory?.length}개
+            </p>
           </div>
         </details>
       </div>
 
       {/* 하단 버튼 */}
       <div className="recipe-actions">
-        <button 
-          className="btn-secondary"
-          onClick={() => navigate('/chat')}
-        >
+        <button className="btn-secondary" onClick={() => navigate("/chat")}>
           새로운 레시피 찾기
         </button>
-        <button 
+        <button
           className="btn-primary"
           onClick={() => {
             // TODO: 조리 모드로 이동
-            alert('조리 모드는 준비 중입니다!');
+            alert("조리 모드는 준비 중입니다!");
           }}
         >
           조리 시작하기

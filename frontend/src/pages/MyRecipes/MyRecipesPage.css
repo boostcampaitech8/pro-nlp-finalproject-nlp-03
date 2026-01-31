@@ -1,18 +1,12 @@
 /* src/pages/MyRecipes/MyRecipesPage.css */
-
-/* ===============================
-   폰트
-================================ */
 @font-face {
-  font-family: 'EF_jejudoldam';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2') format('woff2');
+  font-family: "EF_jejudoldam";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2")
+    format("woff2");
   font-weight: normal;
   font-style: normal;
 }
 
-/* ===============================
-   페이지 전체 (cook-bg-brown 배경)
-================================ */
 .my-recipes-page {
   position: relative;
   width: 100%;
@@ -22,12 +16,9 @@
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  font-family: 'EF_jejudoldam', sans-serif;
+  font-family: "EF_jejudoldam", sans-serif;
 }
 
-/* ===============================
-   내부 스크롤 영역 (BottomNav 위)
-================================ */
 .my-recipes-scroll {
   position: absolute;
   top: 0;
@@ -46,9 +37,6 @@
   display: none;
 }
 
-/* ===============================
-   클립 이미지 (베이지)
-================================ */
 .clipboard-clip {
   display: flex;
   justify-content: center;
@@ -62,9 +50,6 @@
   height: auto;
 }
 
-/* ===============================
-   클립보드 본체 (my-recipe-board 배경)
-================================ */
 .clipboard-board {
   position: relative;
   margin: 0 16px;
@@ -80,7 +65,7 @@
    제목
 ================================ */
 .clipboard-title {
-  font-family: 'EF_jejudoldam', sans-serif;
+  font-family: "EF_jejudoldam", sans-serif;
   font-size: 26px;
   font-weight: 700;
   color: #ffffff;
@@ -90,9 +75,6 @@
   text-decoration-thickness: 3px;
 }
 
-/* ===============================
-   로딩
-================================ */
 .recipes-loading {
   display: flex;
   justify-content: center;
@@ -102,25 +84,16 @@
   font-size: 16px;
 }
 
-/* ===============================
-   빈 상태
-================================ */
 .recipes-empty {
   min-height: calc(100vh - 280px);
 }
 
-/* ===============================
-   레시피 그리드 (2열)
-================================ */
 .recipes-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-/* ===============================
-   레시피 카드
-================================ */
 .recipe-card {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
@@ -135,16 +108,13 @@
   transform: scale(0.97);
 }
 
-/* ===============================
-   카드 이미지 영역
-================================ */
 .recipe-card-image {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
-  background: #B8856A;
+  background: #b8856a;
 }
 
 .recipe-card-image img {
@@ -159,16 +129,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #B8856A;
+  background: #b8856a;
 }
 
 .recipe-card-placeholder svg {
   opacity: 0.4;
 }
 
-/* ===============================
-   별점 (이미지 위 오른쪽 상단)
-================================ */
 .card-star-overlay {
   position: absolute;
   top: 6px;
@@ -182,22 +149,19 @@
 }
 
 .star-filled {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .star-empty {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* ===============================
-   카드 제목 (하단 오렌지 바)
-================================ */
 .recipe-card-title {
   display: block;
-  font-family: 'EF_jejudoldam', sans-serif;
+  font-family: "EF_jejudoldam", sans-serif;
   font-size: 11px;
   color: #ffffff;
-  background: #D35400;
+  background: #d35400;
   padding: 5px 8px;
   border-radius: 0 0 6px 6px;
   white-space: nowrap;

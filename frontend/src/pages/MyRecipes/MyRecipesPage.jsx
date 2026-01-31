@@ -14,7 +14,7 @@ function StarRating({ rating = 0, size = 11 }) {
         style={{ fontSize: size }}
       >
         ★
-      </span>
+      </span>,
     );
   }
   return <div className="card-star-overlay">{stars}</div>;
@@ -92,10 +92,26 @@ export default function MyRecipesPage() {
                       <img src={recipe.image_url} alt={recipe.title} />
                     ) : (
                       <div className="recipe-card-placeholder">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                          <circle cx="16" cy="16" r="14" stroke="#C4956A" strokeWidth="1.5" fill="none"/>
-                          <path d="M10 20C10 20 13 15 16 15C19 15 22 20 22 20" stroke="#C4956A" strokeWidth="1.5"/>
-                          <circle cx="12" cy="13" r="1.5" fill="#C4956A"/>
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                        >
+                          <circle
+                            cx="16"
+                            cy="16"
+                            r="14"
+                            stroke="#C4956A"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                          <path
+                            d="M10 20C10 20 13 15 16 15C19 15 22 20 22 20"
+                            stroke="#C4956A"
+                            strokeWidth="1.5"
+                          />
+                          <circle cx="12" cy="13" r="1.5" fill="#C4956A" />
                         </svg>
                       </div>
                     )}
