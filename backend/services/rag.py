@@ -136,7 +136,7 @@ class RecipeRAGLangChain:
         print("\n[3/4] CLOVA Studio Reranker 초기화 중")
         self.reranker = None
         if use_reranker:
-            api_key = os.getenv("CLOVASTUDIO_API_KEY")
+            api_key = os.getenv("CLOVASTUDIO_RERANKER_API_KEY")
             request_id = os.getenv("CLOVASTUDIO_REQUEST_ID", "recipe-rag-rerank")
             
             if api_key:
@@ -146,7 +146,7 @@ class RecipeRAGLangChain:
                 )
                 print("[OK] CLOVA Studio Reranker 활성화")
             else:
-                print("[WARNING] CLOVASTUDIO_API_KEY 없음. Reranker 비활성화.")
+                print("[WARNING] CLOVASTUDIO_RERANKER_API_KEY 없음. Reranker 비활성화.")
                 self.use_reranker = False
         else:
             print("[OK] Reranker 비활성화")
