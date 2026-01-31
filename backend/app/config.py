@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     NAVER_CLIENT_SECRET: Optional[str] = None
     
     # Milvus
-    MILVUS_HOST: str = "34.158.218.209"
+    MILVUS_HOST: str = "136.113.251.237"
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
     
