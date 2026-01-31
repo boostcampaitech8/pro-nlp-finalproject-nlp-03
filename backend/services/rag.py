@@ -242,7 +242,11 @@ class RecipeRAGLangChain:
         if use_rerank and self.reranker:
             # Reranker 사용 시 더 많이 검색 후 rerank
             search_k = min(k * 3, 20)  # 최대 20개
-            docs_with_scores = self.vectorstore.similarity_search_with_score(query, k=search_k)
+            docs_with_scores = self.vectorstore.similarity_search_with_score(
+                query,
+                k=search_k,
+                ef=max(search_k * 2, 50)  # ef는 항상 k보다 커야 함
+            )
             
             # Document 객체와 점수 분리
             docs = [doc for doc, score in docs_with_scores]
@@ -267,7 +271,11 @@ class RecipeRAGLangChain:
 
         else:
             # 일반 벡터 검색만
-            docs_with_scores = self.vectorstore.similarity_search_with_score(query, k=k)
+            docs_with_scores = self.vectorstore.similarity_search_with_score(
+                query,
+                k=k,
+                ef=max(k * 2, 50)  # ef는 항상 k보다 커야 함
+            )
 
             results = []
             for doc, score in docs_with_scores:
