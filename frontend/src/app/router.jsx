@@ -72,25 +72,36 @@ export default function Router() {
             }
           />
 
-        {/* Cook Mode - 고정 화면 (음성 컨트롤) */}
-        <Route
-          path="/cook"
-          element={
-            <FixedLayout>
-              <CookModePage />
-            </FixedLayout>
-          }
-        />
+          {/* Cook Mode - 고정 화면 (음성 컨트롤) */}
+          <Route
+            path="/cook"
+            element={
+              <FixedLayout>
+                <CookModePage />
+              </FixedLayout>
+            }
+          />
 
-        {/* 마이 레시피 - 고정 화면 (내부 스크롤) */}
-        <Route
-          path="/recipes/my"
-          element={
-            <FixedLayout>
-              <MyRecipesPage />
-            </FixedLayout>
-          }
-        />
+          {/* 마이 레시피 - 고정 화면 (내부 스크롤) */}
+          <Route
+            path="/recipes/my"
+            element={
+              <FixedLayout>
+                <MyRecipesPage />
+              </FixedLayout>
+            }
+          />
+
+          {/* Cook Mode - 고정 화면 (음성 컨트롤) */}
+          <Route
+            path="/cook-start"
+            element={
+              <FixedLayout>
+                <CookStartPage />
+              </FixedLayout>
+            }
+          />
+
           {/* Cook Mode - 고정 화면 (음성 컨트롤) */}
           <Route
             path="/cook"
