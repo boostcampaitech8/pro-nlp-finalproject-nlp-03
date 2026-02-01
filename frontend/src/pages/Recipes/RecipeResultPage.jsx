@@ -1,127 +1,178 @@
-// src/pages/RecipeResult/RecipeResultPage.jsx
-import { useLocation, useNavigate } from "react-router-dom";
+"use client";
+
+import { useNavigate } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
+import { useState } from "react";
 import "./RecipeResultPage.css";
 
-export default function RecipeResultPage() {
-  const location = useLocation();
+export default function RecipeRecommendation() {
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [remainingCount, setRemainingCount] = useState(1);
   const navigate = useNavigate();
-  const { recipe, memberInfo, chatHistory } = location.state || {};
+  const currentStep = 3;
 
-  if (!recipe) {
-    return (
-      <div className="error-page">
-        <h2>레시피 정보가 없습니다</h2>
-        <button onClick={() => navigate("/chat")}>돌아가기</button>
-      </div>
-    );
-  }
+  const recipeSteps = [
+    { id: 1, text: "먼저 종이컵 기준 물 2컵에 떡볶이떡을 넣고 센불에서 팔팔 끓여 줍니다." },
+    { id: 2, text: "물이 팔팔 끓으면 양념을 다 넣어준 뒤 잘 풀어주고 또 자글자글 끓여 줍니다." },
+    { id: 3, text: "국물이 줄어들면 대파를 가위로 쫑쫑 썰어 넣어주시고 통깨 약간 뿌려 주시면 끝!" },
+    { id: 4, text: "너무 간단한데 맛있어서 놀라는 분식집 떡볶이 완성입니다!" },
+    { id: 5, text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^" },
+    { id: 6, text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^" },
+  ];
+
+  const recipeList = [
+    { id: 1, name: "바지락양념칼국수", time: "15분", level: "왕초급" },
+    { id: 2, name: "계란후라이", time: "10분", level: "초급" },
+    { id: 3, name: "김치찌개", time: "20분", level: "중급" },
+    { id: 4, name: "된장찌개", time: "15분", level: "중급" },
+    { id: 5, name: "된장국", time: "30분", level: "고급" },
+    { id: 6, name: "계란국", time: "20분", level: "고급" },
+  ];
+
+  const handleRegenerate = () => {
+    if (remainingCount > 0) {
+      setRemainingCount(remainingCount - 1);
+    }
+  };
+
+  const handleStartCooking = () => {
+    console.log("요리 시작");
+  };
+
+  const handleClose = () => {
+    console.log("/home");
+  };
 
   return (
-    <div className="recipe-result-page">
-      <div className="recipe-header">
-        <button className="back-button" onClick={() => navigate("/chat")}>
-          ← 돌아가기
-        </button>
-        <h1>{recipe.title}</h1>
+    <div className="recipe-container">
+      {/* Status Bar */}
+      <div className="status-bar">
+        <span>9:41</span>
+        <div className="status-bar-right">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
+            <path d="M1 8.5C1 8.5 3.5 4 9 4C14.5 4 17 8.5 17 8.5" stroke="black" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="9" cy="9" r="2" fill="black"/>
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+            <rect x="0.5" y="3" width="2" height="6" rx="0.5" fill="black"/>
+            <rect x="4" y="2" width="2" height="7" rx="0.5" fill="black"/>
+            <rect x="7.5" y="1" width="2" height="8" rx="0.5" fill="black"/>
+            <rect x="11" y="0" width="2" height="9" rx="0.5" fill="black"/>
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="black"/>
+            <rect x="2" y="2" width="18" height="8" rx="1" fill="black"/>
+            <path d="M23 4V8C24.1046 8 25 7.10457 25 6V6C25 4.89543 24.1046 4 23 4Z" fill="black"/>
+          </svg>
+        </div>
       </div>
 
-      <div className="recipe-content">
-        {/* 메타 정보 */}
-        <div className="recipe-meta">
-          <div className="meta-item">
-            <span className="label">조리시간</span>
-            <span className="value">{recipe.cook_time}</span>
-          </div>
-          <div className="meta-item">
-            <span className="label">난이도</span>
-            <span className="value">{recipe.level}</span>
-          </div>
-          <div className="meta-item">
-            <span className="label">분량</span>
-            <span className="value">{recipe.servings}</span>
-          </div>
-        </div>
-
-        {/* 소개 */}
-        {recipe.intro && (
-          <div className="recipe-intro">
-            <p>{recipe.intro}</p>
-          </div>
-        )}
-
-        {/* 재료 */}
-        <div className="recipe-section">
-          <h2>🥘 재료</h2>
-          <ul className="ingredients-list">
-            {recipe.ingredients?.map((ing, idx) => (
-              <li key={idx}>
-                <span className="ing-name">{ing.name}</span>
-                <span className="ing-amount">{ing.amount}</span>
-                {ing.note && <span className="ing-note">({ing.note})</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* 조리법 */}
-        <div className="recipe-section">
-          <h2>👨‍🍳 조리법</h2>
-          <ol className="steps-list">
-            {recipe.steps?.map((step, idx) => (
-              <li key={idx}>
-                <span className="step-number">{step.no}</span>
-                <span className="step-desc">{step.desc}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* 팁 */}
-        {recipe.tips && recipe.tips.length > 0 && (
-          <div className="recipe-section">
-            <h2>💡 팁</h2>
-            <ul className="tips-list">
-              {recipe.tips.map((tip, idx) => (
-                <li key={idx}>{tip}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* 가족 정보 (디버그용 - 나중에 제거 가능) */}
-        <details className="debug-info">
-          <summary>적용된 정보</summary>
-          <div className="debug-content">
-            <p>
-              <strong>대상:</strong> {memberInfo?.names?.join(", ")}
-            </p>
-            <p>
-              <strong>알레르기:</strong> {memberInfo?.allergies?.join(", ")}
-            </p>
-            <p>
-              <strong>비선호:</strong> {memberInfo?.dislikes?.join(", ")}
-            </p>
-            <p>
-              <strong>대화 수:</strong> {chatHistory?.length}개
-            </p>
-          </div>
-        </details>
+      {/* Mascot - Outside the card */}
+      <div className="mascot-wrapper">
+        <img 
+          src="/public/chef-mascot.png" 
+          alt="요리사 마스코트" 
+          className="mascot-image"
+        />
       </div>
 
-      {/* 하단 버튼 */}
-      <div className="recipe-actions">
-        <button className="btn-secondary" onClick={() => navigate("/chat")}>
-          새로운 레시피 찾기
+      {/* Main Card */}
+      <div className="main-card">
+        {/* Close Button - On top of the card */}
+        <button className="close-button" onClick={() => navigate("/home")}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
         </button>
+
+        {/* Title */}
+        <div className="title-section">
+          <p className="title-prefix">오늘의 추천 레시피는</p>
+          <div className="title-main">
+            <span className="recipe-name">바지락양념칼국수</span>
+            <span className="title-suffix"> 입니다</span>
+          </div>
+        </div>
+
+        {/* Food Image */}
+        <div className="food-image-container">
+          <img 
+            src="/images/clam-noodle.jpg" 
+            alt="바지락양념칼국수" 
+            className="food-image"
+          />
+        </div>
+
+        {/* Info Tags */}
+        <div className="info-tags">
+          <div className="info-tag">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 4V8L11 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span>15분</span>
+          </div>
+          <div className="info-tag">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2C9.5 2 11 3 11 5C11 7 8 8 8 8C8 8 5 7 5 5C5 3 6.5 2 8 2Z" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M4 14C4 11.7909 5.79086 10 8 10C10.2091 10 12 11.7909 12 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span>왕초급</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="action-buttons">
         <button
-          className="btn-primary"
-          onClick={() => {
-            // TODO: 조리 모드로 이동
-            alert("조리 모드는 준비 중입니다!");
-          }}
+          className="btn-regenerate"
+          onClick={() => navigate("/chat")}
         >
-          조리 시작하기
-        </button>
+            <span className="btn-regenerate-text">다시 생성</span>
+            <span className="btn-regenerate-sub">{remainingCount}회 남음</span>
+          </button>
+          <button className="btn-start" onClick={handleStartCooking}>
+            요리 시작하기
+          </button>
+        </div>
+
+        {/* Bottom Sheet Trigger */}
+        <div 
+          className="bottom-sheet-trigger"
+          onClick={() => setIsBottomSheetOpen(true)}
+        >
+          <div className="drag-indicator" />
+          <span className="view-all-text">레시피 전체보기</span>
+        </div>
+      </div>
+
+      {/* Bottom Sheet Overlay */}
+      <div 
+        className={`bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`}
+        onClick={() => setIsBottomSheetOpen(false)}
+      />
+
+      {/* Bottom Sheet */}
+      <div className={`bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
+        <div className="bottom-sheet-header">
+          <div 
+            className="bottom-sheet-handle"
+            onClick={() => setIsBottomSheetOpen(false)}
+          />
+          <h2 className="bottom-sheet-title">레시피 전체보기</h2>
+        </div>
+        <div className="bottom-sheet-content">
+          <div className="recipe-steps">
+            {recipeSteps.map((step) => (
+              <div 
+                key={step.id} 
+                className={`recipe-step ${step.id === currentStep ? "active" : ""}`}
+              >
+                <span className="step-number">{step.id}.</span>
+                <span className="step-text">{step.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
