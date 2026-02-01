@@ -20,7 +20,8 @@ export default function HomePage() {
         src="/main-profile.png"
         alt="프로필"
         className="profile-icon"
-        onClick={() => navigate("/profile")}
+        onClick={() => navigate("/mypage")}
+        style={{ cursor: "pointer" }}
       />
 
       <div className="speech-bubble">
@@ -35,7 +36,7 @@ export default function HomePage() {
         {/* 메인 카드 - 채팅으로 이동 */}
         <div
           className="card card-large"
-          onClick={() => navigate("/cook-start")}
+          onClick={() => navigate("/chat")}
           style={{ cursor: "pointer" }}
         >
           <img src="/main-profile.png" className="card-icon" alt="감자" />
