@@ -12,12 +12,27 @@ export default function RecipeRecommendation() {
   const currentStep = 3;
 
   const recipeSteps = [
-    { id: 1, text: "먼저 종이컵 기준 물 2컵에 떡볶이떡을 넣고 센불에서 팔팔 끓여 줍니다." },
-    { id: 2, text: "물이 팔팔 끓으면 양념을 다 넣어준 뒤 잘 풀어주고 또 자글자글 끓여 줍니다." },
-    { id: 3, text: "국물이 줄어들면 대파를 가위로 쫑쫑 썰어 넣어주시고 통깨 약간 뿌려 주시면 끝!" },
+    {
+      id: 1,
+      text: "먼저 종이컵 기준 물 2컵에 떡볶이떡을 넣고 센불에서 팔팔 끓여 줍니다.",
+    },
+    {
+      id: 2,
+      text: "물이 팔팔 끓으면 양념을 다 넣어준 뒤 잘 풀어주고 또 자글자글 끓여 줍니다.",
+    },
+    {
+      id: 3,
+      text: "국물이 줄어들면 대파를 가위로 쫑쫑 썰어 넣어주시고 통깨 약간 뿌려 주시면 끝!",
+    },
     { id: 4, text: "너무 간단한데 맛있어서 놀라는 분식집 떡볶이 완성입니다!" },
-    { id: 5, text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^" },
-    { id: 6, text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^" },
+    {
+      id: 5,
+      text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^",
+    },
+    {
+      id: 6,
+      text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^",
+    },
   ];
 
   const recipeList = [
@@ -45,33 +60,11 @@ export default function RecipeRecommendation() {
 
   return (
     <div className="recipe-container">
-      {/* Status Bar */}
-      <div className="status-bar">
-        <span>9:41</span>
-        <div className="status-bar-right">
-          <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
-            <path d="M1 8.5C1 8.5 3.5 4 9 4C14.5 4 17 8.5 17 8.5" stroke="black" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="9" cy="9" r="2" fill="black"/>
-          </svg>
-          <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-            <rect x="0.5" y="3" width="2" height="6" rx="0.5" fill="black"/>
-            <rect x="4" y="2" width="2" height="7" rx="0.5" fill="black"/>
-            <rect x="7.5" y="1" width="2" height="8" rx="0.5" fill="black"/>
-            <rect x="11" y="0" width="2" height="9" rx="0.5" fill="black"/>
-          </svg>
-          <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
-            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="black"/>
-            <rect x="2" y="2" width="18" height="8" rx="1" fill="black"/>
-            <path d="M23 4V8C24.1046 8 25 7.10457 25 6V6C25 4.89543 24.1046 4 23 4Z" fill="black"/>
-          </svg>
-        </div>
-      </div>
-
       {/* Mascot - Outside the card */}
       <div className="mascot-wrapper">
-        <img 
-          src="/public/chef-mascot.png" 
-          alt="요리사 마스코트" 
+        <img
+          src="/public/chef-mascot.png"
+          alt="요리사 마스코트"
           className="mascot-image"
         />
       </div>
@@ -81,7 +74,12 @@ export default function RecipeRecommendation() {
         {/* Close Button - On top of the card */}
         <button className="close-button" onClick={() => navigate("/home")}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path
+              d="M15 5L5 15M5 5L15 15"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
 
@@ -96,9 +94,9 @@ export default function RecipeRecommendation() {
 
         {/* Food Image */}
         <div className="food-image-container">
-          <img 
-            src="/images/clam-noodle.jpg" 
-            alt="바지락양념칼국수" 
+          <img
+            src="/images/clam-noodle.jpg"
+            alt="바지락양념칼국수"
             className="food-image"
           />
         </div>
@@ -107,15 +105,35 @@ export default function RecipeRecommendation() {
         <div className="info-tags">
           <div className="info-tag">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M8 4V8L11 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle
+                cx="8"
+                cy="8"
+                r="7"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M8 4V8L11 10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
             <span>15분</span>
           </div>
           <div className="info-tag">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2C9.5 2 11 3 11 5C11 7 8 8 8 8C8 8 5 7 5 5C5 3 6.5 2 8 2Z" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M4 14C4 11.7909 5.79086 10 8 10C10.2091 10 12 11.7909 12 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path
+                d="M8 2C9.5 2 11 3 11 5C11 7 8 8 8 8C8 8 5 7 5 5C5 3 6.5 2 8 2Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M4 14C4 11.7909 5.79086 10 8 10C10.2091 10 12 11.7909 12 14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
             <span>왕초급</span>
           </div>
@@ -123,10 +141,7 @@ export default function RecipeRecommendation() {
 
         {/* Action Buttons */}
         <div className="action-buttons">
-        <button
-          className="btn-regenerate"
-          onClick={() => navigate("/chat")}
-        >
+          <button className="btn-regenerate" onClick={() => navigate("/chat")}>
             <span className="btn-regenerate-text">다시 생성</span>
             <span className="btn-regenerate-sub">{remainingCount}회 남음</span>
           </button>
@@ -136,7 +151,7 @@ export default function RecipeRecommendation() {
         </div>
 
         {/* Bottom Sheet Trigger */}
-        <div 
+        <div
           className="bottom-sheet-trigger"
           onClick={() => setIsBottomSheetOpen(true)}
         >
@@ -146,7 +161,7 @@ export default function RecipeRecommendation() {
       </div>
 
       {/* Bottom Sheet Overlay */}
-      <div 
+      <div
         className={`bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`}
         onClick={() => setIsBottomSheetOpen(false)}
       />
@@ -154,7 +169,7 @@ export default function RecipeRecommendation() {
       {/* Bottom Sheet */}
       <div className={`bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
         <div className="bottom-sheet-header">
-          <div 
+          <div
             className="bottom-sheet-handle"
             onClick={() => setIsBottomSheetOpen(false)}
           />
@@ -163,8 +178,8 @@ export default function RecipeRecommendation() {
         <div className="bottom-sheet-content">
           <div className="recipe-steps">
             {recipeSteps.map((step) => (
-              <div 
-                key={step.id} 
+              <div
+                key={step.id}
                 className={`recipe-step ${step.id === currentStep ? "active" : ""}`}
               >
                 <span className="step-number">{step.id}.</span>

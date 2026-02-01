@@ -36,7 +36,7 @@ export default function HomePage() {
         {/* 메인 카드 - 채팅으로 이동 */}
         <div
           className="card card-large"
-          onClick={() => navigate("/chat")}
+          onClick={() => navigate("/cook-start")}
           style={{ cursor: "pointer" }}
         >
           <img src="/main-profile.png" className="card-icon" alt="감자" />
