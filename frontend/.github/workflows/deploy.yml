@@ -1,0 +1,24 @@
+name: Deploy Frontend to NCP
+
+on:
+  push:
+    branches:
+      - feature/frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: 211.188.62.72
+          username: root
+          key: ${{ secrets.NCP_SSH_KEY }}
+          script: |
+            cd ~/recipe-app/frontend
+            git pull origin feature/frontend
+            cd ~/recipe-app
+            sudo docker compose down
+            sudo docker compose build --no-cache frontend
+            sudo docker compose up -d
