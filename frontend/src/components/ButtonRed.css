@@ -1,0 +1,16 @@
+.cook-start-btn {
+  width: calc(393px - 48px);
+  height: 56px;
+  background-color: #ff5b32;
+  border: none;
+  border-radius: 16px;
+  color: #ffffff;
+  font-family: "Pretendard", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.cook-start-btn:active {
+  background-color: #e04a24;
+}

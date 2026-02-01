@@ -13,7 +13,7 @@ export default function BottomNav() {
       inactiveIcon: "/nav-home-non.png",
     },
     {
-      path: "/cook",
+      path: "/cook-start",
       label: "조리모드",
       activeIcon: "/nav-cook-click.png",
       inactiveIcon: "/nav-cook-non.png",

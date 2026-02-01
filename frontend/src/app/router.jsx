@@ -9,6 +9,7 @@ import RecipeResultPage from "@/pages/Recipes/RecipeResultPage";
 // import RecipeDetailPage from "@/pages/Recipes/RecipeDetailPage";
 import CookModePage from "@/pages/Cook/CookModePage";
 import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
+import CookStartPage from "@/pages/Cook/CookStartPage";
 // import CookCompletePage from "@/pages/Cook/CookCompletePage";
 
 import FixedLayout from "@/layouts/FixedLayout";
@@ -65,6 +66,16 @@ export default function Router() {
           element={
             <FixedLayout>
               <RecipeResultPage />
+            </FixedLayout>
+          }
+        />
+
+        {/* Cook Start - 조리모드 시작 페이지 */}
+        <Route
+          path="/cook-start"
+          element={
+            <FixedLayout>
+              <CookStartPage />
             </FixedLayout>
           }
         />
