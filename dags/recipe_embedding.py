@@ -7,14 +7,12 @@ from lib.embedding_pipeline import run_embedding_pipeline
 default_args = {
     "owner": "airflow",
     "start_date": datetime(2026, 1, 9),
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
 }
 
 with DAG(
     dag_id="recipe_embedding",
     default_args=default_args,
-    schedule_interval="*/10 * * * *",
+    schedule_interval=timedelta(days=1),
     max_active_runs=1,
     catchup=False,
     tags=["ai-tech"],

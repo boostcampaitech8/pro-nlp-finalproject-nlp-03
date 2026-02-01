@@ -13,7 +13,7 @@ LIST_URL = "https://www.10000recipe.com/recipe/list.html"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 
 REQUEST_DELAY = 0.7
-MAX_PAGES = 100
+MAX_PAGES = 500
 
 MONGO_URI = "mongodb://root:RootPassword123@mongodb:27017/admin"
 DB_NAME = "recipe_db"

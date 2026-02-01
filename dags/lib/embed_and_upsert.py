@@ -2,20 +2,16 @@ import time
 from typing import List
 from lib.chunking import chunk_documents
 from langchain_community.vectorstores import Milvus
-from langchain_community.embeddings import ClovaXEmbeddings
 
 from lib.mongo_utils import get_mongo_collections, get_unembedded_recipes, mark_embedded
 
-MODEL_NAME = "bge-m3"
 MILVUS_HOST = "milvus-standalone"
 MILVUS_PORT = "19530"
 COLLECTION_NAME = "recipe_docs"
+MODEL_NAME = "bge-m3"
 
 
-def embedding_and_upsert(documents, recipes_col, sleep_per_doc=0.5):
-    embeddings = ClovaXEmbeddings(
-        model=MODEL_NAME,
-    )
+def embedding_and_upsert(documents, embeddings, recipes_col, sleep_per_doc=1.0):
 
     vectorstore = Milvus(
         embedding_function=embeddings,
