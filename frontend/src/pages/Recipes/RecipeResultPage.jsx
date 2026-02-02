@@ -1,6 +1,7 @@
 // src/pages/Recipe/RecipeResultPage.jsx
+
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import RecipeLayout from "@/layouts/RecipeLayout";
 import ButtonRed from "@/components/ButtonRed";
 import ButtonWhite from "@/components/ButtonWhite";
@@ -9,6 +10,7 @@ import "./RecipeResultPage.css";
 export default function RecipeResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const {
     recipe,
     userId,
@@ -29,15 +31,20 @@ export default function RecipeResultPage() {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
+  useEffect(() => {
+    if (!recipe) {
+      console.error("[RecipeResultPage] 레시피 데이터 없음");
+      navigate("/home", { replace: true });
+    } else {
+      console.log("[RecipeResultPage] 받은 레시피:", recipe);
+      console.log("[RecipeResultPage] 세션 ID:", sessionId);
+      console.log("[RecipeResultPage] 남은 횟수:", remainingCount);
+    }
+  }, [recipe, navigate, sessionId, remainingCount]);
+
   if (!recipe) {
-    console.error("[RecipeResultPage] 레시피 데이터 없음");
-    navigate("/home", { replace: true });
     return null;
   }
-
-  console.log("[RecipeResultPage] 받은 레시피:", recipe);
-  console.log("[RecipeResultPage] 세션 ID:", sessionId);
-  console.log("[RecipeResultPage] 남은 횟수:", remainingCount);
 
   // 재생성 버튼 핸들러
   const handleRegenerate = async () => {
@@ -102,7 +109,7 @@ export default function RecipeResultPage() {
 
   return (
     <RecipeLayout steps={recipe.steps || []} currentStep={1}>
-      {/* 타이틀 */}
+      {/* 나머지 동일 */}
       <div className="result-title-section">
         <p className="result-subtitle">오늘의 추천 레시피는</p>
         <h1 className="result-title">
@@ -110,17 +117,15 @@ export default function RecipeResultPage() {
         </h1>
       </div>
 
-      {/* 플립 카드 */}
       <div
         className={`result-card-container ${isFlipped ? "flipped" : ""}`}
         onClick={handleFlipCard}
       >
         <div className="result-card">
-          {/* 앞면 - 이미지 */}
           <div className="result-card-front">
             <div className="result-image-wrapper">
               <img
-                class="result-image"
+                className="result-image"
                 src={recipeImage}
                 alt={recipe.title}
                 onError={(e) => {
@@ -132,7 +137,6 @@ export default function RecipeResultPage() {
                 }}
               />
 
-              {/* 이미지 위 정보 태그 */}
               <div className="result-image-info">
                 <div className="info-badge">
                   <img src="/time-icon.png" alt="시간" className="badge-icon" />
@@ -148,7 +152,6 @@ export default function RecipeResultPage() {
                 </div>
               </div>
 
-              {/* 클릭 힌트 */}
               <div className="flip-hint">
                 <span>재료 보기</span>
                 <span className="flip-icon">↻</span>
@@ -156,7 +159,6 @@ export default function RecipeResultPage() {
             </div>
           </div>
 
-          {/* 뒷면 - 재료 */}
           <div className="result-card-back">
             <div className="ingredients-wrapper">
               <h3 className="ingredients-title">필요한 재료</h3>
@@ -179,7 +181,6 @@ export default function RecipeResultPage() {
         </div>
       </div>
 
-      {/* 액션 버튼들 */}
       <div className="result-actions">
         <div className="result-button-wrapper">
           <ButtonRed
