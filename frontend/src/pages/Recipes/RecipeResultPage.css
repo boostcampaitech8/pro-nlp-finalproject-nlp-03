@@ -1,332 +1,99 @@
-.recipe-container {
-  width: 393px;
-  height: 852px;
-  background-image: url("/cook-bg-brown.png");
-  background-size: cover;
-  background-position: center;
-  position: relative;
-  overflow: hidden;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+/* src/pages/RecipeResult/RecipeResultPage.css */
 
-/* Status Bar */
-.status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.status-bar-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-bar-right svg {
-  fill: #fff;
-}
-
-.status-bar-right svg path,
-.status-bar-right svg rect,
-.status-bar-right svg circle {
-  stroke: #fff;
-  fill: #fff;
-}
-
-/* Mascot - Outside card */
-.mascot-wrapper {
-  position: absolute;
-  top: 44px;
-  left: 20px;
-  z-index: 10;
-}
-
-.mascot-image {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-/* Main Card */
-.main-card {
-  position: absolute;
-  top: 100px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #ffffff;
-  opacity: 70%;
-  border-radius: 24px 24px 0 0;
-  padding: 60px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Close Button */
-.close-button {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-button:hover {
-  color: #555;
-}
-
-/* Title Section */
-.title-section {
+/* 타이틀 섹션 */
+.result-title-section {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  width: 100%;
 }
 
-.title-prefix {
-  font-size: 21px;
-  color: #48547b;
-  margin-bottom: 4px;
+.result-subtitle {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 400;
 }
 
-.title-main {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
+.result-title {
+  font-size: 22px;
+  color: #333;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.4;
 }
 
-.recipe-name {
-  font-size: 24px;
-  font-weight: 700;
+.result-title .highlight {
   color: #ff5b32;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
 }
 
-.title-suffix {
-  font-size: 21px;
-  color: #48547b;
-}
-
-/* Food Image */
-.food-image-container {
-  width: 260px;
-  height: 260px;
-  border-radius: 16px;
+/* 이미지 */
+.result-image-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  margin-bottom: 16px;
-  flex-shrink: 0;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.food-image {
+.result-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Info Tags */
-.info-tags {
+/* 이미지 위 정보 뱃지 */
+.result-image-info {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
   display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  margin-bottom: 20px;
-  color: #5a4a3a;
-  font-size: 14px;
-  width: 260px;
+  gap: 8px;
 }
 
-.info-tag {
+.info-badge {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 24px;
-}
-
-.btn-regenerate {
-  flex: 1;
-  background: linear-gradient(135deg, #e8734a 0%, #d45a32 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 14px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.btn-regenerate:hover {
-  background: linear-gradient(135deg, #d45a32 0%, #c04a28 100%);
-}
-
-.btn-regenerate-text {
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
-}
-
-.btn-regenerate-sub {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.btn-start {
-  flex: 1;
-  background: white;
   color: #333;
-  border: none;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-start:hover {
-  background: #f5f5f5;
+.badge-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
 }
 
-/* Bottom Sheet Trigger */
-.bottom-sheet-trigger {
+/* 액션 버튼 */
+.result-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: auto;
-  cursor: pointer;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 20px;
 }
 
-.drag-indicator {
-  width: 40px;
-  height: 4px;
-  background: #ccc;
-  border-radius: 2px;
-  margin-bottom: 8px;
-}
-
-.view-all-text {
-  font-size: 14px;
-  color: #5a4a3a;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-/* Bottom Sheet Overlay */
-.bottom-sheet-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.3s ease,
-    visibility 0.3s ease;
-  z-index: 20;
-}
-
-.bottom-sheet-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Bottom Sheet */
-.bottom-sheet {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-radius: 24px 24px 0 0;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  max-height: 70%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  z-index: 30;
-}
-
-.bottom-sheet.active {
-  transform: translateY(0);
-}
-
-.bottom-sheet-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 24px 16px;
-  border-bottom: 1px solid #eee;
-}
-
-.bottom-sheet-handle {
-  width: 40px;
-  height: 4px;
-  background: #ddd;
-  border-radius: 2px;
-  margin-bottom: 16px;
-  cursor: pointer;
-}
-
-.bottom-sheet-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-.bottom-sheet-content {
+.result-button-wrapper {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px;
-}
-
-/* Recipe Steps */
-.recipe-steps {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  justify-content: center;
 }
 
-.recipe-step {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #666;
-}
-
-.recipe-step.active {
-  color: #e8734a;
-  font-weight: 500;
-}
-
-.step-number {
-  flex-shrink: 0;
-  font-weight: 600;
-}
-
-.step-text {
-  flex: 1;
+.result-button-wrapper .button-red,
+.result-button-wrapper .button-white {
+  width: 100%;
+  max-width: none;
 }
