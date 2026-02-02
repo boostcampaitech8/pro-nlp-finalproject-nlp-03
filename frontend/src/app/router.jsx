@@ -101,38 +101,39 @@ export default function Router() {
             }
           />
 
-        {/* Cook Mode Audio - 음성 녹음 페이지 */}
-        <Route
-          path="/cook-audio"
-          element={
-            <FixedLayout>
-              <CookModeAudioPage />
-            </FixedLayout>
-          }
-        />
+          {/* Cook Mode Audio - 음성 녹음 페이지 */}
+          <Route
+            path="/cook-audio"
+            element={
+              <FixedLayout>
+                <CookModeAudioPage />
+              </FixedLayout>
+            }
+          />
 
-        {/* 마이 레시피 - 스크롤 화면 */}
-        <Route
-          path="/recipes/my"
-          element={
-            <ScrollLayout>
-              {/* TODO: MyRecipesPage 컴포넌트 생성 */}
-              <div>마이 레시피 페이지</div>
-            </ScrollLayout>
-          }
-        />
+          {/* 마이 레시피 - 스크롤 화면 */}
+          <Route
+            path="/recipes/my"
+            element={
+              <ScrollLayout>
+                {/* TODO: MyRecipesPage 컴포넌트 생성 */}
+                <div>마이 레시피 페이지</div>
+              </ScrollLayout>
+            }
+          />
 
-        {/* 전체 레시피 - 스크롤 화면 */}
-        <Route
-          path="/recipes"
-          element={
-            <ScrollLayout>
-              {/* TODO: AllRecipesPage 컴포넌트 생성 */}
-              <div>전체 레시피 페이지</div>
-            </ScrollLayout>
-          }
-        />
-      </Routes>
+          {/* 전체 레시피 - 스크롤 화면 */}
+          <Route
+            path="/recipes"
+            element={
+              <ScrollLayout>
+                {/* TODO: AllRecipesPage 컴포넌트 생성 */}
+                <div>전체 레시피 페이지</div>
+              </ScrollLayout>
+            }
+          />
+        </Routes>
+      </MobileLayout>
     </BrowserRouter>
   );
 }
