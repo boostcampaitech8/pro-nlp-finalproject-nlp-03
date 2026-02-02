@@ -34,10 +34,6 @@ class RecipeService:
         
         # 3. 알레르기/비선호 필터링
         filtered_docs = self._filter_by_constraints(retrieved_docs, member_info)
-
-        # 4. 최적 이미지 선택
-        best_image_url = self._get_best_image(filtered_docs)
-        print(f"[RecipeService] 선택된 이미지: {best_image_url}")
         
         print(f"[RecipeService] 필터링 후: {len(filtered_docs)}개")
         
@@ -47,8 +43,6 @@ class RecipeService:
             member_info=member_info,
             context_docs=filtered_docs
         )
-        recipe_json['image_url'] = best_image_url
-        recipe_json['img_url'] = best_image_url 
         
         # 5. DB 저장
         if self.db:
