@@ -318,8 +318,6 @@ services:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
       MQ_TYPE: woodpecker
-      MILVUS_ADDRESS: 0.0.0.0:19530
-      PROXY_PORT: 19530
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
     healthcheck:
