@@ -1,0 +1,192 @@
+/* FoodReview.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.food-review-container {
+  width: 100%;
+  max-width: 375px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #D4926F 0%, #D4926F 30%, #F5F5F5 30%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  position: relative;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+}
+
+.time {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.status-icons {
+  display: flex;
+  gap: 4px;
+  font-size: 14px;
+}
+
+/* Logo */
+.logo {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.logo img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: white;
+  padding: 8px;
+}
+
+/* Content Card */
+.content-card {
+  background: white;
+  border-radius: 30px 30px 0 0;
+  padding: 30px 24px 40px;
+  margin-top: 10px;
+  min-height: calc(100vh - 150px);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.highlight {
+  color: #FF6B35;
+  font-weight: 600;
+}
+
+.order-info {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+/* Food Image */
+.food-image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.food-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Star Rating */
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px 0;
+}
+
+.star {
+  font-size: 48px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  filter: grayscale(100%);
+}
+
+.star.filled {
+  filter: grayscale(0%);
+  transform: scale(1.1);
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  line-height: 1.4;
+}
+
+.btn-share {
+  background-color: #FF6B6B;
+  color: white;
+}
+
+.btn-share:hover {
+  background-color: #FF5252;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.btn-review {
+  background-color: white;
+  color: #333;
+  border: 2px solid #E0E0E0;
+}
+
+.btn-review:hover {
+  background-color: #F8F8F8;
+  border-color: #CCCCCC;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 375px) {
+  .content-card {
+    padding: 24px 20px 36px;
+  }
+  
+  .star {
+    font-size: 42px;
+  }
+  
+  .btn {
+    font-size: 12px;
+    padding: 14px;
+  }
+}
