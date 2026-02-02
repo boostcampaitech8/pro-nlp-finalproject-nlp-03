@@ -137,7 +137,7 @@
   background: rgba(255, 255, 255, 0.7);
   border-radius: 18px;
   padding: 17px 20px 11px 56px;
-  margin-bottom: 16px;
+  margin-bottom: 13px;
 }
 
 /* 메인 카드 */
@@ -194,10 +194,10 @@
 /* 하단 카드 전용 */
 .card.small {
   width: 170px;
-  padding: 18px 16px;
+  padding: 15px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 /* 상단 아이콘 영역 */

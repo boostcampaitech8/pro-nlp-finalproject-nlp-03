@@ -116,8 +116,7 @@ export default function Router() {
             path="/recipes/my"
             element={
               <ScrollLayout>
-                {/* TODO: MyRecipesPage 컴포넌트 생성 */}
-                <div>마이 레시피 페이지</div>
+                <MyRecipesPage />
               </ScrollLayout>
             }
           />
@@ -127,8 +126,7 @@ export default function Router() {
             path="/recipes"
             element={
               <ScrollLayout>
-                {/* TODO: AllRecipesPage 컴포넌트 생성 */}
-                <div>전체 레시피 페이지</div>
+                <MyRecipesPage />
               </ScrollLayout>
             }
           />
