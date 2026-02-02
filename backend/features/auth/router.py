@@ -81,6 +81,7 @@ async def naver_callback(code: str = Query(...), state: str = Query(...),
 
     # 3. DB upsert용 데이터 매핑
     member_data = {
+        "naver_id": naver.get("id", ""),
         "email": naver.get("email", ""),
         "name": naver.get("name", ""),
         "nickname": naver.get("nickname", ""),
