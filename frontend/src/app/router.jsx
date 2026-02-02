@@ -11,6 +11,7 @@ import CookModeAudioPage from "@/pages/Cook/CookModeAudioPage";
 import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
 import MyPage from "@/pages/MyPages/MyPage";
+import NaverCallbackPage from "@/pages/NaverCallback/NaverCallbackPage";
 
 import FixedLayout from "@/layouts/FixedLayout";
 import ScrollLayout from "@/layouts/ScrollLayout";
@@ -30,6 +31,9 @@ export default function Router() {
               </FixedLayout>
             }
           />
+
+          {/* 네이버 로그인 콜백 */}
+          <Route path="/naver-callback" element={<NaverCallbackPage />} />
 
           {/* Home - 스크롤 화면 */}
           <Route
