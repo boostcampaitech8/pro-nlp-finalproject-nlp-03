@@ -2,11 +2,17 @@
 """
 Recipe 비즈니스 로직
 """
+import os
+from pymongo import MongoClient
 from typing import List, Dict, Any
 from .prompts import RECIPE_QUERY_EXTRACTION_PROMPT, RECIPE_GENERATION_PROMPT
 
 class RecipeService:
     def __init__(self, rag_system, recipe_db, user_profile=None):
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://root:RootPassword123@136.113.251.237:27017/admin")
+        self.mongo_client = MongoClient(mongo_uri)
+        self.recipe_db = self.mongo_client["recipe_db"]
+        self.recipes_collection = self.recipe_db["recipes"]
         self.rag = rag_system
         self.db = recipe_db
         self.user_profile = user_profile or {}
@@ -16,7 +22,7 @@ class RecipeService:
         chat_history: List[Dict[str, str]],
         member_info: Dict[str, Any] = None
     ) -> Dict[str, Any]:
-        """상세 레시피 생성 (대화 기반)"""
+        """상세 레시피 생성 (대화 기반) + 이미지 URL"""
         
         print(f"[RecipeService] 레시피 생성 시작")
         print(f"[RecipeService] 대화 개수: {len(chat_history)}")
@@ -44,20 +50,117 @@ class RecipeService:
             context_docs=filtered_docs
         )
         
-        # 5. DB 저장
-        if self.db:
-            try:
-                recipe_id = self.db.save_recipe(
-                    user_id=member_info.get('names', ['사용자'])[0] if member_info else '사용자',
-                    recipe=recipe_json,
-                    constraints=member_info or {}
-                )
-                print(f"[RecipeService] DB 저장 완료: ID={recipe_id}")
-                recipe_json['recipe_id'] = recipe_id
-            except Exception as e:
-                print(f"[RecipeService] DB 저장 실패: {e}")
+        print(f"[RecipeService] 레시피 생성 완료: {recipe_json.get('title')}")
+        
+        # 5. 생성된 레시피 제목으로 MongoDB에서 직접 이미지 검색!
+        recipe_title = recipe_json.get('title', '')
+        best_image = ""
+        
+        if recipe_title:
+            best_image = self._find_image_by_title(recipe_title)
+        
+        # 실패하면 원본 검색 결과에서
+        if not best_image:
+            print(f"[RecipeService] 제목 검색 실패 → 원본 검색 결과 사용")
+            best_image = self._get_best_image(filtered_docs)
+        
+        print(f"[RecipeService] 선택된 이미지: {best_image or '없음'}")
+        
+        # 6. 이미지 URL 추가
+        recipe_json['image'] = best_image
+        recipe_json['img_url'] = best_image
+        
+        # 7. 인원수 설정
+        servings = len(member_info.get('names', [])) if member_info and member_info.get('names') else 1
+        if 'servings' not in recipe_json or not recipe_json['servings']:
+            recipe_json['servings'] = f"{servings}인분"
+        
+        print(f"[RecipeService] 최종 레시피: {recipe_json.get('title')}")
+        print(f"[RecipeService] 인원수: {recipe_json['servings']}")
+        print(f"[RecipeService] 이미지: {recipe_json.get('image', 'None')[:60]}...")
         
         return recipe_json
+    
+    def _find_image_by_title(self, title: str) -> str:
+        """MongoDB에서 제목으로 이미지 직접 검색 (빠름!)"""
+        try:
+            # 정확한 매칭 시도
+            recipe = self.recipes_collection.find_one(
+                {"title": {"$regex": title, "$options": "i"}}, 
+                {"image": 1, "recipe_id": 1, "_id": 0}
+            )
+            
+            if recipe and "image" in recipe:
+                image_url = recipe["image"]
+                recipe_id = recipe.get("recipe_id", "")
+                print(f"[RecipeService] MongoDB 제목 매칭: {title} → {recipe_id}")
+                print(f"[RecipeService] 이미지: {image_url[:60]}...")
+                return image_url
+            
+            # 부분 매칭 시도 (예: "두쫀쿠" → "두바이 쫀득 쿠키")
+            # 제목의 주요 키워드 추출
+            keywords = [word for word in title.split() if len(word) > 1]
+            
+            if keywords:
+                # 키워드로 검색
+                recipe = self.recipes_collection.find_one(
+                    {"title": {"$regex": "|".join(keywords), "$options": "i"}},
+                    {"image": 1, "recipe_id": 1, "title": 1, "_id": 0}
+                )
+                
+                if recipe and "image" in recipe:
+                    image_url = recipe["image"]
+                    matched_title = recipe.get("title", "")
+                    print(f"[RecipeService] MongoDB 키워드 매칭: {title} → {matched_title}")
+                    print(f"[RecipeService] 이미지: {image_url[:60]}...")
+                    return image_url
+            
+            print(f"[RecipeService] MongoDB 제목 검색 실패: {title}")
+            return ""
+            
+        except Exception as e:
+            print(f"[RecipeService] MongoDB 제목 검색 실패: {e}")
+            return ""
+    
+    def _get_image_from_mongo(self, recipe_id: str) -> str:
+        """MongoDB에서 레시피 이미지 URL 가져오기"""
+        try:
+            recipe = self.recipes_collection.find_one(
+                {"recipe_id": recipe_id},
+                {"image": 1, "_id": 0}
+            )
+            
+            if recipe and "image" in recipe:
+                image_url = recipe["image"]
+                print(f"[RecipeService] MongoDB 이미지: {image_url[:50]}...")
+                return image_url
+            else:
+                print(f"[RecipeService] MongoDB에 이미지 없음: recipe_id={recipe_id}")
+                return ""
+                
+        except Exception as e:
+            print(f"[RecipeService] MongoDB 이미지 조회 실패: {e}")
+            return ""
+    
+    def _get_best_image(self, filtered_docs: List[Dict]) -> str:
+        """필터링된 레시피 중 이미지 선택 (MongoDB 우선)"""
+        for doc in filtered_docs:
+            recipe_id = doc.get('recipe_id', '')
+            
+            if recipe_id:
+                # MongoDB에서 이미지 조회
+                image_url = self._get_image_from_mongo(recipe_id)
+                if image_url:
+                    return image_url
+            
+            # fallback: RAG 메타데이터에서
+            image_url = doc.get('image_url', '')
+            if image_url:
+                print(f"[RecipeService] RAG 메타데이터 이미지 사용")
+                return image_url
+        
+        print("[RecipeService] 이미지 없음")
+        return ""
     
     def _extract_search_query_with_llm(
         self, 

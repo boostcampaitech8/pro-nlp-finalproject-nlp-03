@@ -1,6 +1,6 @@
 # backend/features/chat/agent.py
 """
-Chat Agent - Adaptive RAG (네이버 검색 API 사용)
+Chat Agent - Adaptive RAG
 """
 import os
 from typing import TypedDict, List, Literal
@@ -15,12 +15,12 @@ from services.search import get_search_service
 
 class ChatAgentState(TypedDict):
     """Agent 상태"""
-    question: str               # 현재 질문 (재작성된)
-    original_question: str      # 원래 질문
-    chat_history: List[str]     # 대화 기록
-    documents: List[Document]   # 검색된 문서
-    generation: str             # 최종 답변
-    web_search_needed: str      # "yes" or "no"
+    question: str
+    original_question: str
+    chat_history: List[str]
+    documents: List[Document]
+    generation: str
+    web_search_needed: str
     user_constraints: dict
     constraint_warning: str
 
@@ -33,6 +33,61 @@ def create_chat_agent(rag_system):
     print(f"[Agent] 검색 엔진: {search_engine}")
     
     # ===== 노드 함수 =====
+
+    def check_recipe_relevance(state: ChatAgentState) -> ChatAgentState:
+        """관련성 체크 - 원본 질문으로 판단"""
+        print("[Agent] 0. 레시피 관련성 체크 중...")
+        
+        question = state.get("question", state.get("original_question", ""))
+        chat_history = state.get("chat_history", [])
+        
+        recent_context = "\n".join(chat_history[-3:]) if chat_history else ""
+        full_context = f"{recent_context}\n사용자: {question}"
+        
+        relevance_prompt = f"""당신은 레시피 추천 챗봇입니다. 다음 대화가 레시피 추천과 관련이 있는지 판단하세요.
+
+    대화:
+    {full_context}
+
+    ✅ 레시피 추천 관련 (RELEVANT):
+    - 음식 종류 언급: "짬뽕", "찌개", "파스타", "디저트", "쿠키", "두쫀쿠"
+    - 맛/특징 언급: "매운 거", "시원한 거", "차가운 거", "달콤한 거"
+    - 상황/니즈: "간단한 요리", "빠른 요리", "야식", "간식"
+    - 재료 기반: "김치로", "계란으로", "남은 재료로"
+    - 조건 추가: "덜 맵게", "더 달게", "인원 늘려서"
+    - 막연한 요청: "뭐 먹을까", "추천해줘", "요리 해볼까"
+    - 줄임말/별명: "두쫀쿠", "계란찜", "김볶" 등
+
+    ❌ 레시피 추천 무관 (NOT_RELEVANT):
+    - 날씨: "날씨가 좋네", "비 오네"
+    - 일반 상식: "보냉팩 분리수거", "칼 쓰는 법"
+    - 뉴스/시사: "오늘 뉴스", "주식"
+    - 요리와 완전 무관: "영화 추천", "여행지"
+
+    중요: 음식/맛/식사와 조금이라도 관련 있으면 RELEVANT!
+
+    답변 (한 단어만):"""
+        
+        try:
+            from langchain_core.messages import HumanMessage
+            result = rag_system.chat_model.invoke([HumanMessage(content=relevance_prompt)])
+            decision = result.content.strip().upper()
+            
+            print(f"   LLM 판단: {decision}")
+            
+            if "NOT" in decision and "RELEVANT" in decision:
+                print(f"   → 레시피 생성 무관")
+                return {
+                    "generation": "NOT_RECIPE_RELATED",
+                    "documents": []
+                }
+            else:
+                print(f"   → 레시피 생성 관련")
+                return {}
+                
+        except Exception as e:
+            print(f"   관련성 체크 실패: {e}")
+            return {}
     
     def rewrite_query(state: ChatAgentState) -> ChatAgentState:
         """1. 쿼리 재작성"""
@@ -92,48 +147,41 @@ def create_chat_agent(rag_system):
         return {"documents": documents}
     
     def check_constraints(state: ChatAgentState) -> ChatAgentState:
-            """2.5. 제약 조건 체크 (알레르기, 비선호 음식)"""
-            print("[Agent] 2.5. 제약 조건 체크 중...")
-            
-            question = state["question"]
-            history = state.get("chat_history", [])
-            
-            # WebSocket으로 전달된 사용자 제약사항 가져오기
-            # (router.py에서 chat_sessions에 저장된 정보)
-            # 일단 state에 없으면 스킵
-            user_constraints = state.get("user_constraints", {})
-            
-            if not user_constraints:
-                print("   제약 조건 없음 → 스킵")
-                return {"constraint_warning": ""}
-            
-            dislikes = user_constraints.get("dislikes", [])
-            allergies = user_constraints.get("allergies", [])
-            
-            # 질문에 비선호 재료가 포함되어 있는지 확인
-            question_lower = question.lower()
-            
-            warning_parts = []
-
-            for allergy in allergies:
-                if allergy.lower() in question_lower:
-                    warning_parts.append(f"**{allergy}**는 알레르기 재료입니다!")
-            
-            for dislike in dislikes:
-                if dislike.lower() in question_lower:
-                    warning_parts.append(f"**{dislike}**는 싫어하는 음식입니다.")
+        """2.5. 제약 조건 체크 (알레르기, 비선호 음식)"""
+        print("[Agent] 2.5. 제약 조건 체크 중...")
         
-            if warning_parts:
-                warning_msg = "\n".join(warning_parts)
-                print(f"   제약 조건 위반 감지!")
-                print(f"   {warning_msg}")
-                return {"constraint_warning": warning_msg}
-            else:
-                print("   제약 조건 통과")
-                return {"constraint_warning": ""}
+        question = state["question"]
+        user_constraints = state.get("user_constraints", {})
+        
+        if not user_constraints:
+            print("   제약 조건 없음 → 스킵")
+            return {"constraint_warning": ""}
+        
+        dislikes = user_constraints.get("dislikes", [])
+        allergies = user_constraints.get("allergies", [])
+        
+        question_lower = question.lower()
+        warning_parts = []
+
+        for allergy in allergies:
+            if allergy.lower() in question_lower:
+                warning_parts.append(f"**{allergy}**는 알레르기 재료입니다!")
+        
+        for dislike in dislikes:
+            if dislike.lower() in question_lower:
+                warning_parts.append(f"**{dislike}**는 싫어하는 음식입니다.")
+    
+        if warning_parts:
+            warning_msg = "\n".join(warning_parts)
+            print(f"   제약 조건 위반 감지!")
+            print(f"   {warning_msg}")
+            return {"constraint_warning": warning_msg}
+        else:
+            print("   제약 조건 통과")
+            return {"constraint_warning": ""}
 
     def grade_documents(state: ChatAgentState) -> ChatAgentState:
-        """3. 문서 관련성 평가 (엄격하게)"""
+        """3. 문서 관련성 평가"""
         print("[Agent] 3. 관련성 평가 중...")
         
         question = state["question"]
@@ -144,14 +192,11 @@ def create_chat_agent(rag_system):
             return {"web_search_needed": "yes"}
         
         try:
-            # 정확한 매칭 확인
             question_lower = question.lower()
             
-            # 문서 제목에서 핵심 키워드 확인
             found_exact_match = False
             for doc in documents[:3]:
                 title = doc.metadata.get("title", "").lower()
-                # 질문의 핵심 단어가 제목에 있는지
                 if question_lower in title or any(
                     word in title 
                     for word in question_lower.split() 
@@ -164,7 +209,6 @@ def create_chat_agent(rag_system):
                 print("   제목 매칭 실패 → 웹 검색")
                 return {"web_search_needed": "yes"}
             
-            # LLM으로 2차 검증
             context_text = "\n".join([
                 f"- {doc.page_content[:200]}"
                 for doc in documents[:3]
@@ -187,28 +231,24 @@ def create_chat_agent(rag_system):
                 
         except Exception as e:
             print(f"   평가 실패: {e}")
-            # 에러 시 웹 검색으로 (안전하게)
             return {"web_search_needed": "yes"}
     
     def web_search(state: ChatAgentState) -> ChatAgentState:
-        """4. 웹 검색 (검색 엔진 추상화)"""
+        """4. 웹 검색"""
         print("[Agent] 4. 웹 검색 실행 중...")
         
         question = state["question"]
-        
-        # 검색 서비스 호출
         documents = search_service.search(query=question, max_results=5)
         
-        # 로깅
         for i, doc in enumerate(documents, 1):
             print(f"\n   [검색 결과 {i}]")
             print(f"   제목: {doc.metadata.get('title', '')}")
             print(f"   내용: {doc.page_content[:200]}...")
         
         return {"documents": documents}
-    
+
     def generate(state: ChatAgentState) -> ChatAgentState:
-        """5. 답변 생성 (대화 히스토리 반영)"""
+        """5. 답변 생성 (이미지 제거)"""
         print("[Agent] 5. 답변 생성 중...")
         
         question = state["original_question"]
@@ -217,43 +257,33 @@ def create_chat_agent(rag_system):
         constraint_warning = state.get("constraint_warning", "")
         user_constraints = state.get("user_constraints", {})
         
-        # 히스토리 포맷
         formatted_history = "\n".join(history[-10:]) if isinstance(history, list) else str(history)
         
-        # 문서 결합
         context_text = "\n\n".join([
             doc.page_content[:800]
             for doc in documents
         ])
         
-        #  제약 조건 경고가 있으면 먼저 표시
         if constraint_warning:
-            # 경고 + 대체 제안
             try:
-                # 대체 재료 제안 프롬프트
                 alt_prompt = f"""{constraint_warning}
 
-그래도 레시피를 원하시나요? 
-아니면 비슷한 다른 재료로 대체할까요?
+    그래도 레시피를 원하시나요? 
+    아니면 비슷한 다른 재료로 대체할까요?
 
-예: "가지 → 호박", "땅콩 → 아몬드"
-
-답변:"""
+    답변:"""
                 
                 from langchain_core.messages import HumanMessage
                 result = rag_system.chat_model.invoke([HumanMessage(content=alt_prompt)])
                 answer = f"{constraint_warning}\n\n{result.content.strip()}"
                 
-                print(f"   제약 조건 경고 포함 생성 완료")
                 return {"generation": answer}
                 
             except Exception as e:
                 print(f"   경고 생성 실패: {e}")
-                # Fallback
                 return {"generation": f"{constraint_warning}\n\n다른 요리를 추천해드릴까요?"}
         
         try:
-            # 제약 조건을 컨텍스트에 명시
             if user_constraints:
                 allergies = user_constraints.get("allergies", [])
                 dislikes = user_constraints.get("dislikes", [])
@@ -264,10 +294,9 @@ def create_chat_agent(rag_system):
                 if dislikes:
                     constraints_text += f"\n비선호 음식 (피해야 함): {', '.join(dislikes)}"
                 
-                # 강화된 컨텍스트
                 enhanced_context = f"""{constraints_text}
 
-{context_text}"""
+    {context_text}"""
             else:
                 enhanced_context = context_text
             
@@ -278,33 +307,6 @@ def create_chat_agent(rag_system):
                 "history": formatted_history
             })
             
-            # 3단계: 생성 후 재료 체크
-            if user_constraints:
-                allergies = user_constraints.get("allergies", [])
-                dislikes = user_constraints.get("dislikes", [])
-                
-                answer_lower = answer.lower()
-                found_issues = []
-                
-                # 알레르기 재료 체크
-                for allergy in allergies:
-                    if allergy.lower() in answer_lower:
-                        found_issues.append(f"**{allergy}** (알레르기)")
-                
-                # 비선호 음식 체크
-                for dislike in dislikes:
-                    if dislike.lower() in answer_lower:
-                        found_issues.append(f"**{dislike}** (싫어함)")
-                
-                if found_issues:
-                    print(f"   생성된 레시피에 문제 발견: {found_issues}")
-                    
-                    # 경고 추가
-                    issues_text = ", ".join(found_issues)
-                    warning = f"\n\n---\n**주의**: 이 레시피에 {issues_text}가 포함되어 있습니다!\n다른 재료로 대체하거나 다른 레시피를 추천해드릴까요?"
-                    
-                    answer = answer + warning
-            
             print(f"   생성 완료: {answer[:50]}...")
             return {"generation": answer}
             
@@ -313,10 +315,11 @@ def create_chat_agent(rag_system):
             import traceback
             traceback.print_exc()
             return {"generation": "답변 생성에 실패했습니다."}
-    
+
     # ===== 그래프 구성 =====
     
     def decide_to_generate(state: ChatAgentState) -> Literal["web_search", "generate"]:
+        """grade 노드 이후 분기 결정"""
         if state.get("web_search_needed") == "yes":
             return "web_search"
         else:
@@ -324,6 +327,7 @@ def create_chat_agent(rag_system):
     
     workflow = StateGraph(ChatAgentState)
     
+    workflow.add_node("check_relevance", check_recipe_relevance)
     workflow.add_node("rewrite", rewrite_query)
     workflow.add_node("retrieve", retrieve)
     workflow.add_node("check_constraints", check_constraints)
@@ -331,18 +335,24 @@ def create_chat_agent(rag_system):
     workflow.add_node("web_search", web_search)
     workflow.add_node("generate", generate)
     
-    workflow.set_entry_point("rewrite")
+    workflow.set_entry_point("check_relevance")
+    
+    workflow.add_conditional_edges(
+        "check_relevance",
+        lambda state: "end" if state.get("generation") == "NOT_RECIPE_RELATED" else "rewrite",
+        {"end": END, "rewrite": "rewrite"}
+    )
+    
     workflow.add_edge("rewrite", "retrieve")
     workflow.add_edge("retrieve", "check_constraints")
     workflow.add_edge("check_constraints", "grade")
+    
     workflow.add_conditional_edges(
         "grade",
         decide_to_generate,
-        {
-            "web_search": "web_search",
-            "generate": "generate"
-        }
+        {"web_search": "web_search", "generate": "generate"}
     )
+    
     workflow.add_edge("web_search", "generate")
     workflow.add_edge("generate", END)
     

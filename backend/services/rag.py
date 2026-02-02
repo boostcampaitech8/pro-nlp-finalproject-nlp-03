@@ -9,6 +9,7 @@ import http.client
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # LangChain CLOVA X
 try:
@@ -46,6 +47,7 @@ class ClovaStudioReranker:
         self.host = 'clovastudio.stream.ntruss.com'
         self.api_key = f'Bearer {api_key}'
         self.request_id = request_id
+        
     
     def rerank(self, query: str, documents: List[Dict[str, str]], max_tokens: int = 1024) -> Dict:
         """
@@ -119,12 +121,12 @@ class RecipeRAGLangChain:
         print("="*60)
 
         # 1. CLOVA X Embeddings 초기화
-        print(f"\n[1/4] CLOVA X Embeddings 초기화 중 (model: {embedding_model})")
+        print(f"\n[1/5] CLOVA X Embeddings 초기화 중 (model: {embedding_model})")
         self.embeddings = ClovaXEmbeddings(model=embedding_model)
         print("[OK] Embeddings 초기화 완료")
 
         # 2. CLOVA X Chat 모델 초기화
-        print(f"\n[2/4] CLOVA X Chat 모델 초기화 중 (model: {chat_model})")
+        print(f"\n[2/5] CLOVA X Chat 모델 초기화 중 (model: {chat_model})")
         self.chat_model = ChatClovaX(
             model=chat_model,
             temperature=temperature,
@@ -133,7 +135,7 @@ class RecipeRAGLangChain:
         print("[OK] Chat 모델 초기화 완료")
 
         # 3. CLOVA Studio Reranker 초기화
-        print("\n[3/4] CLOVA Studio Reranker 초기화 중")
+        print("\n[3/5] CLOVA Studio Reranker 초기화 중")
         self.reranker = None
         if use_reranker:
             api_key = os.getenv("CLOVASTUDIO_RERANKER_API_KEY")
@@ -152,10 +154,18 @@ class RecipeRAGLangChain:
             print("[OK] Reranker 비활성화")
 
         # 4. Milvus Vectorstore 연결
-        print(f"\n[4/4] Milvus 연결 중 ({self.milvus_uri})")
+        print(f"\n[4/5] Milvus 연결 중 ({self.milvus_uri})")
         self.vectorstore = None
         self._connect_milvus()
 
+        # 4. MongoDB 연결
+        print("\n[5/5] MongoDB 연결 중")
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://root:RootPassword123@136.113.251.237:27017/admin")
+        self.mongo_client = MongoClient(mongo_uri)
+        self.recipe_db = self.mongo_client["recipe_db"]
+        self.recipes_collection = self.recipe_db["recipes"]
+        print("[OK] MongoDB 연결 완료")
+        
         print("\n" + "="*60)
         print("시스템 초기화 완료")
         print("="*60 + "\n")
@@ -228,33 +238,51 @@ class RecipeRAGLangChain:
             return [(doc, 1.0) for doc in documents[:top_n]]
         
         return reranked
+    
+    def _get_image_from_mongodb(self, recipe_id: str) -> str:
+        """MongoDB에서 이미지 URL 가져오기"""
+        try:
+            recipe = self.recipes_collection.find_one(
+                {"recipe_id": recipe_id},
+                {"image": 1, "_id": 0}
+            )
+            
+            if recipe and "image" in recipe:
+                image_url = recipe["image"]
+                print(f"[RAG] MongoDB 이미지: {image_url[:60]}...")
+                return image_url
+            else:
+                print(f"[RAG] MongoDB에 이미지 없음: {recipe_id}")
+                return ""
+        except Exception as e:
+            print(f"[RAG] MongoDB 조회 실패: {e}")
+            return ""
 
     def _milvus_search(self, query: str, k: int) -> List[tuple]:
-        """pymilvus 직접 호출로 ef 설정"""
+        """pymilvus 직접 호출 - 이미지 조회 안 함!"""
         from pymilvus import Collection
         
-        # 쿼리 벡터화
         query_embedding = self.embeddings.embed_query(query)
-        
-        # Collection 가져오기
         collection = self.vectorstore.col
         
-        # ef를 k보다 크게 설정
         ef = max(k * 2, 50)
         search_params = {"metric_type": "L2", "params": {"ef": ef}}
         
-        # 검색 (실제 필드: recipe_id, title, level, cook_time, source, text, vector)
+        # 이미지 필드 체크 안 함, MongoDB 조회 안 함!
+        output_fields = ["text", "title", "level", "cook_time", "source", "recipe_id"]
+        
         results = collection.search(
             data=[query_embedding],
             anns_field="vector",
             param=search_params,
             limit=k,
-            output_fields=["text", "title", "level", "cook_time", "source", "recipe_id"]
+            output_fields=output_fields
         )
         
-        # Document 형태로 변환
         docs_with_scores = []
         for hit in results[0]:
+            recipe_id = hit.entity.get("recipe_id", "")
+            
             doc = Document(
                 page_content=hit.entity.get("text", ""),
                 metadata={
@@ -262,7 +290,8 @@ class RecipeRAGLangChain:
                     "level": hit.entity.get("level", "N/A"),
                     "cook_time": hit.entity.get("cook_time", "N/A"),
                     "source": hit.entity.get("source", "N/A"),
-                    "recipe_id": hit.entity.get("recipe_id", "N/A"),
+                    "recipe_id": recipe_id,
+                    "image_url": "", 
                 }
             )
             docs_with_scores.append((doc, hit.score))
@@ -275,7 +304,7 @@ class RecipeRAGLangChain:
         k: int = 5,
         use_rerank: bool = None
     ) -> List[Dict]:
-        """레시피 검색 (with optional CLOVA Studio reranking)"""
+        """레시피 검색 (with optional CLOVA Studio reranking + image)"""
         use_rerank = use_rerank if use_rerank is not None else self.use_reranker
 
         if use_rerank and self.reranker:
@@ -298,6 +327,8 @@ class RecipeRAGLangChain:
                     "source": doc.metadata.get("source", "N/A"),
                     "cook_time": doc.metadata.get("cook_time", "N/A"),
                     "level": doc.metadata.get("level", "N/A"),
+                    "recipe_id": doc.metadata.get("recipe_id", "N/A"),
+                    "image": doc.metadata.get("image_url", ""),
                 })
         else:
             docs_with_scores = self._milvus_search(query, k)
@@ -312,6 +343,8 @@ class RecipeRAGLangChain:
                     "source": doc.metadata.get("source", "N/A"),
                     "cook_time": doc.metadata.get("cook_time", "N/A"),
                     "level": doc.metadata.get("level", "N/A"),
+                    "recipe_id": doc.metadata.get("recipe_id", "N/A"),
+                    "image": doc.metadata.get("image_url", ""),
                 })
 
         return results
