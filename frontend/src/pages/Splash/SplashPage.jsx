@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import "./SplashPage.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 export default function SplashPage() {
   const navigate = useNavigate();
 
@@ -8,8 +10,21 @@ export default function SplashPage() {
     navigate("/home");
   };
 
-  const goNaverLogin = () => {
-    // TODO: 네이버 로그인 구현
+  const goNaverLogin = async () => {
+    try {
+      const callbackUrl = `${window.location.origin}/naver-callback`;
+      const res = await fetch(
+        `${API_URL}/api/auth/login-url?callback_url=${encodeURIComponent(callbackUrl)}`
+      );
+      const data = await res.json();
+
+      if (data.url) {
+        sessionStorage.setItem("naver_oauth_state", data.state);
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("네이버 로그인 URL 요청 실패:", err);
+    }
   };
 
   return (

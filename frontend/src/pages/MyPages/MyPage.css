@@ -53,9 +53,43 @@
 }
 .nav-home-icon { font-size: 22px; pointer-events: none; }
 
+/* 회원 프로필 카드 */
+.member-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #EAEAEA;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.10);
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.member-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FF5C35;
+}
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.member-nickname {
+  font-size: 16px;
+  font-weight: bold;
+  color: #48547B;
+}
+.member-email {
+  font-size: 12px;
+  color: #868E96;
+}
+
 /* 인사말 */
-.greeting { 
-  width: 100%; /* 이 줄 추가 */
+.greeting {
+  width: 100%;
 }
 .greeting .hello { font-size: 17px; color: #48547B; margin: 0; }
 .greeting .user-name { font-size: 21px; color: #48547B; margin: 5px 0 20px; }

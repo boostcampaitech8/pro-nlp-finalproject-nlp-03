@@ -5,6 +5,16 @@ import "./MyPage.css";
 export default function MyPage() {
   const navigate = useNavigate();
 
+  // --- 로그인 회원 정보 ---
+  const [member, setMember] = useState(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("member");
+    if (saved) {
+      try { setMember(JSON.parse(saved)); } catch {}
+    }
+  }, []);
+
   // --- 상태 관리 ---
   const [currentProfile, setCurrentProfile] = useState('나');
   const [profiles, setProfiles] = useState(['나', '딸']);
@@ -117,8 +127,22 @@ export default function MyPage() {
 
         <div className="mypage-board">
           <section className="greeting">
+            {member && (
+              <div className="member-profile-card">
+                <img
+                  src={member.mem_photo}
+                  alt="프로필"
+                  className="member-photo"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="member-info">
+                  <span className="member-nickname">{member.nickname}</span>
+                  <span className="member-email">{member.email}</span>
+                </div>
+              </div>
+            )}
             <p className="hello">안녕하세요,</p>
-            <h1 className="user-name"><span className="orange-text">두바이쫀득쿠키</span> 님</h1>
+            <h1 className="user-name"><span className="orange-text">{member ? member.nickname : "게스트"}</span> 님</h1>
             
             <div className="profile-selection">
               <div className="tab-group">
