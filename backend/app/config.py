@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174", 
     "http://198.18.16.237:5173"]
+
+    # MySQL
+    MYSQL_HOST: str = "localhost"
+    MYSQL_PORT: int = 3306
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = ""
+    MYSQL_DATABASE: str = "recipeu"
     
     # CLOVA Studio
     CLOVASTUDIO_API_KEY: str
