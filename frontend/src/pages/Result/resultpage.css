@@ -1,192 +1,165 @@
-/* FoodReview.css */
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.food-review-container {
-  width: 100%;
-  max-width: 375px;
-  min-height: 100vh;
+/* 전체 레이아웃 컨테이너 */
+.result-mode-container {
+  width: 393px;
+  height: 852px;
   margin: 0 auto;
-  background: linear-gradient(180deg, #D4926F 0%, #D4926F 30%, #F5F5F5 30%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #B5855A url('/cook-bg-brown.png') no-repeat center top;
+  background-size: cover;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* Header */
-.header {
+/* 마스코트 배치 */
+.result-mode-mascot-section {
+  position: relative;
+  height: 140px;
+  z-index: 5;
+}
+
+.result-mode-mascot-img {
+  width: 110px;
+  position: absolute;
+  bottom: -20px;
+  left: 35px;
+  object-fit: contain;
+}
+
+/* 메인 카드 영역 */
+.result-mode-card {
+  flex: 1;
+  background-color: #fef6ed;
+  border-radius: 40px 40px 0 0;
+  padding: 50px 24px 30px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 20px;
-  color: #333;
+  position: relative;
+  z-index: 1;
 }
 
-.time {
-  font-size: 15px;
-  font-weight: 600;
+.result-mode-close-btn {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-.status-icons {
-  display: flex;
-  gap: 4px;
-  font-size: 14px;
-}
-
-/* Logo */
-.logo {
+/* 텍스트 헤더 및 정보 박스 */
+.result-mode-header {
   text-align: center;
-  padding: 20px 0;
+  margin-bottom: 25px;
+  width: 100%;
 }
 
-.logo img {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: white;
-  padding: 8px;
-}
-
-/* Content Card */
-.content-card {
-  background: white;
-  border-radius: 30px 30px 0 0;
-  padding: 30px 24px 40px;
-  margin-top: 10px;
-  min-height: calc(100vh - 150px);
-}
-
-.title {
+.result-mode-main-title {
   font-size: 18px;
   font-weight: 700;
   color: #333;
-  margin-bottom: 8px;
-  text-align: center;
+  margin-bottom: 4px;
 }
 
-.subtitle {
+.result-mode-sub-desc {
   font-size: 13px;
-  color: #666;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+/* 요리 정보 흰색 박스 (핵심 포인트) */
+.result-mode-info-card {
   text-align: center;
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-
-.highlight {
-  color: #FF6B35;
-  font-weight: 600;
-}
-
-.order-info {
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 20px;
-}
-
-/* Food Image */
-.food-image {
-  width: 100%;
-  aspect-ratio: 1;
+  /* margin-bottom: 30px; */
+  width: 90%;
+  background: #ffffff; /* 순백색 */
+  padding: 0px 20px;
   border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* 배경 이미지와의 대비를 위해 그림자를 살짝 더 깊게 조절 */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.food-image img {
+.result-mode-dish-name {
+  font-size: 24px;
+  font-weight: 800;
+  color: #FF6B4D;
+  margin-bottom: 4px;
+}
+
+.result-mode-duration {
+  font-size: 13px;
+  color: #999;
+}
+
+/* 이미지 박스 */
+.result-mode-image-box {
+  width: 100%;
+  max-width: 290px;
+  aspect-ratio: 1;
+  border-radius: 30px;
+  border: 4px solid #ffffff;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+}
+
+.result-mode-dish-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Star Rating */
-.star-rating {
+/* 별점 섹션 */
+.result-mode-rating-area {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding: 16px 0;
+  gap: 15px;
+  margin-bottom: 25px;
 }
 
-.star {
-  font-size: 48px;
+.result-mode-star {
+  background: none;
+  border: none;
+  font-size: 52px;
+  color: #E0E0E0;
   cursor: pointer;
+  line-height: 1;
   transition: all 0.2s ease;
-  filter: grayscale(100%);
 }
 
-.star.filled {
-  filter: grayscale(0%);
+.result-mode-star.is-active {
+  color: #FFC107;
   transform: scale(1.1);
 }
 
-.star:hover {
-  transform: scale(1.15);
-}
-
-/* Button Group */
-.button-group {
+/* 하단 버튼 */
+.result-mode-footer-btns {
+  margin-top: auto;
+  width: 100%;
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  padding-bottom: 10px;
 }
 
-.btn {
-  flex: 1;
-  padding: 16px;
+.result-mode-btn-confirm {
+  flex: 1.3;
+  background-color: #FF7B7B;
+  color: #ffffff;
   border: none;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  line-height: 1.4;
+  padding: 18px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
-.btn-share {
-  background-color: #FF6B6B;
-  color: white;
-}
-
-.btn-share:hover {
-  background-color: #FF5252;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-}
-
-.btn-review {
-  background-color: white;
-  color: #333;
-  border: 2px solid #E0E0E0;
-}
-
-.btn-review:hover {
-  background-color: #F8F8F8;
-  border-color: #CCCCCC;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btn:active {
-  transform: translateY(0);
-}
-
-/* Responsive */
-@media (max-width: 375px) {
-  .content-card {
-    padding: 24px 20px 36px;
-  }
-  
-  .star {
-    font-size: 42px;
-  }
-  
-  .btn {
-    font-size: 12px;
-    padding: 14px;
-  }
+.result-mode-btn-cancel {
+  flex: 1;
+  background-color: #ffffff;
+  color: #666;
+  border: 1.5px solid #EEEEEE;
+  padding: 18px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 700;
 }

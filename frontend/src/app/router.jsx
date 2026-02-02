@@ -11,6 +11,7 @@ import CookModeAudioPage from "@/pages/Cook/CookModeAudioPage";
 import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
 import MyPage from "@/pages/MyPages/MyPage";
+import ResultPage from "@/pages/Result/resultpage";
 import FixedLayout from "@/layouts/FixedLayout";
 import ScrollLayout from "@/layouts/ScrollLayout";
 
@@ -104,6 +105,16 @@ export default function Router() {
           element={
             <FixedLayout>
               <CookModeAudioPage />
+            </FixedLayout>
+          }
+        />
+
+        {/* Result - 요리 완료 후 평가 페이지 */}
+        <Route
+          path="/result"
+          element={
+            <FixedLayout>
+              <ResultPage />
             </FixedLayout>
           }
         />

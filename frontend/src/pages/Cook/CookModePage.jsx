@@ -25,7 +25,14 @@ export default function RecipeRecommendation() {
   const [currentStepIndex, setCurrentStepIndex] = useState(passedStepIndex);
 
   const handlePrev = () => setCurrentStepIndex((prev) => (prev > 0 ? prev - 1 : prev));
-  const handleNext = () => setCurrentStepIndex((prev) => (prev < recipeSteps.length - 1 ? prev + 1 : prev));
+  const handleNext = () => {
+    if (currentStepIndex === recipeSteps.length - 1) {
+      // 마지막 단계에서는 resultpage로 이동
+      navigate("/result");
+    } else {
+      setCurrentStepIndex((prev) => prev + 1);
+    }
+  };
 
   // 녹음 버튼 클릭 시 CookModeAudioPage로 이동 (현재 단계 전달)
   const handleRecordClick = () => {
@@ -78,7 +85,7 @@ export default function RecipeRecommendation() {
             />
           </div>
 
-          <button className="cook-mode-nav-btn" onClick={handleNext} disabled={currentStepIndex === recipeSteps.length - 1}>
+          <button className="cook-mode-nav-btn" onClick={handleNext}>
             <span className="cook-mode-arrow-icon">〉</span>
           </button>
         </div>
