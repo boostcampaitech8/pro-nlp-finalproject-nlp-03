@@ -44,8 +44,8 @@ def upsert_member(profile: dict) -> dict:
     반환: member row (dict)
     """
     with mysql_cursor() as cur:
-        # 기존 회원 조회
-        cur.execute("SELECT * FROM member WHERE email = %s", (profile["email"],))
+        # 기존 회원 조회 (naver_id 기준)
+        cur.execute("SELECT * FROM member WHERE naver_id = %s", (profile["naver_id"],))
         row = cur.fetchone()
 
         if row:
@@ -62,7 +62,7 @@ def upsert_member(profile: dict) -> dict:
                     birthday    = %s,
                     age         = %s,
                     birth_year  = %s
-                WHERE email = %s
+                WHERE naver_id = %s
                 """,
                 (
                     profile["name"],
@@ -72,22 +72,23 @@ def upsert_member(profile: dict) -> dict:
                     profile["birthday"],
                     profile["age"],
                     profile["birth_year"],
-                    profile["email"],
+                    profile["naver_id"],
                 ),
             )
             # 갱신된 row 다시 조회
-            cur.execute("SELECT * FROM member WHERE email = %s", (profile["email"],))
+            cur.execute("SELECT * FROM member WHERE naver_id = %s", (profile["naver_id"],))
             row = cur.fetchone()
         else:
             # 신규 회원
             cur.execute(
                 """
                 INSERT INTO member
-                    (email, name, nickname, mem_photo, gender, birthday, age, birth_year, to_cnt)
+                    (naver_id, email, name, nickname, mem_photo, gender, birthday, age, birth_year, to_cnt)
                 VALUES
-                    (%s, %s, %s, %s, %s, %s, %s, %s, 1)
+                    (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
                 """,
                 (
+                    profile["naver_id"],
                     profile["email"],
                     profile["name"],
                     profile["nickname"],
@@ -98,7 +99,7 @@ def upsert_member(profile: dict) -> dict:
                     profile["birth_year"],
                 ),
             )
-            cur.execute("SELECT * FROM member WHERE email = %s", (profile["email"],))
+            cur.execute("SELECT * FROM member WHERE naver_id = %s", (profile["naver_id"],))
             row = cur.fetchone()
 
     # datetime → str 직렬화
