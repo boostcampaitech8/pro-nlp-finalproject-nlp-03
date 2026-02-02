@@ -3,11 +3,7 @@
 Recipe 비즈니스 로직
 """
 from typing import List, Dict, Any
-from .prompts import (
-    RECIPE_RELEVANCE_CHECK_PROMPT,
-    RECIPE_QUERY_EXTRACTION_PROMPT, 
-    RECIPE_GENERATION_PROMPT
-)
+from .prompts import RECIPE_QUERY_EXTRACTION_PROMPT, RECIPE_GENERATION_PROMPT
 
 class RecipeService:
     def __init__(self, rag_system, recipe_db, user_profile=None):
@@ -25,15 +21,6 @@ class RecipeService:
         print(f"[RecipeService] 레시피 생성 시작")
         print(f"[RecipeService] 대화 개수: {len(chat_history)}")
         print(f"[RecipeService] 가족 정보: {member_info}")
-        
-        # 0. 요리 관련성 체크
-        is_relevant = self._check_recipe_relevance(chat_history)
-        if not is_relevant:
-            print(f"[RecipeService] 요리와 관련 없는 질문 감지")
-            return {
-                "error": "NOT_RECIPE_RELATED",
-                "message": "죄송합니다. 요리와 관련된 질문만 답변 드릴 수 있습니다.\n일반적인 질문은 외부 AI 챗봇(ChatGPT, Claude 등)을 이용해주세요! 😊"
-            }
         
         # 1. LLM으로 대화 분석 + 검색 쿼리 생성
         search_query = self._extract_search_query_with_llm(chat_history, member_info)
@@ -54,25 +41,16 @@ class RecipeService:
         
         print(f"[RecipeService] 필터링 후: {len(filtered_docs)}개")
         
-        # 5. LLM으로 최종 레시피 생성
+        # 4. LLM으로 최종 레시피 생성
         recipe_json = self._generate_final_recipe_with_llm(
             chat_history=chat_history,
             member_info=member_info,
             context_docs=filtered_docs
         )
-        
-        # 6. 이미지 추가
         recipe_json['image_url'] = best_image_url
         recipe_json['img_url'] = best_image_url 
         
-        # 7. 인원수 확인 및 자동 설정
-        servings = len(member_info.get('names', [])) if member_info and member_info.get('names') else 1
-        if 'servings' not in recipe_json or not recipe_json['servings']:
-            recipe_json['servings'] = f"{servings}인분"
-        
-        print(f"[RecipeService] 최종 인원수: {recipe_json['servings']}")
-        
-        # 8. DB 저장
+        # 5. DB 저장
         if self.db:
             try:
                 recipe_id = self.db.save_recipe(
@@ -86,44 +64,6 @@ class RecipeService:
                 print(f"[RecipeService] DB 저장 실패: {e}")
         
         return recipe_json
-    
-    def _check_recipe_relevance(self, chat_history: List[Dict]) -> bool:
-        """요리 관련성 체크"""
-        
-        conversation = "\n".join([
-            f"{msg['role']}: {msg['content']}"
-            for msg in chat_history[-5:]  # 최근 5개만
-        ])
-        
-        prompt = RECIPE_RELEVANCE_CHECK_PROMPT.format(conversation=conversation)
-        
-        from langchain_naver import ChatClovaX
-        llm = ChatClovaX(model="HCX-003", temperature=0.0, max_tokens=20)
-        
-        try:
-            result = llm.invoke(prompt)
-            response = result.content.strip().upper()
-            
-            print(f"[RecipeService] 관련성 체크 결과: {response}")
-            
-            return "RELEVANT" in response
-            
-        except Exception as e:
-            print(f"[RecipeService] 관련성 체크 실패: {e}, 기본값 True 반환")
-            return True
-    
-    def _get_best_image(self, filtered_docs: List[Dict]) -> str:
-        """필터링된 레시피 중 가장 적합한 이미지 선택"""
-        for doc in filtered_docs:
-            if doc.get('metadata') and doc['metadata'].get('image_url'):
-                return doc['metadata']['image_url']
-            if doc.get('image_url'):
-                return doc['image_url']
-            if doc.get('img_url'):
-                return doc['img_url']
-        
-        print("[RecipeService] 검색된 레시피에 이미지가 없습니다. 기본 이미지 사용")
-        return "/images/default-food.jpg"
     
     def _extract_search_query_with_llm(
         self, 

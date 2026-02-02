@@ -13,7 +13,6 @@ from features.recipe.schemas import RecipeGenerateRequest
 router = APIRouter()
 
 
-# backend/features/recipe/router.py
 @router.post("/generate")
 async def generate_recipe(
     request: RecipeGenerateRequest,
@@ -40,14 +39,7 @@ async def generate_recipe(
             member_info=request.member_info
         )
         
-        # 요리와 관련 없는 질문인 경우 (에러 응답)
-        if recipe_data.get('error') == 'NOT_RECIPE_RELATED':
-            return {
-                "error": "NOT_RECIPE_RELATED",
-                "message": recipe_data.get('message')
-            }
-        
-        # 정상 레시피 응답
+        # 프론트엔드 기대 형식에 맞춰 응답
         response = {
             "recipe": recipe_data, 
             "user_id": request.member_info.get('names', ['사용자'])[0] if request.member_info else '사용자',
@@ -57,7 +49,6 @@ async def generate_recipe(
         
         print(f"[Recipe API] 응답 데이터:")
         print(f"  - 레시피명: {response['title']}")
-        print(f"  - 인원수: {recipe_data.get('servings', 'N/A')}")
         print(f"  - 이미지: {recipe_data.get('image_url', 'None')}")
         print(f"  - 조리시간: {recipe_data.get('cook_time', 'None')}")
         print(f"  - 난이도: {recipe_data.get('level', 'None')}")
