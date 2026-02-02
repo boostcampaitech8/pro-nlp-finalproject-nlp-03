@@ -15,7 +15,7 @@ from features.auth.router import router as auth_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("\n" + "="*60)
-    print("레시피 Agent API 시작")
+    print("레시피 Agent API 시작!")
     print("="*60)
     
     rag_system = get_rag_system()
