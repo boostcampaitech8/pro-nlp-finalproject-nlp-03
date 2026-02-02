@@ -1,4 +1,6 @@
-.recipe-container {
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+.recipe-result-container {
   width: 393px;
   height: 852px;
   background-image: url("/cook-bg-brown.png");
@@ -11,7 +13,7 @@
 }
 
 /* Status Bar */
-.status-bar {
+.recipe-result-status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -21,55 +23,56 @@
   color: #fff;
 }
 
-.status-bar-right {
+.recipe-result-status-bar-right {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.status-bar-right svg {
+.recipe-result-status-bar-right svg {
   fill: #fff;
 }
 
-.status-bar-right svg path,
-.status-bar-right svg rect,
-.status-bar-right svg circle {
+.recipe-result-status-bar-right svg path,
+.recipe-result-status-bar-right svg rect,
+.recipe-result-status-bar-right svg circle {
   stroke: #fff;
   fill: #fff;
 }
 
 /* Mascot - Outside card */
-.mascot-wrapper {
+.recipe-result-mascot-wrapper {
   position: absolute;
-  top: 44px;
-  left: 20px;
+  top: 33px;
+  left: 30px;
   z-index: 10;
 }
 
-.mascot-image {
-  width: 80px;
-  height: 80px;
+.recipe-result-mascot-image {
+  width: 110px;
+  height: auto;
   object-fit: contain;
+  transform: translateY(10px);
 }
 
 /* Main Card */
-.main-card {
+.recipe-result-main-card {
   position: absolute;
-  top: 100px;
+  top: 120px;
   left: 0;
   right: 0;
   bottom: 0;
-  background: #ffffff;
-  opacity: 70%;
-  border-radius: 24px 24px 0 0;
-  padding: 60px 24px 24px;
+  background: #fef6ed;
+  border-radius: 40px 40px 0 0;
+  padding: 50px 24px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  z-index: 1;
 }
 
 /* Close Button */
-.close-button {
+.recipe-result-close-button {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -83,44 +86,48 @@
   justify-content: center;
 }
 
-.close-button:hover {
+.recipe-result-close-button:hover {
   color: #555;
 }
 
 /* Title Section */
-.title-section {
+.recipe-result-title-section {
   text-align: center;
   margin-bottom: 20px;
 }
 
-.title-prefix {
+.recipe-result-title-prefix {
   font-size: 21px;
   color: #48547b;
   margin-bottom: 4px;
+  font-weight: 800;
 }
 
-.title-main {
+.recipe-result-title-main {
   display: flex;
   align-items: baseline;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.recipe-name {
+.recipe-result-recipe-name {
   font-size: 24px;
   font-weight: 700;
   color: #ff5b32;
   text-decoration: underline;
   text-underline-offset: 4px;
+  font-family: 'Jua', sans-serif;
+  font-weight: 600;
 }
 
-.title-suffix {
+.recipe-result-title-suffix {
   font-size: 21px;
   color: #48547b;
+  font-weight: 800;
 }
 
 /* Food Image */
-.food-image-container {
+.recipe-result-food-image-container {
   width: 260px;
   height: 260px;
   border-radius: 16px;
@@ -130,14 +137,14 @@
   flex-shrink: 0;
 }
 
-.food-image {
+.recipe-result-food-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 /* Info Tags */
-.info-tags {
+.recipe-result-info-tags {
   display: flex;
   justify-content: flex-end;
   gap: 16px;
@@ -147,21 +154,21 @@
   width: 260px;
 }
 
-.info-tag {
+.recipe-result-info-tag {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 /* Action Buttons */
-.action-buttons {
+.recipe-result-action-buttons {
   display: flex;
   gap: 12px;
   width: 100%;
   margin-bottom: 24px;
 }
 
-.btn-regenerate {
+.recipe-result-btn-regenerate {
   flex: 1;
   background: linear-gradient(135deg, #e8734a 0%, #d45a32 100%);
   color: white;
@@ -175,21 +182,21 @@
   gap: 2px;
 }
 
-.btn-regenerate:hover {
+.recipe-result-btn-regenerate:hover {
   background: linear-gradient(135deg, #d45a32 0%, #c04a28 100%);
 }
 
-.btn-regenerate-text {
+.recipe-result-btn-regenerate-text {
   font-size: 16px;
   font-weight: 600;
 }
 
-.btn-regenerate-sub {
+.recipe-result-btn-regenerate-sub {
   font-size: 11px;
   opacity: 0.8;
 }
 
-.btn-start {
+.recipe-result-btn-start {
   flex: 1;
   background: white;
   color: #333;
@@ -202,12 +209,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-start:hover {
+.recipe-result-btn-start:hover {
   background: #f5f5f5;
 }
 
 /* Bottom Sheet Trigger */
-.bottom-sheet-trigger {
+.recipe-result-bottom-sheet-trigger {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -215,7 +222,7 @@
   cursor: pointer;
 }
 
-.drag-indicator {
+.recipe-result-drag-indicator {
   width: 40px;
   height: 4px;
   background: #ccc;
@@ -223,7 +230,7 @@
   margin-bottom: 8px;
 }
 
-.view-all-text {
+.recipe-result-view-all-text {
   font-size: 14px;
   color: #5a4a3a;
   background: none;
@@ -232,7 +239,7 @@
 }
 
 /* Bottom Sheet Overlay */
-.bottom-sheet-overlay {
+.recipe-result-bottom-sheet-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -247,13 +254,13 @@
   z-index: 20;
 }
 
-.bottom-sheet-overlay.active {
+.recipe-result-bottom-sheet-overlay.active {
   opacity: 1;
   visibility: visible;
 }
 
 /* Bottom Sheet */
-.bottom-sheet {
+.recipe-result-bottom-sheet {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -269,11 +276,11 @@
   z-index: 30;
 }
 
-.bottom-sheet.active {
+.recipe-result-bottom-sheet.active {
   transform: translateY(0);
 }
 
-.bottom-sheet-header {
+.recipe-result-bottom-sheet-header {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -281,7 +288,7 @@
   border-bottom: 1px solid #eee;
 }
 
-.bottom-sheet-handle {
+.recipe-result-bottom-sheet-handle {
   width: 40px;
   height: 4px;
   background: #ddd;
@@ -290,43 +297,55 @@
   cursor: pointer;
 }
 
-.bottom-sheet-title {
+.recipe-result-bottom-sheet-title {
   font-size: 18px;
   font-weight: 600;
   color: #333;
 }
 
-.bottom-sheet-content {
+.recipe-result-bottom-sheet-content {
   flex: 1;
   overflow-y: auto;
   padding: 16px 24px;
 }
 
 /* Recipe Steps */
-.recipe-steps {
+.recipe-result-recipe-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.recipe-step {
+.recipe-result-recipe-item {
   display: flex;
   gap: 8px;
   font-size: 14px;
   line-height: 1.6;
   color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
-.recipe-step.active {
+.recipe-result-recipe-item:hover {
+  background-color: #f5f5f5;
+}
+
+.recipe-result-recipe-item.current {
   color: #e8734a;
   font-weight: 500;
+  background-color: #fff5f2;
 }
 
-.step-number {
+.recipe-result-step-number {
   flex-shrink: 0;
   font-weight: 600;
 }
 
-.step-text {
+.recipe-result-step-text {
   flex: 1;
 }

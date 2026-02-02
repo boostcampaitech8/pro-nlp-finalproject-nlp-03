@@ -6,16 +6,13 @@ import HomePage from "@/pages/Home/HomePage";
 import ChatPage from "@/pages/Chat/ChatPage";
 import LoadingPage from "@/pages/Loading/LoadingPage";
 import RecipeResultPage from "@/pages/Recipes/RecipeResultPage";
-// import RecipeDetailPage from "@/pages/Recipes/RecipeDetailPage";
 import CookModePage from "@/pages/Cook/CookModePage";
 import CookModeAudioPage from "@/pages/Cook/CookModeAudioPage";
 import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
-// import CookCompletePage from "@/pages/Cook/CookCompletePage";
 import MyPage from "@/pages/MyPages/MyPage";
 import FixedLayout from "@/layouts/FixedLayout";
 import ScrollLayout from "@/layouts/ScrollLayout";
-import MobileLayout from "@/layouts/MobileLayout";
 
 export default function Router() {
   return (
@@ -101,6 +98,16 @@ export default function Router() {
           }
         />
 
+        {/* Cook Mode Audio - 음성 녹음 페이지 */}
+        <Route
+          path="/cook-audio"
+          element={
+            <FixedLayout>
+              <CookModeAudioPage />
+            </FixedLayout>
+          }
+        />
+
         {/* 마이 레시피 - 고정 화면 (내부 스크롤) */}
         <Route
           path="/recipes/my"
@@ -111,41 +118,6 @@ export default function Router() {
           }
         />
 
-<<<<<<< HEAD
-          {/* Cook Mode Audio - 음성 녹음 페이지 */}
-          <Route
-            path="/cook-audio"
-            element={
-              <FixedLayout>
-                <CookModeAudioPage />
-              </FixedLayout>
-            }
-          />
-
-          {/* 마이 레시피 - 스크롤 화면 */}
-          <Route
-            path="/recipes/my"
-            element={
-              <ScrollLayout>
-                {/* TODO: MyRecipesPage 컴포넌트 생성 */}
-                <div>마이 레시피 페이지</div>
-              </ScrollLayout>
-            }
-          />
-
-          {/* 전체 레시피 - 스크롤 화면 */}
-          <Route
-            path="/recipes"
-            element={
-              <ScrollLayout>
-                {/* TODO: AllRecipesPage 컴포넌트 생성 */}
-                <div>전체 레시피 페이지</div>
-              </ScrollLayout>
-            }
-          />
-        </Routes>
-      </MobileLayout>
-=======
         {/* 전체 레시피 - 스크롤 화면 */}
         <Route
           path="/recipes"
@@ -157,7 +129,6 @@ export default function Router() {
           }
         />
       </Routes>
->>>>>>> b5e4f8bc8b740bc60b5ed2b686775d8a797f4330
     </BrowserRouter>
   );
 }

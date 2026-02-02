@@ -69,20 +69,20 @@ export default function RecipeRecommendation() {
   };
 
   return (
-    <div className="recipe-container">
+    <div className="recipe-result-container">
       {/* Mascot - Outside the card */}
-      <div className="mascot-wrapper">
+      <div className="recipe-result-mascot-wrapper">
         <img
           src="/public/chef-mascot.png"
           alt="요리사 마스코트"
-          className="mascot-image"
+          className="recipe-result-mascot-image"
         />
       </div>
 
       {/* Main Card */}
-      <div className="main-card">
+      <div className="recipe-result-main-card">
         {/* Close Button - On top of the card */}
-        <button className="close-button" onClick={() => navigate("/home")}>
+        <button className="recipe-result-close-button" onClick={() => navigate("/home")}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path
               d="M15 5L5 15M5 5L15 15"
@@ -94,26 +94,26 @@ export default function RecipeRecommendation() {
         </button>
 
         {/* Title */}
-        <div className="title-section">
-          <p className="title-prefix">오늘의 추천 레시피는</p>
-          <div className="title-main">
-            <span className="recipe-name">바지락양념칼국수</span>
-            <span className="title-suffix"> 입니다</span>
+        <div className="recipe-result-title-section">
+          <p className="recipe-result-title-prefix">오늘의 추천 레시피는</p>
+          <div className="recipe-result-title-main">
+            <span className="recipe-result-recipe-name">바지락양념칼국수</span>
+            <span className="recipe-result-title-suffix"> 입니다</span>
           </div>
         </div>
 
         {/* Food Image */}
-        <div className="food-image-container">
+        <div className="recipe-result-food-image-container">
           <img
             src="/images/clam-noodle.jpg"
             alt="바지락양념칼국수"
-            className="food-image"
+            className="recipe-result-food-image"
           />
         </div>
 
         {/* Info Tags */}
-        <div className="info-tags">
-          <div className="info-tag">
+        <div className="recipe-result-info-tags">
+          <div className="recipe-result-info-tag">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle
                 cx="8"
@@ -131,7 +131,7 @@ export default function RecipeRecommendation() {
             </svg>
             <span>15분</span>
           </div>
-          <div className="info-tag">
+          <div className="recipe-result-info-tag">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M8 2C9.5 2 11 3 11 5C11 7 8 8 8 8C8 8 5 7 5 5C5 3 6.5 2 8 2Z"
@@ -150,53 +150,54 @@ export default function RecipeRecommendation() {
         </div>
 
         {/* Action Buttons */}
-        <div className="action-buttons">
-          <button className="btn-regenerate" onClick={() => navigate("/chat")}>
-            <span className="btn-regenerate-text">다시 생성</span>
-            <span className="btn-regenerate-sub">{remainingCount}회 남음</span>
+        <div className="recipe-result-action-buttons">
+          <button className="recipe-result-btn-regenerate" onClick={() => navigate("/chat")}>
+            <span className="recipe-result-btn-regenerate-text">다시 생성</span>
+            <span className="recipe-result-btn-regenerate-sub">{remainingCount}회 남음</span>
           </button>
-          <button className="btn-start" onClick={handleStartCooking}>
+          <button className="recipe-result-btn-start" onClick={handleStartCooking}>
             요리 시작하기
           </button>
         </div>
 
         {/* Bottom Sheet Trigger */}
         <div
-          className="bottom-sheet-trigger"
+          className="recipe-result-bottom-sheet-trigger"
           onClick={() => setIsBottomSheetOpen(true)}
         >
-          <div className="drag-indicator" />
-          <span className="view-all-text">레시피 전체보기</span>
+          <div className="recipe-result-drag-indicator" />
+          <span className="recipe-result-view-all-text">레시피 전체보기</span>
         </div>
       </div>
 
       {/* Bottom Sheet Overlay */}
       <div
-        className={`bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`}
+        className={`recipe-result-bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`}
         onClick={() => setIsBottomSheetOpen(false)}
       />
 
       {/* Bottom Sheet */}
-      <div className={`bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
-        <div className="bottom-sheet-header">
+      <div className={`recipe-result-bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
+        <div className="recipe-result-bottom-sheet-header">
           <div
-            className="bottom-sheet-handle"
+            className="recipe-result-bottom-sheet-handle"
             onClick={() => setIsBottomSheetOpen(false)}
           />
-          <h2 className="bottom-sheet-title">레시피 전체보기</h2>
+          <h2 className="recipe-result-bottom-sheet-title">레시피 전체보기</h2>
         </div>
-        <div className="bottom-sheet-content">
-          <div className="recipe-steps">
-            {recipeSteps.map((step) => (
-              <div
+        <div className="recipe-result-bottom-sheet-content">
+          <ul className="recipe-result-recipe-list">
+            {recipeSteps.map((step, index) => (
+              <li
                 key={step.id}
-                className={`recipe-step ${step.id === currentStep ? "active" : ""}`}
+                className={`recipe-result-recipe-item ${index === currentStep - 1 ? "current" : ""}`}
+                onClick={() => setIsBottomSheetOpen(false)}
               >
-                <span className="step-number">{step.id}.</span>
-                <span className="step-text">{step.text}</span>
-              </div>
+                <span className="recipe-result-step-number">{step.id}.</span>
+                <span className="recipe-result-step-text">{step.text}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </div>
     </div>

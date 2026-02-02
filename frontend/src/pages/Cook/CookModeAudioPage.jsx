@@ -24,7 +24,7 @@ export default function CookModeAudioPage() {
   ];
 
   // 현재 단계를 추적하는 상태 (전달받은 단계로 초기화)
-  const [currentStepIndex, setCurrentStepIndex] = useState(passedStepIndex); 
+  const [currentStepIndex, setCurrentStepIndex] = useState(passedStepIndex);
 
   // 채팅 데이터 (사용자: 우측, AI: 좌측 배치용)
   const [messages] = useState([
@@ -32,48 +32,58 @@ export default function CookModeAudioPage() {
     { id: 2, type: "ai", text: "통깨는 약간만 뿌려주시면 충분해요!" }
   ]);
 
+  // 녹음 버튼 클릭 시 CookModePage로 이동
+  const handleMicClick = () => {
+    navigate("/cook", {
+      state: {
+        currentStepIndex,
+        recipeSteps
+      }
+    });
+  };
+
   return (
-    <div className="recipe-container">
-      <div className="mascot-wrapper">
-        <img src="/chef-mascot.png" alt="마스코트" className="mascot-image" />
+    <div className="cook-audio-container">
+      <div className="cook-audio-mascot-wrapper">
+        <img src="/chef-mascot.png" alt="마스코트" className="cook-audio-mascot-image" />
       </div>
 
-      <div className="main-card audio-layout">
-        <button className="close-button" onClick={() => navigate("/home")}>
+      <div className="cook-audio-main-card audio-layout">
+        <button className="cook-audio-close-button" onClick={() => navigate("/home")}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
 
-        <div className="audio-header">
-          <h2 className="audio-recipe-title">바지락양념칼국수</h2>
-          <span className="audio-time">소요시간 00:10:34</span>
+        <div className="cook-audio-header">
+          <h2 className="cook-audio-recipe-title">바지락양념칼국수</h2>
+          <span className="cook-audio-time">소요시간 00:10:34</span>
         </div>
 
         {/* STEP 박스: currentStepIndex에 따라 실시간 텍스트 반영 */}
-        <div className="step-display-container">
-          <div className="step-number-tag">STEP {recipeSteps[currentStepIndex].id}</div>
-          <p className="step-main-text">{recipeSteps[currentStepIndex].text}</p>
+        <div className="cook-audio-step-display-container">
+          <div className="cook-audio-step-number-tag">STEP {recipeSteps[currentStepIndex].id}</div>
+          <p className="cook-audio-step-main-text">{recipeSteps[currentStepIndex].text}</p>
         </div>
 
         {/* [복구] 이미지와 동일한 채팅 박스 영역 */}
-        <div className="chat-outer-box">
-          <div className="chat-inner-list">
+        <div className="cook-audio-chat-outer-box">
+          <div className="cook-audio-chat-inner-list">
             {messages.map((msg) => (
-              <div key={msg.id} className={`chat-bubble-row ${msg.type}`}>
-                <div className="bubble">{msg.text}</div>
+              <div key={msg.id} className={`cook-audio-chat-bubble-row ${msg.type}`}>
+                <div className="cook-audio-bubble">{msg.text}</div>
               </div>
             ))}
           </div>
           {/* 우측 하단 로딩 스피너 */}
-          <div className="chat-loading-anchor">
-            <div className="circle-loader"></div>
+          <div className="cook-audio-chat-loading-anchor">
+            <div className="cook-audio-circle-loader"></div>
           </div>
         </div>
 
         {/* 하단 제어 영역: 녹음 버튼을 위로 올림 */}
-        <div className="mic-control-section">
-          <button className="orange-mic-btn">
+        <div className="cook-audio-mic-control-section">
+          <button className="cook-audio-orange-mic-btn" onClick={handleMicClick}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
@@ -82,32 +92,32 @@ export default function CookModeAudioPage() {
         </div>
 
         {/* 바텀시트 트리거 */}
-        <div className="bottom-sheet-anchor" onClick={() => setIsBottomSheetOpen(true)}>
-          <div className="handle-bar" />
-          <span className="handle-text">레시피 전체보기</span>
+        <div className="cook-audio-bottom-sheet-anchor" onClick={() => setIsBottomSheetOpen(true)}>
+          <div className="cook-audio-handle-bar" />
+          <span className="cook-audio-handle-text">레시피 전체보기</span>
         </div>
       </div>
 
       {/* 바텀시트: 클릭 시 상단 STEP 박스 연동 */}
-      <div className={`bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`} onClick={() => setIsBottomSheetOpen(false)} />
-      <div className={`bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
-        <div className="bottom-sheet-header">
-          <div className="bottom-sheet-handle" />
-          <h2 className="bottom-sheet-title">레시피 전체보기</h2>
+      <div className={`cook-audio-bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`} onClick={() => setIsBottomSheetOpen(false)} />
+      <div className={`cook-audio-bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
+        <div className="cook-audio-bottom-sheet-header">
+          <div className="cook-audio-bottom-sheet-handle" />
+          <h2 className="cook-audio-bottom-sheet-title">레시피 전체보기</h2>
         </div>
-        <div className="bottom-sheet-content">
-          <ul className="recipe-list">
+        <div className="cook-audio-bottom-sheet-content">
+          <ul className="cook-audio-recipe-list">
             {recipeSteps.map((step, index) => (
-              <li 
-                key={step.id} 
-                className={`recipe-item ${index === currentStepIndex ? "current" : ""}`}
+              <li
+                key={step.id}
+                className={`cook-audio-recipe-item ${index === currentStepIndex ? "current" : ""}`}
                 onClick={() => {
                   setCurrentStepIndex(index); // 상단 STEP 박스 업데이트
                   setIsBottomSheetOpen(false);
                 }}
               >
-                <span className="step-num">{step.id}.</span>
-                <span className="step-txt">{step.text}</span>
+                <span className="cook-audio-step-num">{step.id}.</span>
+                <span className="cook-audio-step-txt">{step.text}</span>
               </li>
             ))}
           </ul>
