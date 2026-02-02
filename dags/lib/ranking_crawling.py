@@ -42,7 +42,6 @@ def save_ranking_to_mongo(recipe_ids):
     client = MongoClient(MONGO_URI)
     db = client[DB_NAME]
     col = db[DB_RANKING_COLLECTION]
-    
 
     KST = pytz.timezone("Asia/Seoul")
 
@@ -61,7 +60,10 @@ def save_ranking_to_mongo(recipe_ids):
         "created_at_utc": now_utc,
     }
 
-    col.insert_one(doc)
+    try:
+        col.insert_one(doc)
+    except DuplicateKeyError:
+        logger.info("오늘 랭킹 이미 저장됨 -> skip")
 
 
 # 레시피 정보가 있는 db에서 id 가져오기
@@ -77,7 +79,7 @@ def process_ranking_to_recipes():
 
     # 랭킹 수집
     ranking_recipe_ids = get_recipe_ids_by_ranking()
-    
+
     # 랭킹 데이터 저장
     save_ranking_to_mongo(ranking_recipe_ids)
 
