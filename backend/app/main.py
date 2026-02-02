@@ -9,7 +9,6 @@ from features.chat.router import router as chat_router
 from features.recipe.router import router as recipe_router
 from features.cooking.router import router as cooking_router
 from features.user.router import router as user_router
-from features.auth.router import router as auth_router
 
 
 @asynccontextmanager
@@ -48,7 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user_router, prefix="/api/user", tags=["User"])
 app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 app.include_router(recipe_router, prefix="/api/recipe", tags=["Recipe"])

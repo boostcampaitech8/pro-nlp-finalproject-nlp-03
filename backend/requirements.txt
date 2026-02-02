@@ -27,10 +27,11 @@ requests==2.32.5
 # Vector DB
 pymilvus==2.6.6
 
-# MySQL
-pymysql==1.1.1
-
 # Data & Utils
 python-dateutil==2.9.0.post0
 typing-extensions==4.15.0
 python-multipart==0.0.22
+
+# 크롤링(임시)
+beautifulsoup4==4.12.3
+requests==2.31.0

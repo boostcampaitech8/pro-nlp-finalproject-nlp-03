@@ -2,7 +2,7 @@
 """
 Chat Agent WebSocket 라우터 - Adaptive RAG
 """
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from typing import Dict
 import json
 import asyncio
@@ -14,9 +14,7 @@ from features.chat.agent import create_chat_agent
 
 router = APIRouter()
 
-# 세션별 대화 기록 저장
 chat_sessions: Dict[str, dict] = {}
-
 
 @router.websocket("/ws/{session_id}")
 async def chat_websocket(
@@ -27,11 +25,9 @@ async def chat_websocket(
 ):
     """채팅 Agent WebSocket - Adaptive RAG"""
     
-    # 1. Accept
     await websocket.accept()
     print(f"[WS] Connected: {session_id}")
     
-    # 2. RAG 검증
     if not rag_system:
         print("[WS] RAG 시스템 없음")
         await websocket.send_json({
@@ -41,7 +37,6 @@ async def chat_websocket(
         await websocket.close()
         return
     
-    # 3. Agent 생성
     try:
         agent = create_chat_agent(rag_system)
         if not agent:
@@ -58,17 +53,14 @@ async def chat_websocket(
         await websocket.close()
         return
     
-    # 4. 연결 등록
     manager.active_connections[session_id] = websocket
     
-    # 5. 초기 상태
     if session_id not in chat_sessions:
         chat_sessions[session_id] = {
-            "messages": [],           # 대화 기록
-            "user_constraints": {},   # 가족 정보
+            "messages": [],
+            "user_constraints": {}
         }
     
-    # 6. 메시지 처리 루프
     try:
         while True:
             data = await websocket.receive_text()
@@ -77,40 +69,33 @@ async def chat_websocket(
             msg_type = message.get("type")
             print(f"[WS] 메시지 수신: {msg_type}")
             
-            # ===== 컨텍스트 초기화 =====
             if msg_type == "init_context":
                 member_info = message.get("member_info", {})
                 chat_sessions[session_id]["user_constraints"] = member_info
                 print(f"[WS] 컨텍스트 설정: {member_info.get('names', [])}")
                 continue
             
-            # ===== 사용자 메시지 =====
             elif msg_type == "user_message":
                 content = message.get("content", "")
                 print(f"[WS] 사용자 메시지: {content}")
                 
-                # 시작 시간
                 start_time = time.time()
                 
-                # 대화 기록 추가
                 chat_sessions[session_id]["messages"].append({
                     "role": "user",
                     "content": content
                 })
                 
-                # 대화 히스토리 포맷
                 chat_history = [
                     f"{msg['role']}: {msg['content']}"
                     for msg in chat_sessions[session_id]["messages"]
                 ]
                 
-                # Thinking 전송
                 await websocket.send_json({
                     "type": "thinking",
                     "message": "생각 중..."
                 })
                 
-                # ===== Agent 상태 준비 =====
                 agent_state = {
                     "question": content,
                     "original_question": content,
@@ -118,16 +103,13 @@ async def chat_websocket(
                     "documents": [],
                     "generation": "",
                     "web_search_needed": "no",
-                    "user_constraints": chat_sessions[session_id]["user_constraints"],  
-                    "constraint_warning": "",
+                    "user_constraints": chat_sessions[session_id]["user_constraints"],
+                    "constraint_warning": ""
                 }
 
                 print(f"[WS] user_constraints: {chat_sessions[session_id]['user_constraints']}")
                 
-                # ===== 진행 상황 알림 태스크 =====
-                elapsed = 0
                 async def progress_notifier():
-                    nonlocal elapsed
                     steps = [
                         (0, "쿼리 재작성 중..."),
                         (3, "레시피 검색 중..."),
@@ -150,29 +132,37 @@ async def chat_websocket(
                 notifier_task = asyncio.create_task(progress_notifier())
                 
                 try:
-                    # ===== Agent 실행 (타임아웃 20초) =====
                     async def run_agent():
-                        """동기 invoke를 비동기로 래핑"""
                         import asyncio
                         loop = asyncio.get_event_loop()
                         return await loop.run_in_executor(None, agent.invoke, agent_state)
                     
                     result = await asyncio.wait_for(run_agent(), timeout=20.0)
                     
-                    # 소요 시간
                     elapsed = time.time() - start_time
                     print(f"[WS] ✅ Agent 완료 ({elapsed:.1f}초)")
                     
-                    # 응답 추출
                     response = result.get("generation", "답변을 생성할 수 없습니다.")
+
+                    if response == "NOT_RECIPE_RELATED":
+                        print(f"[WS] 요리 무관 대화 감지")
+                        
+                        chat_sessions[session_id]["messages"].append({
+                            "role": "assistant",
+                            "content": "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
+                        })
+                        
+                        await websocket.send_json({
+                            "type": "not_recipe_related",
+                            "content": "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
+                        })
+                        continue
                     
-                    # 대화 기록에 추가
                     chat_sessions[session_id]["messages"].append({
                         "role": "assistant",
                         "content": response
                     })
                     
-                    # 응답 전송
                     await websocket.send_json({
                         "type": "agent_message",
                         "content": response
@@ -199,7 +189,6 @@ async def chat_websocket(
                     })
                 
                 finally:
-                    # 진행 상황 알림 태스크 취소
                     notifier_task.cancel()
                     try:
                         await notifier_task
@@ -214,6 +203,20 @@ async def chat_websocket(
         traceback.print_exc()
     finally:
         manager.disconnect(session_id)
-        if session_id in chat_sessions:
-            del chat_sessions[session_id]
         print(f"[WS] Closed: {session_id}")
+
+@router.get("/session/{session_id}")
+async def get_chat_session(session_id: str):
+    """채팅 세션 정보 조회"""
+    print(f"[Chat API] 세션 조회: {session_id}")
+    
+    if session_id not in chat_sessions:
+        raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다")
+    
+    session = chat_sessions[session_id]
+    
+    return {
+        "session_id": session_id,
+        "messages": session.get("messages", []),
+        "user_constraints": session.get("user_constraints", {})
+    }
