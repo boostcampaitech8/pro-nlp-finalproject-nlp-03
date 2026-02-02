@@ -249,7 +249,7 @@ class RecipeRAGLangChain:
             anns_field="vector",
             param=search_params,
             limit=k,
-            output_fields=["text", "title", "level", "cook_time", "source", "recipe_id"]
+            output_fields=["text", "title", "level", "cook_time", "source", "recipe_id","image_url", "img_url"]
         )
         
         # Document 형태로 변환
@@ -263,6 +263,8 @@ class RecipeRAGLangChain:
                     "cook_time": hit.entity.get("cook_time", "N/A"),
                     "source": hit.entity.get("source", "N/A"),
                     "recipe_id": hit.entity.get("recipe_id", "N/A"),
+                    "image_url": hit.entity.get("image_url", ""),
+                    "img_url": hit.entity.get("img_url", "")
                 }
             )
             docs_with_scores.append((doc, hit.score))
@@ -298,6 +300,8 @@ class RecipeRAGLangChain:
                     "source": doc.metadata.get("source", "N/A"),
                     "cook_time": doc.metadata.get("cook_time", "N/A"),
                     "level": doc.metadata.get("level", "N/A"),
+                    "image_url": doc.metadata.get("image_url", ""),
+                    "img_url": doc.metadata.get("img_url", ""),
                 })
         else:
             docs_with_scores = self._milvus_search(query, k)
@@ -312,6 +316,8 @@ class RecipeRAGLangChain:
                     "source": doc.metadata.get("source", "N/A"),
                     "cook_time": doc.metadata.get("cook_time", "N/A"),
                     "level": doc.metadata.get("level", "N/A"),
+                    "image_url": doc.metadata.get("image_url", ""),
+                    "img_url": doc.metadata.get("img_url", ""),
                 })
 
         return results
