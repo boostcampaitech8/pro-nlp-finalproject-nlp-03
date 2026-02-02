@@ -1,6 +1,7 @@
 // src/pages/Chat/ChatPage.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ButtonRed from "@/components/ButtonRed";
 import "./ChatPage.css";
 
 export default function ChatPage() {
@@ -16,11 +17,20 @@ export default function ChatPage() {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [combinedMemberInfo, setCombinedMemberInfo] = useState(null);
 
+  // 레시피 생성 버튼 활성화
+  const [hasRecipeGenerated, setHasRecipeGenerated] = useState(false);
+
   const wsRef = useRef(null);
   const sessionId = useRef(crypto.randomUUID()).current;
+  const messagesEndRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
   const WS_URL = import.meta.env.VITE_WS_URL || "ws://211.188.62.72:8080";
+
+  // 스크롤 최하단
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isThinking]);
 
   // 가족 정보 불러오기
   useEffect(() => {
@@ -66,7 +76,6 @@ export default function ChatPage() {
       console.log("[WebSocket] Connected");
       setIsConnected(true);
 
-      // 컨텍스트만 전송 (자동 추천 X)
       if (combinedMemberInfo) {
         ws.send(
           JSON.stringify({
@@ -75,13 +84,12 @@ export default function ChatPage() {
           }),
         );
 
-        // 자유 대화 시작 안내
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
             content:
-              '어떤 요리를 만들고 싶으세요? 자유롭게 말씀해주세요! \n\n예: "매운 찌개 먹고 싶어요", \n"간단한 요리 알려줘"',
+              '어떤 요리를 만들고 싶으세요? 자유롭게 말씀해주세요!\n예) "매운 찌개 먹고 싶어요", "간식으로 먹을 요리 알려줘"',
             timestamp: new Date().toISOString(),
           },
         ]);
@@ -102,6 +110,7 @@ export default function ChatPage() {
           },
         ]);
         setIsThinking(false);
+        setHasRecipeGenerated(true); // AI 답변 오면 버튼 활성화
       } else if (data.type === "thinking") {
         setIsThinking(true);
       } else if (data.type === "progress") {
@@ -166,10 +175,11 @@ export default function ChatPage() {
 
       const namesText = selectedMembers.join(", ");
       const infoText =
-        `${namesText}님을 위한 요리 정보:\n` +
-        `- 알레르기: ${combined.allergies.join(", ") || "없음"}\n` +
-        `- 싫어하는 음식: ${combined.dislikes.join(", ") || "없음"}\n` +
-        `- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}`;
+        `[ ${namesText} ]님을 위한 요리 정보\n\n` +
+        `- 알레르기: ${combined.allergies.join(", ") || "없음"}\n\n` +
+        `- 싫어하는 음식: ${combined.dislikes.join(", ") || "없음"}\n\n` +
+        `- 사용 가능한 조리도구\n: ${combined.cooking_tools.join(", ")}\n\n` +
+        `이 정보가 맞나요?`;
 
       setMessages((prev) => [
         ...prev,
@@ -180,7 +190,7 @@ export default function ChatPage() {
         },
         {
           role: "assistant",
-          content: infoText + "\n\n이 정보가 맞나요?",
+          content: infoText,
           timestamp: new Date().toISOString(),
           showButtons: true,
           buttonType: "confirm_info",
@@ -196,27 +206,15 @@ export default function ChatPage() {
 
   // 정보 확인
   const handleConfirmInfo = (confirmed) => {
-    if (confirmed) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "user",
-          content: "예, 맞아요",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "user",
-          content: "아니요, 수정할게요",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: confirmed ? "예, 맞아요" : "아니오, 수정이 필요해요",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
-    // 자유 대화 상태로 전환
     setFlowState("FREE_CHAT");
     console.log("[ChatPage] 자유 대화 상태로 전환");
   };
@@ -256,16 +254,10 @@ export default function ChatPage() {
       (m) => m.role && m.content && typeof m.content === "string",
     );
 
-    if (validMessages.length < 4) {
-      alert("대화를 좀 더 진행해주세요! (최소 4개 메시지)");
-      return;
-    }
-
     console.log("[ChatPage] 레시피 생성 시작...");
     console.log("- 대화 수:", validMessages.length);
     console.log("- 가족:", combinedMemberInfo.names);
 
-    // LoadingPage로 이동
     navigate("/loading", {
       state: {
         memberInfo: combinedMemberInfo,
@@ -279,16 +271,9 @@ export default function ChatPage() {
       {/* 헤더 */}
       <div className="chat-header">
         <button className="back-button" onClick={() => navigate(-1)}>
-          ←
+          <img src="/exit-icon.png" alt="닫기" className="back-button-icon" />
         </button>
-        <h1>
-          {flowState === "FREE_CHAT"
-            ? "어떤 요리를 만들까요?"
-            : "조리 전, 마지막으로 확인할게요"}
-        </h1>
-        {flowState === "FREE_CHAT" && (
-          <div className="connection-status">{isConnected ? "🟢" : "🔴"}</div>
-        )}
+        <h1>조리 전, 마지막으로 확인할게요</h1>
       </div>
 
       {/* 메시지 영역 */}
@@ -317,8 +302,7 @@ export default function ChatPage() {
                         className={`btn-option ${selectedMembers.includes(name) ? "selected" : ""}`}
                         onClick={() => handleSelectMember(name)}
                       >
-                        {selectedMembers.includes(name) && "✓ "}
-                        {name} ({familyMembers[name].role})
+                        {name}
                       </button>
                     ))}
                   </div>
@@ -328,14 +312,14 @@ export default function ChatPage() {
                     onClick={handleConfirmSelection}
                     disabled={selectedMembers.length === 0}
                   >
-                    선택 완료 ({selectedMembers.length}명)
+                    선택 완료
                   </button>
                 </div>
               )}
 
               {/* 정보 확인 버튼 */}
               {msg.showButtons && msg.buttonType === "confirm_info" && (
-                <div className="button-group">
+                <div className="button-group confirm-group">
                   <button
                     className="btn-option btn-confirm"
                     onClick={() => handleConfirmInfo(true)}
@@ -346,7 +330,7 @@ export default function ChatPage() {
                     className="btn-option btn-edit"
                     onClick={() => handleConfirmInfo(false)}
                   >
-                    아니요, 수정할게요
+                    아니오, 수정이 필요해요
                   </button>
                 </div>
               )}
@@ -365,19 +349,20 @@ export default function ChatPage() {
               </div>
             </div>
           )}
+
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* 레시피 생성 버튼 - FREE_CHAT 상태에서 항상 표시 */}
+      {/* 레시피 생성 버튼 - AI 답변 오면 활성화 */}
       {flowState === "FREE_CHAT" && (
         <div className="action-area">
-          <button
-            className="btn-generate-primary"
+          <ButtonRed
             onClick={handleGenerateRecipe}
-            disabled={isThinking || messages.length < 4}
+            disabled={!hasRecipeGenerated || isThinking}
           >
-            레시피 생성하기
-          </button>
+            대화 종료하고 레시피 생성하기
+          </ButtonRed>
         </div>
       )}
 

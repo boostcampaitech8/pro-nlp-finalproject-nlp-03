@@ -20,7 +20,8 @@ export default function HomePage() {
         src="/main-profile.png"
         alt="프로필"
         className="profile-icon"
-        onClick={() => navigate("/profile")}
+        onClick={() => navigate("/mypage")}
+        style={{ cursor: "pointer" }}
       />
 
       <div className="speech-bubble">
