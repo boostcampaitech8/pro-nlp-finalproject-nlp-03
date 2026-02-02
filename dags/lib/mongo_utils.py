@@ -17,7 +17,7 @@ def get_mongo_collections():
     return recipes
 
 
-def get_unembedded_recipes(recipes, limit=50):
+def get_unembedded_recipes(recipes, limit=100):
     """
     아직 임베딩 안 된 레시피 조회
     """

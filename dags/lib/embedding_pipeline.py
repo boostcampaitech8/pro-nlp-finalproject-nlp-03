@@ -10,7 +10,7 @@ MODEL_NAME = "bge-m3"
 def run_embedding_pipeline():
     recipes = get_mongo_collections()
 
-    raw_recipes = list(get_unembedded_recipes(recipes, limit=50))
+    raw_recipes = list(get_unembedded_recipes(recipes, limit=100))
 
     docs = [recipe_to_document(r) for r in raw_recipes]
     docs = chunk_documents(docs)

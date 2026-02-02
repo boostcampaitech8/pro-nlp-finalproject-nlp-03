@@ -5,7 +5,7 @@ from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.python import PythonOperator
 
-from dags.lib.page_crawling import crawl_incremental
+from lib.page_crawling import crawl_incremental
 
 default_args = {
     "owner": "airflow",
