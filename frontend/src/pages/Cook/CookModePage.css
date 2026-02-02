@@ -1,257 +1,241 @@
-/* src/pages/Cook/CookModePage.css */
-.cook-mode-page {
-  width: 100%;
-  height: 100%;
+/* 기본 컨테이너 */
+.recipe-container {
+  width: 393px;
+  height: 852px;
+  background: #c4a574;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0 auto;
+}
+
+/* 마스코트: 카드 상단 왼쪽 경계에 걸침 */
+.mascot-wrapper {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  z-index: 10;
+}
+
+.mascot-image {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* 메인 카드 */
+.main-card {
+  position: absolute;
+  top: 95px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fef6ed;
+  border-radius: 40px 40px 0 0;
+  padding: 50px 24px 24px;
   display: flex;
   flex-direction: column;
-  background: #fff5e6;
-}
-
-/* 헤더 */
-.cook-header {
-  flex-shrink: 0;
-  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #ff5b32 0%, #ff8c42 100%);
-  color: white;
+  z-index: 1;
 }
 
-.back-button {
-  background: rgba(255, 255, 255, 0.2);
+/* 닫기 버튼 */
+.close-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
   border: none;
-  color: white;
-  font-size: 20px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  color: #888;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 8px;
 }
 
-.cook-header-info {
-  flex: 1;
+/* 상단 단계 설명 */
+.recipe-display-section {
   text-align: center;
-}
-
-.cook-header-info h1 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  margin-top: 10px;
+  margin-bottom: 25px;
+  width: 100%;
 }
 
 .step-indicator {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 2px;
-}
-
-.connection-status {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* 컨텐츠 */
-.cook-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* 단계 표시 */
-.step-display {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.step-number {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  color: #ff5b32;
-  margin-bottom: 16px;
+  color: #a8875a;
+  margin-bottom: 8px;
 }
 
 .step-description {
-  font-size: 16px;
+  font-size: 17px;
+  color: #444;
   line-height: 1.6;
-  color: #333;
+  word-break: keep-all;
 }
 
-.thinking-indicator {
+/* 이미지 + 화살표 가로 배치 */
+.image-nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.nav-btn {
+  background: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+}
+
+.arrow-icon {
+  font-size: 18px;
+  color: #a8875a;
+  font-weight: bold;
+}
+
+.food-image-wrapper {
+  width: 220px;
+  height: 220px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border: 3px solid white;
+}
+
+.food-image-content {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 하단 녹음 버튼 영역 */
+.record-section-spacer {
+  margin-top: auto;
+  margin-bottom: 50px;
+}
+
+.btn-record-giant {
+  width: 80px;
+  height: 80px;
+  background: #e8734a;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 15px rgba(232, 115, 74, 0.3);
+  cursor: pointer;
+}
+
+/* 바텀시트 트리거 */
+.bottom-sheet-trigger {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 20px;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 91, 50, 0.2);
-  border-top-color: #ff5b32;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.thinking-indicator p {
-  color: #ff5b32;
-  font-size: 14px;
-}
-
-/* 오디오 플레이어 */
-.audio-player {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.audio-player audio {
-  width: 100%;
-}
-
-/* 컨트롤 영역 */
-.cook-controls {
-  flex-shrink: 0;
-  padding: 20px;
-  background: white;
-  border-top: 1px solid #e9e9e9;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* 네비게이션 버튼 */
-.nav-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-nav {
-  flex: 1;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.btn-prev {
-  background: #e9e9e9;
+.drag-indicator {
+  width: 40px;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+
+.view-all-text {
+  font-size: 15px;
+  font-weight: 600;
   color: #666;
 }
 
-.btn-next {
-  background: linear-gradient(135deg, #ff5b32 0%, #ff8c42 100%);
-  color: white;
+/* 바텀시트 (배경 어둡게) */
+.bottom-sheet-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+  z-index: 20;
 }
+.bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
 
-.btn-complete {
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  color: white;
-}
-
-.btn-nav:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-nav:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* 음성 입력 */
-.voice-input-section {
-  text-align: center;
-}
-
-.btn-voice {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-voice:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-voice:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.voice-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #999;
-}
-
-/* 텍스트 입력 */
-.text-input-section {
+.bottom-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-radius: 32px 32px 0 0;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 80%;
+  z-index: 30;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+}
+.bottom-sheet.active { transform: translateY(0); }
+
+.bottom-sheet-header {
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.text-input-section input {
-  flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #e9e9e9;
-  border-radius: 24px;
-  font-size: 14px;
-  outline: none;
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  margin: 0 auto 15px;
 }
 
-.text-input-section input:focus {
-  border-color: #ff5b32;
+.bottom-sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
 }
 
-.text-input-section input:disabled {
-  background: #f5f5f5;
+.bottom-sheet-content {
+  padding: 24px;
+  overflow-y: auto;
 }
 
-.text-input-section button {
-  padding: 12px 24px;
-  background: #ff5b32;
-  color: white;
-  border: none;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 600;
+.recipe-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recipe-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.text-input-section button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* 현재 진행 단계 붉은색 강조 */
+.recipe-item.current {
+  color: #e8734a;
+  font-weight: 600;
 }
 
-.text-input-section button:not(:disabled):hover {
-  background: #ff7a50;
+.step-number {
+  font-weight: 700;
+  min-width: 24px;
 }

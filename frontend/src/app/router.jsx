@@ -8,6 +8,7 @@ import LoadingPage from "@/pages/Loading/LoadingPage";
 import RecipeResultPage from "@/pages/Recipes/RecipeResultPage";
 // import RecipeDetailPage from "@/pages/Recipes/RecipeDetailPage";
 import CookModePage from "@/pages/Cook/CookModePage";
+import CookModeAudioPage from "@/pages/Cook/CookModeAudioPage";
 import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
 // import CookCompletePage from "@/pages/Cook/CookCompletePage";
@@ -108,6 +109,16 @@ export default function Router() {
             element={
               <FixedLayout>
                 <CookModePage />
+              </FixedLayout>
+            }
+          />
+
+          {/* Cook Mode Audio - 음성 녹음 페이지 */}
+          <Route
+            path="/cook-audio"
+            element={
+              <FixedLayout>
+                <CookModeAudioPage />
               </FixedLayout>
             }
           />

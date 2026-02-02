@@ -36,7 +36,17 @@ export default function RecipeRecommendation() {
   };
 
   const handleStartCooking = () => {
-    console.log("요리 시작");
+    const recipe = {
+      name: "바지락양념칼국수",
+      time: "15분",
+      level: "왕초급",
+      steps: recipeSteps.map((step) => ({
+        no: step.id,
+        desc: step.text,
+        img: null,
+      })),
+    };
+    navigate("/cook", { state: { recipe } });
   };
 
   const handleClose = () => {

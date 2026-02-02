@@ -1,0 +1,72 @@
+/* 채팅을 감싸는 흰색 박스 (테두리 포함) */
+.chat-outer-box {
+  background-color: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.chat-inner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* 말풍선 방향: 사용자(우측), AI(좌측) */
+.chat-bubble-row.user { align-self: flex-end; }
+.chat-bubble-row.ai { align-self: flex-start; }
+
+.bubble {
+  padding: 12px 18px;
+  border-radius: 15px;
+  font-size: 14px;
+  max-width: 220px;
+  line-height: 1.4;
+}
+
+/* 사용자 말풍선 (분홍색) */
+.user .bubble {
+  background-color: #ffe5e1;
+  color: #333;
+  border-bottom-right-radius: 2px;
+}
+
+/* AI 말풍선 (연회색) */
+.ai .bubble {
+  background-color: #f1f1f1;
+  color: #333;
+  border-bottom-left-radius: 2px;
+}
+
+/* 녹음 버튼 위치 위로 올리기 */
+.mic-control-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 50px; /* 트리거와 겹치지 않게 간격 확보 */
+}
+
+.orange-mic-btn {
+  width: 75px; height: 75px;
+  border-radius: 50%;
+  background-color: #ff5f40;
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 95, 64, 0.4);
+}
+
+/* 현재 STEP 박스 스타일 */
+.step-display-container {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.step-number-tag { color: #ff7e5f; font-weight: 800; font-size: 13px; margin-bottom: 8px; }
+.step-main-text { font-size: 15px; font-weight: 600; color: #333; line-height: 1.5; }
