@@ -11,11 +11,8 @@ export default function LoadingPage() {
   const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
   useEffect(() => {
-    // 데이터 검증
     if (!memberInfo || !chatHistory) {
       console.error("[LoadingPage] 필수 데이터 누락");
-      console.log("- memberInfo:", memberInfo);
-      console.log("- chatHistory:", chatHistory);
       alert("필요한 정보가 없습니다.");
       navigate("/chat", { replace: true });
       return;
@@ -25,7 +22,6 @@ export default function LoadingPage() {
     console.log("- 가족:", memberInfo.names);
     console.log("- 대화 수:", chatHistory.length);
 
-    // API 호출
     const generateRecipe = async () => {
       try {
         const response = await fetch(`${API_URL}/api/recipe/generate`, {
@@ -49,19 +45,55 @@ export default function LoadingPage() {
         const data = await response.json();
         console.log("[LoadingPage] 레시피 생성 완료:", data);
 
-        // RecipeResultPage로 이동
+        // 1. 즉시 결과 페이지로 이동
         navigate("/recipe-result", {
           state: {
             recipe: data.recipe,
+            userId: data.user_id,
+            title: data.title,
+            constraints: data.constraints,
             memberInfo: memberInfo,
             chatHistory: chatHistory,
           },
           replace: true,
         });
+
+        // 2. 백그라운드에서 저장
+        saveRecipeInBackground(data);
       } catch (error) {
         console.error("[LoadingPage] 레시피 생성 실패:", error);
         alert("레시피 생성에 실패했습니다. 다시 시도해주세요.");
         navigate("/chat", { replace: true });
+      }
+    };
+
+    // 백그라운드 저장 함수
+    const saveRecipeInBackground = async (recipeData) => {
+      try {
+        console.log("[LoadingPage] 레시피 저장 시작 (백그라운드)...");
+
+        const saveResponse = await fetch(`${API_URL}/api/recipe/save`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: recipeData.user_id,
+            title: recipeData.title,
+            recipe: recipeData.recipe,
+            constraints: recipeData.constraints,
+          }),
+        });
+
+        if (saveResponse.ok) {
+          console.log("[LoadingPage] 레시피 저장 완료 (백그라운드)");
+        } else {
+          console.error(
+            "[LoadingPage] 레시피 저장 실패:",
+            await saveResponse.text(),
+          );
+        }
+      } catch (error) {
+        console.error("[LoadingPage] 레시피 저장 에러 (백그라운드):", error);
+        // 저장 실패해도 사용자는 이미 결과를 보고 있으므로 alert 안 띄움
       }
     };
 

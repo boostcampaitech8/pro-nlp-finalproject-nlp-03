@@ -39,7 +39,9 @@ export default function CookStartPage() {
 
       {/* 레시피 생성하기 버튼 */}
       <div className="cook-start-btn-wrapper">
-        <CookStartButton onClick={handleCookStart} />
+        <CookStartButton onClick={handleCookStart}>
+          레시피 생성하기
+        </CookStartButton>
       </div>
 
       <BottomNav />

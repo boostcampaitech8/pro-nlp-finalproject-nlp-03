@@ -86,7 +86,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* 전체 레시피 */}
+          {/* TOP 100 레시피 */}
           <div
             className="card small"
             onClick={() => navigate("/recipes")}
@@ -96,9 +96,9 @@ export default function HomePage() {
               <img src="/main-profile.png" className="card-icon" alt="감자" />
             </div>
 
-            <h3>전체 레시피</h3>
+            <h3>TOP 100 레시피</h3>
             <p>
-              또 다른 레시피가
+              인기 있는 다른 레시피가
               <br />
               궁금하다면?
             </p>

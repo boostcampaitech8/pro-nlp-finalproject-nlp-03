@@ -1,12 +1,16 @@
+// src/components/ButtonRed.jsx
 import "./ButtonRed.css";
 
-export default function CookStartButton({
+export default function ButtonRed({
   onClick,
-  children = "레시피 생성하기",
+  children = "버튼",
+  disabled = false,
+  subText = null,
 }) {
   return (
-    <button className="cook-start-btn" onClick={onClick}>
-      {children}
+    <button className="button-red" onClick={onClick} disabled={disabled}>
+      <span className="button-red-main">{children}</span>
+      {subText && <span className="button-red-sub">{subText}</span>}
     </button>
   );
 }

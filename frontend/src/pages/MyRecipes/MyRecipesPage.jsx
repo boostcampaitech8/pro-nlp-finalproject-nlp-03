@@ -84,14 +84,14 @@ export default function MyRecipesPage() {
               {recipes.map((recipe) => (
                 <div
                   key={recipe.id}
-                  className="recipe-card"
+                  className="recipe-cards"
                   onClick={() => handleRecipeClick(recipe)}
                 >
-                  <div className="recipe-card-image">
+                  <div className="recipe-cards-image">
                     {recipe.image_url ? (
                       <img src={recipe.image_url} alt={recipe.title} />
                     ) : (
-                      <div className="recipe-card-placeholder">
+                      <div className="recipe-cards-placeholder">
                         <svg
                           width="32"
                           height="32"
@@ -117,7 +117,7 @@ export default function MyRecipesPage() {
                     )}
                     <StarRating rating={recipe.rating || 3} size={11} />
                   </div>
-                  <span className="recipe-card-title">{recipe.title}</span>
+                  <span className="recipe-cards-title">{recipe.title}</span>
                 </div>
               ))}
             </div>

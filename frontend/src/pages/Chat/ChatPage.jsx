@@ -269,10 +269,10 @@ export default function ChatPage() {
   return (
     <div className="chat-page">
       {/* 헤더 */}
+      <button className="header-closed" onClick={() => navigate(-1)}>
+        <img src="/exit-icon.png" alt="닫기" className="closed-icon" />
+      </button>
       <div className="chat-header">
-        <button className="back-button" onClick={() => navigate(-1)}>
-          <img src="/exit-icon.png" alt="닫기" className="back-button-icon" />
-        </button>
         <h1>조리 전, 마지막으로 확인할게요</h1>
       </div>
 
