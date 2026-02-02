@@ -1,0 +1,43 @@
+src
+├── app
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── router.jsx
+├── components
+│   ├── BottomNav.css
+│   ├── BottomNav.jsx
+│   ├── Button.jsx
+│   ├── Header.jsx
+│   └── Modal.jsx
+├── features
+│   └── chat
+│       ├── components
+│       │   ├── ChatAvatar.jsx
+│       │   ├── ChatBubble.jsx
+│       │   ├── ChatInput.jsx
+│       │   └── ChatList.jsx
+│       └── hooks
+│           └── useChatSocket.js
+├── layouts
+│   ├── FixedLayout.jsx
+│   ├── MobileLayout.jsx
+│   └── ScrollLayout.jsx
+├── pages
+│   ├── Auth
+│   ├── Chat
+│   │   └── ChatPage.jsx
+│   ├── Cook
+│   │   ├── CookCompletePage.jsx
+│   │   └── CookModePage.jsx
+│   ├── Home
+│   │   ├── HomePage.css
+│   │   └── HomePage.jsx
+│   ├── Loading
+│   │   └── Loading.jsx
+│   ├── Recipes
+│   └── Splash
+│       └── SplashPage.jsx
+└── style
+    └── global.css
+
+17 directories, 24 files

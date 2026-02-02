@@ -1,0 +1,253 @@
+/* src/pages/MyRecipes/RecipeDetailModal.css */
+
+/* ===============================
+   오버레이 - 앱 컨테이너(393px) 안에 맞춤
+================================ */
+.detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 393px;
+  height: 852px;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+  overflow-y: auto;
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.detail-overlay::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===============================
+   모달 전체 래퍼 - 메인 페이지와 동일한 구조
+================================ */
+.detail-page-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  padding-top: 14px;
+  padding-bottom: 80px;
+}
+
+/* ===============================
+   오렌지 클립 이미지
+================================ */
+.detail-clip {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 101;
+  margin-bottom: -14px;
+}
+
+.detail-clip img {
+  width: 70px;
+  height: auto;
+}
+
+/* ===============================
+   모달 본체 - 클립보드 보드와 동일 위치/크기
+================================ */
+.detail-modal {
+  position: relative;
+  margin: 0 16px;
+  min-height: calc(100vh - 140px);
+  padding: 8px 0 30px;
+  background-image: url("/my-recipe-borderline-beige.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: #FFECD2;
+  border-radius: 14px;
+  font-family: 'EF_jejudoldam', sans-serif;
+}
+
+/* ===============================
+   닫기 버튼
+================================ */
+.detail-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 102;
+}
+
+.detail-close img {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===============================
+   콘텐츠 영역
+================================ */
+.detail-content {
+  padding: 10px 24px 0;
+}
+
+/* ===============================
+   날짜
+================================ */
+.detail-date {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 2px;
+}
+
+/* ===============================
+   제목 + 밑줄
+================================ */
+.detail-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #D35400;
+  margin: 0 0 2px;
+  font-family: 'EF_jejudoldam', sans-serif;
+}
+
+.detail-title-line {
+  border: none;
+  border-top: 2px solid #D35400;
+  width: 60%;
+  margin: 0 auto 6px;
+}
+
+/* ===============================
+   이전 소요시간
+================================ */
+.detail-prev-time {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 14px;
+}
+
+/* ===============================
+   이미지
+================================ */
+.detail-image-wrap {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #E8C9A0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===============================
+   메타 정보 (시간, 난이도)
+================================ */
+.detail-meta {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.detail-meta .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #333;
+}
+
+.meta-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ===============================
+   섹션
+================================ */
+.detail-section {
+  margin-bottom: 18px;
+}
+
+.detail-section-title {
+  font-family: 'EF_jejudoldam', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin: 0 0 4px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #1a3a5c;
+}
+
+.detail-section-line {
+  border: none;
+  border-top: 1.5px solid #D4A574;
+  margin: 0 0 10px;
+}
+
+/* ===============================
+   재료 (2열)
+================================ */
+.ingredients-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+}
+
+.ingredient-item {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ===============================
+   조리법
+================================ */
+.detail-steps {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.step-item {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+
+/* ===============================
+   빈 텍스트
+================================ */
+.detail-empty-text {
+  font-size: 13px;
+  color: #999;
+  margin: 8px 0;
+}
