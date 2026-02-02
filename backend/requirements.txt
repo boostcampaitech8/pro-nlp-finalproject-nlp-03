@@ -31,3 +31,7 @@ pymilvus==2.6.6
 python-dateutil==2.9.0.post0
 typing-extensions==4.15.0
 python-multipart==0.0.22
+
+# 크롤링(임시)
+beautifulsoup4==4.12.3
+requests==2.31.0
