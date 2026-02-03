@@ -12,7 +12,7 @@ export default function RecipeDetailModal({ recipe, onClose }) {
   const level = recipeData.level || "";
   const ingredients = recipeData.ingredients || [];
   const steps = recipeData.steps || [];
-  const imageUrl = recipe.image_url || recipeData.image_url || null;
+  const imageUrl = recipe.image || recipeData.image || null;
 
   // 날짜 포맷 (YY.MM.DD)
   const createdAt = recipe.created_at
@@ -63,9 +63,20 @@ export default function RecipeDetailModal({ recipe, onClose }) {
               ) : (
                 <div className="detail-image-placeholder">
                   <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                    <circle cx="30" cy="30" r="27" stroke="#C4956A" strokeWidth="2" fill="none"/>
-                    <path d="M18 38C18 38 24 27 30 27C36 27 42 38 42 38" stroke="#C4956A" strokeWidth="2"/>
-                    <circle cx="23" cy="24" r="3" fill="#C4956A"/>
+                    <circle
+                      cx="30"
+                      cy="30"
+                      r="27"
+                      stroke="#C4956A"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                    <path
+                      d="M18 38C18 38 24 27 30 27C36 27 42 38 42 38"
+                      stroke="#C4956A"
+                      strokeWidth="2"
+                    />
+                    <circle cx="23" cy="24" r="3" fill="#C4956A" />
                   </svg>
                 </div>
               )}
@@ -75,13 +86,21 @@ export default function RecipeDetailModal({ recipe, onClose }) {
             <div className="detail-meta">
               {cookTime && (
                 <span className="meta-item">
-                  <img src="/my-recipe-time.png" alt="time" className="meta-icon" />
+                  <img
+                    src="/my-recipe-time.png"
+                    alt="time"
+                    className="meta-icon"
+                  />
                   {cookTime}
                 </span>
               )}
               {level && (
                 <span className="meta-item">
-                  <img src="/my-recipe-level.png" alt="level" className="meta-icon" />
+                  <img
+                    src="/my-recipe-level.png"
+                    alt="level"
+                    className="meta-icon"
+                  />
                   {level}
                 </span>
               )}
@@ -97,7 +116,9 @@ export default function RecipeDetailModal({ recipe, onClose }) {
                     {ingredients.map((ing, idx) => (
                       <div key={idx} className="ingredient-item">
                         <span>• </span>
-                        <span>{ing.name} {ing.amount}</span>
+                        <span>
+                          {ing.name} {ing.amount}
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -1,16 +1,17 @@
-# Environment
+backend/.env
+backend/.env.*
 .env
-.env.*
+env
+.DS_Store
 
 # Python
-venv/
 __pycache__/
 *.pyc
 *.pyo
+*.db
 
-# Mac
+# macOS
 .DS_Store
 
-# IDE
-.vscode/
-.idea/
+# frontend
+frontend

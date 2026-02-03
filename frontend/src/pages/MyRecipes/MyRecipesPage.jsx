@@ -88,8 +88,8 @@ export default function MyRecipesPage() {
                   onClick={() => handleRecipeClick(recipe)}
                 >
                   <div className="recipe-cards-image">
-                    {recipe.image_url ? (
-                      <img src={recipe.image_url} alt={recipe.title} />
+                    {recipe.image ? (
+                      <img src={recipe.image} alt={recipe.title} />
                     ) : (
                       <div className="recipe-cards-placeholder">
                         <svg

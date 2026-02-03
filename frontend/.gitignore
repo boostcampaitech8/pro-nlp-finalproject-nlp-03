@@ -1,5 +1,6 @@
 # Node
 node_modules/
+frontend/node_modules/
 
 # Build
 dist/
@@ -9,12 +10,7 @@ build/
 .env
 .env.*
 
-# Vite
-.vite/
-
-# Mac
-.DS_Store
-
-# IDE
-.vscode/
-.idea/
+# Python
+__pycache__/
+*.pyc
+.venv/

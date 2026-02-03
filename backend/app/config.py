@@ -30,13 +30,6 @@ class Settings(BaseSettings):
     # NAVER
     NAVER_CLIENT_ID: Optional[str] = None
     NAVER_CLIENT_SECRET: Optional[str] = None
-
-    # MySQL
-    MYSQL_HOST: str = "localhost"
-    MYSQL_PORT: int = 3306
-    MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = ""
-    MYSQL_DATABASE: str = "recipeu"
     
     # Milvus
     MILVUS_HOST: str = "136.113.251.237"
