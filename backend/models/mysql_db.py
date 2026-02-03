@@ -278,7 +278,10 @@ def upsert_member(profile: dict) -> dict:
             cur.execute("SELECT * FROM member WHERE naver_id = %s", (profile["naver_id"],))
             row = cur.fetchone()
 
-    return _serialize_datetime(row)
+    serialized = _serialize_datetime(row)
+    if serialized:
+        upsert_member_personalization(serialized["id"], [], [])
+    return serialized
 
 
 def get_member_by_id(member_id: int) -> Optional[dict]:
@@ -781,7 +784,9 @@ def get_chat_voices(chat_id: int) -> list:
 
 def load_mypage_data(member_id: int) -> dict:
     """마이페이지 전체 데이터 조회"""
-    member_psnl = get_member_personalization(member_id) or {"allergies": [], "dislikes": []}
+    member_psnl = get_member_personalization(member_id)
+    if not member_psnl:
+        member_psnl = upsert_member_personalization(member_id, [], [])
     families = get_families(member_id)
     utensils = get_all_utensils()
     member_utensil_ids = get_member_utensils(member_id)
@@ -805,5 +810,4 @@ def load_mypage_data(member_id: int) -> dict:
         "utensils": utensils,
         "member_utensil_ids": member_utensil_ids,
     }
-
 
