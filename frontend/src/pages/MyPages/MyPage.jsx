@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MyPage.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -331,25 +331,27 @@ export default function MyPage() {
 
         <div className="mypage-board">
           <section className="greeting">
+            <p className="hello">안녕하세요,</p>
+            <h1 className="user-name"><span className="orange-text">{member ? member.nickname : "게스트"}</span> 님</h1>
+
+            {/* 프로필 정보 행 */}
             {member && (
-              <div className="member-profile-card">
+              <div className="member-profile-row">
                 <img
                   src={member.mem_photo}
                   alt="프로필"
-                  className="member-photo"
+                  className="member-photo-circle"
                   referrerPolicy="no-referrer"
                 />
-                <div className="member-info">
-                  <span className="member-nickname">{member.nickname}</span>
-                  <span className="member-email">{member.email}</span>
+                <div className="member-info-inline">
+                  <span className="member-nickname-inline">{member.nickname}</span>
+                  <span className="member-email-inline">{member.email}</span>
                 </div>
-                <button className="logout-btn" onClick={handleLogout}>
+                <button className="logout-btn-inline" onClick={handleLogout}>
                   로그아웃
                 </button>
               </div>
             )}
-            <p className="hello">안녕하세요,</p>
-            <h1 className="user-name"><span className="orange-text">{member ? member.nickname : "게스트"}</span> 님</h1>
 
             <div className="profile-selection">
               <div className="tab-group">
