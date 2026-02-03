@@ -36,21 +36,11 @@ class Settings(BaseSettings):
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
 
-    # MySQL
-    MYSQL_HOST: str = "localhost"
+    # MySQL (Naver Cloud)
+    MYSQL_HOST: str = "db-wl3de.pub-cdb.ntruss.com"
     MYSQL_PORT: int = 3306
-    MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = ""
-    MYSQL_DATABASE: str = "recipeu"
-    
-    # Database
-    DATABASE_URL: str = "sqlite:///./recipes.db"
-
-    # MySQL
-    MYSQL_HOST: str = "localhost"
-    MYSQL_PORT: int = 3306
-    MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = ""
+    MYSQL_USER: str = "recipeu"
+    MYSQL_PASSWORD: str = "recipe1234!"
     MYSQL_DATABASE: str = "recipeu"
     
     # 사용자 프로필 (테스트용 - 기본값)

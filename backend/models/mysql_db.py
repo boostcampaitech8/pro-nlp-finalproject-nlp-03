@@ -661,3 +661,5 @@ def load_mypage_data(member_id: int) -> dict:
         "utensils": utensils,
         "member_utensil_ids": member_utensil_ids,
     }
+
+

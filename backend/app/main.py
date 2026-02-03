@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from core.dependencies import get_rag_system, get_recipe_db
+from core.dependencies import get_rag_system
 from features.chat.router import router as chat_router
 from features.recipe.router import router as recipe_router
 from features.cooking.router import router as cooking_router
@@ -12,28 +12,41 @@ from features.user.router import router as user_router
 from features.auth.router import router as auth_router
 from features.mypage.router import router as mypage_router, init_utensils
 from features.whether.router import router as weather_router
+from models.mysql_db import get_mysql_connection
+
+
+def check_mysql_connection() -> bool:
+    """MySQL 연결 확인"""
+    try:
+        conn = get_mysql_connection()
+        conn.close()
+        return True
+    except Exception:
+        return False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("\n" + "="*60)
     print("레시피 Agent API 시작!")
     print("="*60)
-    
+
     rag_system = get_rag_system()
     if rag_system:
         print("RAG 시스템 초기화 완료")
-    
-    recipe_db = get_recipe_db()
-    if recipe_db:
-        print("Recipe DB 초기화 완료")
-    
+
+    if check_mysql_connection():
+        print("MySQL DB 연결 확인 완료")
+    else:
+        print("MySQL DB 연결 실패!")
+
     init_utensils()
 
     print("="*60 + "\n")
 
     yield
-    
-    print("\n👋 서버 종료")
+
+    print("\n서버 종료")
 
 
 app = FastAPI(
@@ -69,5 +82,5 @@ async def health_check():
     return {
         "status": "healthy",
         "rag_available": get_rag_system() is not None,
-        "db_available": get_recipe_db() is not None
+        "mysql_available": check_mysql_connection()
     }
