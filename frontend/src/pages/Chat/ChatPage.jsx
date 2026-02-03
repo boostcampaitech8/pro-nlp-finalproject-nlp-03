@@ -69,11 +69,42 @@ export default function ChatPage() {
 
     console.log("[ChatPage] 가족 정보 로딩 시작...");
 
-    fetch(`${API_URL}/api/user/family`)
+    // 로그인된 회원 정보 가져오기
+    const memberStr = localStorage.getItem("member");
+    const member = memberStr ? JSON.parse(memberStr) : null;
+    const memberId = member?.id || 0;
+    const memberNickname = member?.nickname || "게스트";
+
+    fetch(`${API_URL}/api/user/family?member_id=${memberId}`)
       .then((res) => res.json())
       .then((data) => {
         console.log("[ChatPage] 가족 정보 받음:", data);
-        setFamilyMembers(data.family_members);
+
+        // familyMembers를 { 이름: {id, allergies, dislikes, ...} } 형태로 구성
+        const members = {};
+
+        // 본인 추가 (닉네임 사용)
+        members[memberNickname] = {
+          id: memberId,
+          type: "member",  // 본인
+          allergies: [],
+          dislikes: [],
+          cooking_tools: []
+        };
+
+        // 가족 추가 (relationship 사용)
+        for (const fam of data.family_members || []) {
+          const famName = fam.relationship || `가족${fam.id}`;
+          members[famName] = {
+            id: fam.id,
+            type: "family",
+            allergies: fam.allergies || [],
+            dislikes: fam.dislikes || [],
+            cooking_tools: []
+          };
+        }
+
+        setFamilyMembers(members);
 
         setMessages([
           {
@@ -209,32 +240,86 @@ export default function ChatPage() {
     }
 
     try {
-      const memberInfoPromises = selectedMembers.map((name) =>
-        fetch(`${API_URL}/api/user/family/${name}`).then((r) => r.json()),
-      );
+      // 로그인된 회원 정보
+      const memberStr = localStorage.getItem("member");
+      const member = memberStr ? JSON.parse(memberStr) : null;
+      const memberId = member?.id || 0;
 
-      const allMemberInfo = await Promise.all(memberInfoPromises);
+      // 선택된 멤버들의 개인화 정보 수집
+      const allMemberInfo = [];
+
+      for (const name of selectedMembers) {
+        const info = familyMembers[name];
+        if (!info) continue;
+
+        if (info.type === "member") {
+          // 본인 - /api/user/profile에서 로드
+          const res = await fetch(`${API_URL}/api/user/profile?member_id=${memberId}`);
+          const data = await res.json();
+          allMemberInfo.push({
+            allergies: data.allergies || [],
+            dislikes: data.dislikes || [],
+            cooking_tools: []
+          });
+        } else {
+          // 가족 - /api/user/family/{family_id}에서 로드
+          const res = await fetch(`${API_URL}/api/user/family/${info.id}`);
+          const data = await res.json();
+          allMemberInfo.push({
+            allergies: data.allergies || [],
+            dislikes: data.dislikes || [],
+            cooking_tools: []
+          });
+        }
+      }
+
+      // 조리도구 로드 (회원 전체에 속함)
+      let memberUtensils = [];
+      if (memberId > 0) {
+        const utensilRes = await fetch(`${API_URL}/api/user/all-constraints?member_id=${memberId}`);
+        const utensilData = await utensilRes.json();
+        memberUtensils = utensilData.utensils || [];
+      }
 
       const combined = {
         names: selectedMembers,
+        member_id: memberId,
         allergies: [
           ...new Set(allMemberInfo.flatMap((m) => m.allergies || [])),
         ],
         dislikes: [...new Set(allMemberInfo.flatMap((m) => m.dislikes || []))],
-        cooking_tools: [
-          ...new Set(allMemberInfo.flatMap((m) => m.cooking_tools || [])),
-        ],
+        cooking_tools: memberUtensils,
       };
 
       setCombinedMemberInfo(combined);
 
       const namesText = selectedMembers.join(", ");
-      const infoText =
-        `[ ${namesText} ]님을 위한 요리 정보\n\n` +
-        `- 알레르기: ${combined.allergies.join(", ") || "없음"}\n\n` +
-        `- 싫어하는 음식: ${combined.dislikes.join(", ") || "없음"}\n\n` +
-        `- 사용 가능한 조리도구\n: ${combined.cooking_tools.join(", ")}\n\n` +
-        `이 정보가 맞나요?`;
+
+      // 개인화 정보가 있는 항목만 표시
+      let infoLines = [`[ ${namesText} ]님을 위한 요리 정보\n`];
+
+      if (combined.allergies.length > 0) {
+        infoLines.push(`- 알레르기: ${combined.allergies.join(", ")}\n`);
+      }
+      if (combined.dislikes.length > 0) {
+        infoLines.push(`- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`);
+      }
+      if (combined.cooking_tools.length > 0) {
+        infoLines.push(`- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`);
+      }
+
+      // 개인화 정보 유무 확인
+      const hasPersonalization = combined.allergies.length > 0 || combined.dislikes.length > 0 || combined.cooking_tools.length > 0;
+
+      if (!hasPersonalization) {
+        // 개인화 정보 없음 - 안내 메시지만
+        infoLines.push(`\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`);
+      } else {
+        // 개인화 정보 있음 - 확인 질문
+        infoLines.push(`\n이 정보가 맞나요?`);
+      }
+
+      const infoText = infoLines.join("\n");
 
       setMessages((prev) => [
         ...prev,
@@ -247,8 +332,8 @@ export default function ChatPage() {
           role: "assistant",
           content: infoText,
           timestamp: new Date().toISOString(),
-          showButtons: true,
-          buttonType: "confirm_info",
+          showButtons: true,  // 항상 버튼 표시
+          buttonType: hasPersonalization ? "confirm_info" : "start_cooking",  // 개인화 정보 없으면 바로 시작 버튼
         },
       ]);
 
@@ -424,6 +509,17 @@ export default function ChatPage() {
                     onClick={() => handleConfirmInfo(false)}
                   >
                     수정이 필요해요
+                  </button>
+                </div>
+              )}
+
+              {msg.showButtons && msg.buttonType === "start_cooking" && (
+                <div className="button-group confirm-group">
+                  <button
+                    className="btn-option btn-confirm"
+                    onClick={() => handleConfirmInfo(true)}
+                  >
+                    요리 시작하기
                   </button>
                 </div>
               )}

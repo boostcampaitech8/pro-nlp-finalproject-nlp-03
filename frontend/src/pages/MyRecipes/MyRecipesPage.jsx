@@ -77,7 +77,11 @@ export default function MyRecipesPage() {
             </div>
           )}
 
-          {isEmpty && <div className="recipes-empty" />}
+          {isEmpty && (
+            <div className="recipes-empty">
+              <p className="empty-message">요리를 시작해 볼까요?</p>
+            </div>
+          )}
 
           {!isEmpty && !loading && (
             <div className="recipes-grid">

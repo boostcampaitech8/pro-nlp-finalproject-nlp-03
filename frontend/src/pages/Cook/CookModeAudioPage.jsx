@@ -322,10 +322,6 @@ export default function CookModeAudioPage() {
 
   const ttsAudioRef = useRef(null);
 
-  // ✅ getUserMedia가 늦게 resolve 되는 레이스를 막기 위한 플래그/토큰
-  const stopRequestedRef = useRef(false);
-  const startTokenRef = useRef(0);
-
   // 페이지 진입 시 자동으로 녹음 시작
   useEffect(() => {
     startListening();
@@ -333,8 +329,6 @@ export default function CookModeAudioPage() {
     return () => {
       stopListening();
       ttsStreamPlayer.stop();
-
-      // (기존 코드 유지) 오브젝트 URL 정리
       setMessages((prev) => {
         prev.forEach((m) => {
           if (m.audioUrl) URL.revokeObjectURL(m.audioUrl);
@@ -418,6 +412,7 @@ export default function CookModeAudioPage() {
 
       const ttsUrl = URL.createObjectURL(wavBlob);
       patchMessage(aiMsgId, { audioUrl: ttsUrl, status: "done" });
+
     } catch (e) {
       setErrorMsg(String(e));
       appendMessage({ type: "ai", text: `⚠️ 오류: ${String(e)}`, status: "error" });
@@ -549,26 +544,7 @@ export default function CookModeAudioPage() {
 
     setErrorMsg("");
 
-    // ✅ 이번 start의 토큰 발급 (이 토큰이 뒤에서 유효해야만 stream을 붙임)
-    stopRequestedRef.current = false;
-    const myToken = ++startTokenRef.current;
-
-    let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e) {
-      setErrorMsg(`마이크 접근 실패: ${e?.message || String(e)}`);
-      return;
-    }
-
-    // ✅ start 도중 이미 stop/unmount가 발생했으면, 늦게 잡힌 stream 즉시 종료
-    if (stopRequestedRef.current || myToken !== startTokenRef.current) {
-      try {
-        stream.getTracks().forEach((t) => t.stop());
-      } catch {}
-      return;
-    }
-
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     streamRef.current = stream;
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -593,10 +569,6 @@ export default function CookModeAudioPage() {
   }
 
   function stopListening() {
-    // ✅ 앞으로 resolve 될 startListening 결과를 무효화
-    stopRequestedRef.current = true;
-    startTokenRef.current += 1;
-
     setIsListening(false);
     setVadStateInternal("idle");
 
@@ -612,7 +584,8 @@ export default function CookModeAudioPage() {
     // 마이크 스트림 완전히 중지 (핵심!)
     const stream = streamRef.current;
     if (stream) {
-      stream.getTracks().forEach((track) => {
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => {
         track.stop();
         console.log("[stopListening] Track stopped:", track.kind, track.readyState);
       });
@@ -623,10 +596,9 @@ export default function CookModeAudioPage() {
     const audioCtx = audioCtxRef.current;
     if (audioCtx) {
       if (audioCtx.state !== "closed") {
-        audioCtx
-          .close()
-          .then(() => console.log("[stopListening] AudioContext closed"))
-          .catch(() => {});
+        audioCtx.close().then(() => {
+          console.log("[stopListening] AudioContext closed");
+        }).catch(() => {});
       }
       audioCtxRef.current = null;
     }
@@ -637,9 +609,11 @@ export default function CookModeAudioPage() {
 
   // 버튼 클릭 시 녹음 중지 후 CookModePage로 복귀
   function handleMicClick() {
+    // 먼저 녹음 완전히 중지
     stopListening();
     ttsStreamPlayer.stop();
 
+    // 상태 정리 후 페이지 이동
     setTimeout(() => {
       navigate("/cook", {
         state: {
@@ -651,6 +625,7 @@ export default function CookModeAudioPage() {
     }, 100);
   }
 
+  // RecipeBottomSheet용 steps 포맷
   const formattedSteps = recipeSteps.map((step, index) => ({
     no: step.no || index + 1,
     desc: step.desc || "",
@@ -662,10 +637,13 @@ export default function CookModeAudioPage() {
       currentStep={currentStepIndex + 1}
       onStepClick={(index) => setCurrentStepIndex(index)}
     >
+      {/* hidden audio element */}
       <audio ref={ttsAudioRef} style={{ display: "none" }} />
 
+      {/* 레시피 제목 */}
       <h1 className="cook-recipe-title">{passedRecipe.name}</h1>
 
+      {/* 소요시간 & 스톱워치 아이콘 */}
       <div className="cook-time-row">
         <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
         <img
@@ -676,6 +654,7 @@ export default function CookModeAudioPage() {
         />
       </div>
 
+      {/* 단계 설명 박스 */}
       <div className="cook-step-box">
         <span className="cook-step-label">
           STEP {recipeSteps[currentStepIndex]?.no || currentStepIndex + 1}
@@ -685,6 +664,7 @@ export default function CookModeAudioPage() {
         </p>
       </div>
 
+      {/* 채팅 박스 */}
       <div className="audio-chat-box">
         <div className="audio-chat-messages">
           {messages.map((msg) => (
@@ -694,6 +674,7 @@ export default function CookModeAudioPage() {
           ))}
         </div>
 
+        {/* 로딩 스피너 */}
         {(isListening || pipelineBusy) && (
           <div className="audio-chat-loading">
             <div className="audio-loading-spinner"></div>
@@ -701,8 +682,12 @@ export default function CookModeAudioPage() {
         )}
       </div>
 
-      {errorMsg && <div className="audio-error-msg">{errorMsg}</div>}
+      {/* 에러 메시지 */}
+      {errorMsg && (
+        <div className="audio-error-msg">{errorMsg}</div>
+      )}
 
+      {/* 마이크 버튼 */}
       <div className="cook-record-wrapper">
         <button
           className={`cook-record-btn ${isListening ? "recording" : ""}`}

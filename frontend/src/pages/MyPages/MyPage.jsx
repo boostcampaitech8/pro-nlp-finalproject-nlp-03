@@ -282,19 +282,26 @@ export default function MyPage() {
     }
   };
 
-  // --- 조리도구 토글 ---
-  const toggleTool = async (utensilId) => {
-    // 본인만 조리도구 관리 가능
-    if (currentProfileObj?.id !== null) return;
+  // --- 로그아웃 ---
+  const handleLogout = () => {
+    localStorage.removeItem("member");
+    localStorage.removeItem("access_token");
+    setMember(null);
+    navigate("/");
+  };
 
-    const currentTools = currentData.tools;
+  // --- 조리도구 토글 (회원 소유, 프로필 무관) ---
+  const toggleTool = async (utensilId) => {
+    // 항상 "나" 프로필의 tools를 수정 (회원 소유)
+    const myData = profileData["나"] || { allergies: [], dislikes: [], tools: [] };
+    const currentTools = myData.tools || [];
     const newTools = currentTools.includes(utensilId)
       ? currentTools.filter(t => t !== utensilId)
       : [...currentTools, utensilId];
 
     setProfileData({
       ...profileData,
-      [currentProfile]: { ...currentData, tools: newTools }
+      "나": { ...myData, tools: newTools }
     });
 
     // API 저장
@@ -336,6 +343,9 @@ export default function MyPage() {
                   <span className="member-nickname">{member.nickname}</span>
                   <span className="member-email">{member.email}</span>
                 </div>
+                <button className="logout-btn" onClick={handleLogout}>
+                  로그아웃
+                </button>
               </div>
             )}
             <p className="hello">안녕하세요,</p>
@@ -401,30 +411,30 @@ export default function MyPage() {
                 </button>
             </div>
 
-            {/* 조리도구: 본인('나')만 표시 */}
-            {currentProfileObj?.id === null && (
-              <section className="tools-section">
-                  <h3 className="section-title">주방 및 조리 도구</h3>
-                  <div className="tool-grid">
-                  {allUtensils.map(tool => {
-                    const iconData = TOOL_ICONS[tool.name] || { icon: "/default-tool.png" };
-                    return (
-                      <div key={tool.id} className="tool-item" onClick={() => toggleTool(tool.id)}>
-                          <div className={`tool-box ${currentData.tools.includes(tool.id) ? "selected" : ""}`}>
-                          <img
-                            src={iconData.icon}
-                            alt={tool.name}
-                            className="tool-icon-img"
-                            style={iconData.size ? { width: iconData.size, height: iconData.size } : {}}
-                          />
-                          </div>
-                          <span className="tool-label">{tool.name}</span>
-                      </div>
-                    );
-                  })}
-                  </div>
-              </section>
-            )}
+            {/* 조리도구: 항상 표시 (회원 소유, 가족과 무관) */}
+            <section className="tools-section">
+                <h3 className="section-title">주방 및 조리 도구</h3>
+                <div className="tool-grid">
+                {allUtensils.map(tool => {
+                  const iconData = TOOL_ICONS[tool.name] || { icon: "/default-tool.png" };
+                  // 항상 "나" 프로필의 tools 사용 (회원 소유)
+                  const myTools = profileData["나"]?.tools || [];
+                  return (
+                    <div key={tool.id} className="tool-item" onClick={() => toggleTool(tool.id)}>
+                        <div className={`tool-box ${myTools.includes(tool.id) ? "selected" : ""}`}>
+                        <img
+                          src={iconData.icon}
+                          alt={tool.name}
+                          className="tool-icon-img"
+                          style={iconData.size ? { width: iconData.size, height: iconData.size } : {}}
+                        />
+                        </div>
+                        <span className="tool-label">{tool.name}</span>
+                    </div>
+                  );
+                })}
+                </div>
+            </section>
           </div>
         </div>
       </div>
