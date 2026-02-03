@@ -4,7 +4,6 @@ FastAPI 의존성 관리
 """
 from functools import lru_cache
 from typing import Optional
-import os
 
 from services.rag import RecipeRAGLangChain
 from app.config import settings
@@ -38,12 +37,3 @@ def get_rag_system() -> Optional[RecipeRAGLangChain]:
             return None
 
     return _rag_system
-
-
-def get_user_profile() -> dict:
-    """사용자 프로필 반환"""
-    return {
-        "name": settings.USER_NAME,
-        "allergies": settings.USER_ALLERGIES,
-        "dislike": settings.USER_DISLIKES
-    }

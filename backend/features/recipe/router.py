@@ -6,29 +6,58 @@ import json
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 
-from core.dependencies import get_rag_system, get_user_profile
+from core.dependencies import get_rag_system
 from core.exceptions import RAGNotAvailableError
 from features.recipe.service import RecipeService
 from features.recipe.schemas import RecipeGenerateRequest
-from models.mysql_db import save_my_recipe, get_my_recipes, get_my_recipe
+from models.mysql_db import (
+    save_my_recipe, get_my_recipes, get_my_recipe, delete_my_recipe, update_my_recipe,
+    get_member_personalization, get_member_by_id,
+    create_generate, get_generate, get_session_generates
+)
 
 router = APIRouter()
+
+
+def get_user_profile_from_db(member_id: int) -> dict:
+    """MySQL에서 사용자 프로필 조회"""
+    if member_id == 0:
+        return {"name": "게스트", "allergies": [], "dislikes": []}
+
+    member = get_member_by_id(member_id)
+    psnl = get_member_personalization(member_id)
+
+    return {
+        "name": member.get("nickname", "사용자") if member else "사용자",
+        "allergies": psnl.get("allergies", []) if psnl else [],
+        "dislikes": psnl.get("dislikes", []) if psnl else []
+    }
 
 
 @router.post("/generate")
 async def generate_recipe(
     request: RecipeGenerateRequest,
     background_tasks: BackgroundTasks,
-    rag_system = Depends(get_rag_system),
-    user_profile = Depends(get_user_profile)
+    rag_system = Depends(get_rag_system)
 ):
-    """레시피 생성 (대화 히스토리 반영) - 병렬 저장"""
+    """레시피 생성 (대화 히스토리 반영) - generate 테이블에 저장"""
     print("\n" + "="*60)
     print("[Recipe API] 레시피 생성 요청")
     print("="*60)
 
     if not rag_system:
         raise RAGNotAvailableError()
+
+    # member_id 추출 (숫자면 사용, 아니면 0)
+    member_id = 0
+    if request.member_info:
+        mid = request.member_info.get('member_id')
+        if mid and str(mid).isdigit():
+            member_id = int(mid)
+
+    # MySQL에서 사용자 프로필 조회
+    user_profile = get_user_profile_from_db(member_id)
+    print(f"[Recipe API] 사용자 프로필: {user_profile}")
 
     service = RecipeService(rag_system, None, user_profile)
 
@@ -38,30 +67,34 @@ async def generate_recipe(
             member_info=request.member_info
         )
 
-        # member_id 추출 (숫자면 사용, 아니면 0)
-        member_id = 0
-        if request.member_info:
-            mid = request.member_info.get('member_id')
-            if mid and str(mid).isdigit():
-                member_id = int(mid)
-
-        # 백그라운드로 DB 저장 (병렬 처리!)
-        def save_to_db():
+        generate_id = None
+        # 백그라운드로 generate 테이블에 저장
+        def save_to_generate():
+            nonlocal generate_id
             try:
-                result = save_my_recipe(
+                # session_id가 없으면 None으로 저장 (직접 호출 시)
+                session_id = request.member_info.get('session_id') if request.member_info else None
+                if session_id and str(session_id).isdigit():
+                    session_id = int(session_id)
+                else:
+                    session_id = None
+
+                result = create_generate(
+                    session_id=session_id,
                     member_id=member_id,
                     recipe_name=recipe_data.get('title', '추천 레시피'),
                     ingredients=recipe_data.get('ingredients', []),
                     steps=recipe_data.get('steps', []),
-                    image_url=recipe_data.get('image', '')
+                    gen_type="FIRST"
                 )
-                print(f"[Recipe API] 백그라운드 저장 완료: ID={result.get('my_recipe_id')}")
+                generate_id = result.get('generate_id')
+                print(f"[Recipe API] generate 테이블 저장 완료: ID={generate_id}")
             except Exception as e:
-                print(f"[Recipe API] 백그라운드 저장 실패: {e}")
+                print(f"[Recipe API] generate 저장 실패: {e}")
 
-        background_tasks.add_task(save_to_db)
+        background_tasks.add_task(save_to_generate)
 
-        # 즉시 응답 (DB 저장 기다리지 않음!)
+        # 즉시 응답 (generate_id는 백그라운드 저장 후 결정됨)
         return {
             "recipe": recipe_data,
             "member_id": member_id,
@@ -80,10 +113,9 @@ async def generate_recipe(
 async def generate_recipe_from_chat(
     session_id: str,
     background_tasks: BackgroundTasks,
-    rag_system = Depends(get_rag_system),
-    user_profile = Depends(get_user_profile)
+    rag_system = Depends(get_rag_system)
 ):
-    """채팅 세션에서 제대로 된 레시피 생성 (RecipeService 사용)"""
+    """채팅 세션에서 레시피 생성 → generate 테이블에 저장"""
     print("\n" + "="*60)
     print("[Recipe API] 채팅 세션에서 레시피 생성")
     print("="*60)
@@ -99,12 +131,24 @@ async def generate_recipe_from_chat(
     session = chat_sessions[session_id]
     messages = session.get("messages", [])
     user_constraints = session.get("user_constraints", {})
+    db_session_id = session.get("db_session_id")  # MySQL session.session_id
+
+    # member_id 추출 (숫자면 사용, 아니면 0)
+    member_id = session.get("member_id", 0)
+    if not member_id and user_constraints:
+        mid = user_constraints.get('member_id')
+        if mid and str(mid).isdigit():
+            member_id = int(mid)
+
+    # 세션에 저장된 user_profile 또는 MySQL에서 조회
+    user_profile = session.get("user_profile") or get_user_profile_from_db(member_id)
 
     if not messages:
         raise HTTPException(status_code=400, detail="대화 내용이 없습니다")
 
     print(f"[Recipe API] 세션 메시지 수: {len(messages)}")
-    print(f"[Recipe API] 사용자 제약: {user_constraints.get('names', [])}")
+    print(f"[Recipe API] 사용자 프로필: {user_profile}")
+    print(f"[Recipe API] DB session_id: {db_session_id}")
 
     service = RecipeService(rag_system, None, user_profile)
 
@@ -118,36 +162,38 @@ async def generate_recipe_from_chat(
         print(f"[Recipe API] 레시피 생성 완료: {recipe_json.get('title')}")
         print(f"[Recipe API] 이미지: {recipe_json.get('image', 'None')[:60]}...")
 
-        # member_id 추출 (숫자면 사용, 아니면 0)
-        member_id = 0
-        if user_constraints:
-            mid = user_constraints.get('member_id')
-            if mid and str(mid).isdigit():
-                member_id = int(mid)
-
-        # 백그라운드 저장
-        def save_to_db():
+        generate_id = None
+        # generate 테이블에 저장 (동기로 저장하여 generate_id 반환)
+        if member_id > 0:
             try:
-                result = save_my_recipe(
+                # 해당 세션의 이전 생성 개수 확인
+                existing = get_session_generates(db_session_id) if db_session_id else []
+                gen_order = len(existing) + 1
+                gen_type = "FIRST" if gen_order == 1 else "RETRY"
+
+                result = create_generate(
+                    session_id=db_session_id,
                     member_id=member_id,
                     recipe_name=recipe_json.get('title', '추천 레시피'),
                     ingredients=recipe_json.get('ingredients', []),
                     steps=recipe_json.get('steps', []),
-                    image_url=recipe_json.get('image', '')
+                    gen_type=gen_type,
+                    gen_order=gen_order
                 )
-                print(f"[Recipe API] 백그라운드 저장 완료: ID={result.get('my_recipe_id')}")
+                generate_id = result.get('generate_id')
+                print(f"[Recipe API] generate 테이블 저장 완료: ID={generate_id}, order={gen_order}")
             except Exception as e:
-                print(f"[Recipe API] 백그라운드 저장 실패: {e}")
+                print(f"[Recipe API] generate 저장 실패: {e}")
 
-        background_tasks.add_task(save_to_db)
-
-        # 즉시 응답 (이미지 포함!)
+        # 응답에 generate_id 포함 (마이레시피 저장 시 사용)
         return {
             "recipe": recipe_json,
             "member_id": member_id,
             "title": recipe_json.get("title"),
             "constraints": user_constraints,
-            "session_id": session_id
+            "session_id": session_id,
+            "db_session_id": db_session_id,
+            "generate_id": generate_id
         }
 
     except Exception as e:
@@ -215,7 +261,7 @@ async def get_recipe_detail(
 async def save_recipe_to_mypage(
     request: dict,
 ):
-    """요리 완료 후 마이레시피에 저장"""
+    """요리 완료 후 마이레시피에 저장 (generate_id, session_id 연결)"""
     try:
         # member_id 추출 (숫자면 사용, 아니면 0)
         member_id = 0
@@ -223,15 +269,32 @@ async def save_recipe_to_mypage(
         if mid and str(mid).isdigit():
             member_id = int(mid)
 
+        # generate_id, session_id 추출
+        generate_id = request.get("generate_id")
+        if generate_id and str(generate_id).isdigit():
+            generate_id = int(generate_id)
+        else:
+            generate_id = None
+
+        session_id = request.get("session_id") or request.get("db_session_id")
+        if session_id and str(session_id).isdigit():
+            session_id = int(session_id)
+        else:
+            session_id = None
+
         recipe = request.get("recipe", {})
         result = save_my_recipe(
             member_id=member_id,
             recipe_name=recipe.get("title", "마이레시피"),
             ingredients=recipe.get("ingredients", []),
             steps=recipe.get("steps", []),
-            rating=request.get("rating", 0),
-            image_url=recipe.get("image", "")
+            rating=request.get("rating"),
+            image_url=recipe.get("image", ""),
+            session_id=session_id,
+            generate_id=generate_id
         )
+
+        print(f"[Recipe API] 마이레시피 저장: ID={result.get('my_recipe_id')}, generate_id={generate_id}, session_id={session_id}")
 
         return {
             "success": True,
@@ -240,4 +303,52 @@ async def save_recipe_to_mypage(
         }
     except Exception as e:
         print(f"[Recipe API] 마이레시피 저장 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{recipe_id}")
+async def delete_recipe(recipe_id: int):
+    """마이레시피 삭제"""
+    try:
+        existing = get_my_recipe(recipe_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="레시피를 찾을 수 없습니다")
+
+        delete_my_recipe(recipe_id)
+        return {"success": True, "message": "레시피가 삭제되었습니다"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Recipe API] 마이레시피 삭제 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{recipe_id}")
+async def update_recipe(recipe_id: int, request: dict):
+    """마이레시피 수정 (평점, 제목 등)"""
+    try:
+        existing = get_my_recipe(recipe_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="레시피를 찾을 수 없습니다")
+
+        result = update_my_recipe(
+            my_recipe_id=recipe_id,
+            recipe_name=request.get("title"),
+            rating=request.get("rating"),
+            image_url=request.get("image")
+        )
+
+        return {
+            "success": True,
+            "recipe": {
+                "id": result.get("my_recipe_id"),
+                "title": result.get("recipe_name"),
+                "rating": result.get("rating"),
+                "image": result.get("image_url")
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Recipe API] 마이레시피 수정 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))

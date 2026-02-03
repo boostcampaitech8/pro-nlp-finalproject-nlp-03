@@ -3,18 +3,39 @@
 Chat Agent WebSocket 라우터 - Adaptive RAG
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
-from typing import Dict
+from typing import Dict, Optional
 import json
 import asyncio
 import time
 
 from core.websocket import manager
-from core.dependencies import get_rag_system, get_user_profile
+from core.dependencies import get_rag_system
 from features.chat.agent import create_chat_agent
+from models.mysql_db import (
+    create_session, get_session, add_chat_message, get_session_chats,
+    get_member_personalization, get_families, get_family_personalization,
+    get_member_utensils, get_all_utensils, get_member_by_id
+)
 
 router = APIRouter()
 
+# 메모리 캐시 (DB 세션 ID 매핑용)
 chat_sessions: Dict[str, dict] = {}
+
+
+def get_user_profile_from_db(member_id: int) -> dict:
+    """MySQL에서 사용자 프로필 조회"""
+    if member_id == 0:
+        return {"name": "게스트", "allergies": [], "dislikes": []}
+
+    member = get_member_by_id(member_id)
+    psnl = get_member_personalization(member_id)
+
+    return {
+        "name": member.get("nickname", "사용자") if member else "사용자",
+        "allergies": psnl.get("allergies", []) if psnl else [],
+        "dislikes": psnl.get("dislikes", []) if psnl else []
+    }
 
 
 # ─────────────────────────────────────────────
@@ -32,14 +53,13 @@ def _log_step(label: str, start: float, end: float):
 async def chat_websocket(
     websocket: WebSocket,
     session_id: str,
-    rag_system = Depends(get_rag_system),
-    user_profile = Depends(get_user_profile)
+    rag_system = Depends(get_rag_system)
 ):
     """채팅 Agent WebSocket - Adaptive RAG"""
-    
+
     await websocket.accept()
     print(f"[WS] Connected: {session_id}")
-    
+
     if not rag_system:
         print("[WS] RAG 시스템 없음")
         await websocket.send_json({
@@ -48,7 +68,7 @@ async def chat_websocket(
         })
         await websocket.close()
         return
-    
+
     try:
         agent = create_chat_agent(rag_system)
         if not agent:
@@ -64,13 +84,16 @@ async def chat_websocket(
         })
         await websocket.close()
         return
-    
+
     manager.active_connections[session_id] = websocket
-    
+
+    # 세션 초기화 (메모리 캐시)
     if session_id not in chat_sessions:
         chat_sessions[session_id] = {
             "messages": [],
-            "user_constraints": {}
+            "user_constraints": {},
+            "member_id": 0,
+            "db_session_id": None
         }
     
     try:
@@ -86,8 +109,28 @@ async def chat_websocket(
             
             if msg_type == "init_context":
                 member_info = message.get("member_info", {})
+                member_id = member_info.get("member_id", 0)
+                if member_id and str(member_id).isdigit():
+                    member_id = int(member_id)
+                else:
+                    member_id = 0
+
                 chat_sessions[session_id]["user_constraints"] = member_info
-                print(f"[WS] 컨텍스트 설정: {member_info.get('names', [])}")
+                chat_sessions[session_id]["member_id"] = member_id
+
+                # MySQL에 세션 생성 (로그인 사용자만)
+                if member_id > 0:
+                    try:
+                        db_session = create_session(member_id)
+                        chat_sessions[session_id]["db_session_id"] = db_session.get("session_id")
+                        print(f"[WS] MySQL 세션 생성: {db_session.get('session_id')}")
+                    except Exception as e:
+                        print(f"[WS] MySQL 세션 생성 실패: {e}")
+
+                # MySQL에서 사용자 프로필 조회
+                user_profile = get_user_profile_from_db(member_id)
+                chat_sessions[session_id]["user_profile"] = user_profile
+                print(f"[WS] 컨텍스트 설정: member_id={member_id}, profile={user_profile.get('name')}")
                 continue
             
             elif msg_type == "user_message":
@@ -98,13 +141,22 @@ async def chat_websocket(
 
                 # ── 타이밍: 전체 처리 시작점 ──
                 t_total_start = _t()
-                
+
                 # ── 타이밍: 세션 상태 구성 ──
                 t_state_start = _t()
                 chat_sessions[session_id]["messages"].append({
                     "role": "user",
                     "content": content
                 })
+
+                # MySQL에 사용자 메시지 저장
+                member_id = chat_sessions[session_id].get("member_id", 0)
+                db_session_id = chat_sessions[session_id].get("db_session_id")
+                if db_session_id and member_id > 0:
+                    try:
+                        add_chat_message(member_id, db_session_id, "USER", content)
+                    except Exception as e:
+                        print(f"[WS] 사용자 메시지 DB 저장 실패: {e}")
                 
                 chat_history = [
                     f"{msg['role']}: {msg['content']}"
@@ -169,26 +221,41 @@ async def chat_websocket(
 
                     if response == "NOT_RECIPE_RELATED":
                         print(f"[WS] 요리 무관 대화 감지")
-                        
+                        not_recipe_msg = "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
+
                         chat_sessions[session_id]["messages"].append({
                             "role": "assistant",
-                            "content": "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
+                            "content": not_recipe_msg
                         })
-                        
+
+                        # MySQL에 어시스턴트 메시지 저장
+                        if db_session_id and member_id > 0:
+                            try:
+                                add_chat_message(member_id, db_session_id, "AGENT", not_recipe_msg)
+                            except Exception as e:
+                                print(f"[WS] 어시스턴트 메시지 DB 저장 실패: {e}")
+
                         await websocket.send_json({
                             "type": "not_recipe_related",
-                            "content": "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
+                            "content": not_recipe_msg
                         })
                         _log_step("응답 파싱 & WS 전송", t_send_start, _t())
                         _log_step("💥 전체 처리 합계", t_total_start, _t())
                         print(f"{'='*50}\n")
                         continue
-                    
+
                     chat_sessions[session_id]["messages"].append({
                         "role": "assistant",
                         "content": response
                     })
-                    
+
+                    # MySQL에 어시스턴트 메시지 저장
+                    if db_session_id and member_id > 0:
+                        try:
+                            add_chat_message(member_id, db_session_id, "AGENT", response)
+                        except Exception as e:
+                            print(f"[WS] 어시스턴트 메시지 DB 저장 실패: {e}")
+
                     await websocket.send_json({
                         "type": "agent_message",
                         "content": response
