@@ -4,3 +4,5 @@ logs
 plugins
 volumes
 .env
+__pycache__
+*.pyc
