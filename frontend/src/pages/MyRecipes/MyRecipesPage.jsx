@@ -66,7 +66,7 @@ export default function MyRecipesPage() {
   return (
     <div className="my-recipes-page">
       {/* 내부 스크롤 영역 */}
-      <div className="my-recipes-scroll">
+      <div className={`my-recipes-scroll ${isEmpty ? "is-empty" : ""}`}>
         {/* 클립 이미지 (베이지) */}
         <div className="clipboard-clip">
           <img src="/my-recipe-clip-beige.png" alt="clip" />

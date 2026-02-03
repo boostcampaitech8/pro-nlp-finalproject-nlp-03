@@ -37,6 +37,10 @@
   display: none;
 }
 
+.my-recipes-scroll.is-empty {
+  overflow: hidden;
+}
+
 .clipboard-clip {
   display: flex;
   justify-content: center;
@@ -62,8 +66,8 @@
 }
 
 .clipboard-board.is-empty {
-  min-height: calc(100vh - 240px);
-  height: calc(100vh - 240px);
+  min-height: 100%;
+  height: 100%;
 }
 
 /* ===============================

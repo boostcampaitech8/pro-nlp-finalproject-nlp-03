@@ -17,10 +17,16 @@ export default function HomePage() {
   });
   
   const [loading, setLoading] = useState(true);
+  const [myRecipeCount, setMyRecipeCount] = useState(0);
+
+  const memberStr = localStorage.getItem("member");
+  const member = memberStr ? JSON.parse(memberStr) : null;
+  const memberId = member?.id || 0;
 
   // 날씨 데이터 가져오기
   useEffect(() => {
     fetchWeather();
+    fetchMyRecipeCount();
   }, []);
 
   const fetchWeather = async () => {
@@ -73,6 +79,17 @@ export default function HomePage() {
     } catch (error) {
       console.error("날씨 API 에러:", error);
       setLoading(false);
+    }
+  };
+
+  const fetchMyRecipeCount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/recipe/list?member_id=${memberId}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setMyRecipeCount((data.recipes || []).length);
+    } catch (error) {
+      console.error("마이 레시피 개수 불러오기 실패:", error);
     }
   };
 
@@ -168,7 +185,7 @@ const fetchWeatherByCity = async (city) => {
           >
             <div className="card-small-top">
               <img src="/main-profile.png" className="card-icon" alt="감자" />
-              <span className="highlight">N개</span>
+              <span className="highlight">{myRecipeCount}개</span>
             </div>
 
             <h3>마이 레시피</h3>
