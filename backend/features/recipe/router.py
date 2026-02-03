@@ -164,12 +164,14 @@ async def list_recipes(
     recipes = []
     for row in rows:
         recipe_json = json.loads(row[3]) if len(row) > 3 and row[3] else {}
+        rating = row[4] if len(row) > 4 else 0
         
         recipes.append({
             "id": row[0],
             "title": row[1],
             "created_at": row[2],
-            "image": recipe_json.get('image', ''),  # 이미지 URL 포함!
+            "image": recipe_json.get('image', ''),
+            "rating": rating,
         })
     return {"recipes": recipes}
 
@@ -197,3 +199,29 @@ async def get_recipe(
         "constraints": json.loads(row[4]) if row[4] else {},
         "created_at": row[5],
     }
+
+@router.post("/save-my-recipe")
+async def save_my_recipe(
+    request: dict,
+    recipe_db=Depends(get_recipe_db),
+):
+    """요리 완료 후 마이레시피에 저장"""
+    if not recipe_db:
+        raise HTTPException(status_code=503, detail="DB 사용 불가")
+    
+    try:
+        recipe_id = recipe_db.save_recipe(
+            user_id=request.get("user_id", "사용자"),
+            recipe=request.get("recipe", {}),
+            constraints=request.get("constraints", {}),
+            rating=request.get("rating", 0)
+        )
+        
+        return {
+            "success": True,
+            "recipe_id": recipe_id,
+            "message": "마이레시피에 저장되었습니다"
+        }
+    except Exception as e:
+        print(f"[Recipe API] 마이레시피 저장 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
