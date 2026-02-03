@@ -60,69 +60,107 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isThinking]);
 
-  // 가족 정보 불러오기
+  // "나"만 자동 선택하고 바로 개인화 정보 표시
   useEffect(() => {
     if (existingMemberInfo || skipToChat) {
       console.log("[ChatPage] 기존 세션 복원 (skipToChat)");
       return;
     }
 
-    console.log("[ChatPage] 가족 정보 로딩 시작...");
+    console.log("[ChatPage] 개인화 정보 로딩 시작 (나 자동 선택)...");
 
     // 로그인된 회원 정보 가져오기
     const memberStr = localStorage.getItem("member");
     const member = memberStr ? JSON.parse(memberStr) : null;
     const memberId = member?.id || 0;
-    const memberNickname = member?.nickname || "게스트";
+    const memberNickname = member?.nickname || "나";
 
-    fetch(`${API_URL}/api/user/family?member_id=${memberId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("[ChatPage] 가족 정보 받음:", data);
+    // "나"만 자동 선택하여 바로 개인화 정보 로드
+    const loadMyPersonalization = async () => {
+      try {
+        // 본인 개인화 정보 로드
+        const profileRes = await fetch(`${API_URL}/api/user/profile?member_id=${memberId}`);
+        const profileData = await profileRes.json();
 
-        // familyMembers를 { 이름: {id, allergies, dislikes, ...} } 형태로 구성
-        const members = {};
-
-        // 본인 추가 (닉네임 사용)
-        members[memberNickname] = {
-          id: memberId,
-          type: "member",  // 본인
-          allergies: [],
-          dislikes: [],
-          cooking_tools: []
-        };
-
-        // 가족 추가 (relationship 사용)
-        for (const fam of data.family_members || []) {
-          const famName = fam.relationship || `가족${fam.id}`;
-          members[famName] = {
-            id: fam.id,
-            type: "family",
-            allergies: fam.allergies || [],
-            dislikes: fam.dislikes || [],
-            cooking_tools: []
-          };
+        // 조리도구 로드
+        let memberUtensils = [];
+        if (memberId > 0) {
+          const utensilRes = await fetch(`${API_URL}/api/user/all-constraints?member_id=${memberId}`);
+          const utensilData = await utensilRes.json();
+          memberUtensils = utensilData.utensils || [];
         }
 
-        setFamilyMembers(members);
+        const combined = {
+          names: ["나"],
+          member_id: memberId,
+          allergies: profileData.allergies || [],
+          dislikes: profileData.dislikes || [],
+          cooking_tools: memberUtensils,
+        };
+
+        setCombinedMemberInfo(combined);
+
+        // 개인화 정보가 있는 항목만 표시
+        let infoLines = [`[ ${memberNickname} ]님을 위한 요리 정보\n`];
+
+        if (combined.allergies.length > 0) {
+          infoLines.push(`- 알레르기: ${combined.allergies.join(", ")}\n`);
+        }
+        if (combined.dislikes.length > 0) {
+          infoLines.push(`- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`);
+        }
+        if (combined.cooking_tools.length > 0) {
+          infoLines.push(`- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`);
+        }
+
+        // 개인화 정보 유무 확인
+        const hasPersonalization = combined.allergies.length > 0 || combined.dislikes.length > 0 || combined.cooking_tools.length > 0;
+
+        if (!hasPersonalization) {
+          infoLines.push(`\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`);
+        } else {
+          infoLines.push(`\n이 정보가 맞나요?`);
+        }
+
+        const infoText = infoLines.join("\n");
 
         setMessages([
           {
             role: "assistant",
-            content:
-              "안녕하세요! 누구를 위한 요리를 만들까요?\n(여러 명 선택 가능)",
+            content: infoText,
             timestamp: new Date().toISOString(),
             showButtons: true,
-            buttonType: "select_member",
+            buttonType: hasPersonalization ? "confirm_info" : "start_cooking",
           },
         ]);
 
-        setFlowState("SELECT_MEMBER");
-      })
-      .catch((err) => {
-        console.error("[ChatPage] 가족 정보 로딩 실패:", err);
-        alert("가족 정보를 불러올 수 없습니다.");
-      });
+        setFlowState("CONFIRM_INFO");
+      } catch (err) {
+        console.error("[ChatPage] 개인화 정보 로딩 실패:", err);
+        // 에러 시에도 요리 시작 가능하도록
+        setCombinedMemberInfo({
+          names: ["나"],
+          member_id: memberId,
+          allergies: [],
+          dislikes: [],
+          cooking_tools: [],
+        });
+
+        setMessages([
+          {
+            role: "assistant",
+            content: "개인화 정보를 불러오지 못했어요.\n그래도 요리를 시작할 수 있어요!",
+            timestamp: new Date().toISOString(),
+            showButtons: true,
+            buttonType: "start_cooking",
+          },
+        ]);
+
+        setFlowState("CONFIRM_INFO");
+      }
+    };
+
+    loadMyPersonalization();
   }, [API_URL, existingMemberInfo, skipToChat]);
 
   // WebSocket 연결

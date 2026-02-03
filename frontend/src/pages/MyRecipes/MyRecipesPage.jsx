@@ -26,13 +26,18 @@ export default function MyRecipesPage() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 로그인된 회원 정보
+  const memberStr = localStorage.getItem("member");
+  const member = memberStr ? JSON.parse(memberStr) : null;
+  const memberId = member?.id || 0;
+
   useEffect(() => {
     fetchMyRecipes();
   }, []);
 
   const fetchMyRecipes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/recipe/list`);
+      const res = await fetch(`${API_URL}/api/recipe/list?member_id=${memberId}`);
       if (res.ok) {
         const data = await res.json();
         setRecipes(data.recipes || []);
@@ -79,7 +84,7 @@ export default function MyRecipesPage() {
 
           {isEmpty && (
             <div className="recipes-empty">
-              <p className="empty-message">요리를 시작해 볼까요?</p>
+              <p className="empty-message">요리를 시작하러 가볼까요?</p>
             </div>
           )}
 

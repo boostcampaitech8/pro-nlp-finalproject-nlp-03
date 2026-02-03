@@ -27,6 +27,11 @@ export default function CookCompletePage() {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
+  // 로그인된 회원 정보
+  const memberStr = typeof window !== 'undefined' ? localStorage.getItem("member") : null;
+  const member = memberStr ? JSON.parse(memberStr) : null;
+  const memberId = member?.id || 0;
+
   const handleSaveRecipe = async () => {
     try {
       const response = await fetch(`${API_URL}/api/recipe/save-my-recipe`, {
@@ -35,7 +40,7 @@ export default function CookCompletePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: "사용자",  // 실제 로그인 시스템이 있다면 사용자 ID 사용
+          member_id: memberId,
           recipe: recipe,
           constraints: {},
           rating: rating,
