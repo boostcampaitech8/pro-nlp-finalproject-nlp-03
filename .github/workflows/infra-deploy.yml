@@ -3,15 +3,21 @@ name: Deploy to GCP
 on:
   push:
     branches:
-    - infra/pipeline
+      - infra/pipeline
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    outputs:
+      dags_changed: ${{ steps.changes.outputs.dags }}
+      infra_changed: ${{ steps.changes.outputs.infra }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,9 +38,6 @@ jobs:
             infra:
               - 'Dockerfile'
               - 'docker-compose.yml'
-    outputs:
-      dags_changed: ${{ steps.changes.outputs.dags }}
-      infra_changed: ${{ steps.changes.outputs.infra }}
 
   deploy:
     needs: build
@@ -65,4 +68,4 @@ jobs:
             git pull origin infra/pipeline
             sudo docker compose build
             sudo docker compose up -d
-            sudo docker compose logs | tail -10
+
