@@ -26,17 +26,27 @@ export default function MyPage() {
   // 전체 조리도구 목록 (DB에서 로드)
   const [allUtensils, setAllUtensils] = useState([]);
 
-  const TOOL_ICONS = {
-    "밥솥": { icon: "/rice-cooker.png" },
-    "전자레인지": { icon: "/cooked.png", size: "100%" },
-    "오븐": { icon: "/oven.png", size: "65%" },
-    "에어프라이어": { icon: "/air-fryer.png" },
-    "찜기": { icon: "/food-steamer.png" },
-    "믹서기": { icon: "/blender.png" },
-    "착즙기": { icon: "/citrus-juicer.png" },
-    "커피머신": { icon: "/coffe-machine.png" },
-    "토스트기": { icon: "/toast-appliance.png" },
-    "와플메이커": { icon: "/stovetop-waffle.png" },
+  const TOOL_METADATA = {
+    밥솥: { label: "밥솥", icon: "/rice-cooker.png" },
+    RICE_COOKER: { label: "밥솥", icon: "/rice-cooker.png" },
+    전자레인지: { label: "전자레인지", icon: "/cooked.png", size: "100%" },
+    MICROWAVE: { label: "전자레인지", icon: "/cooked.png", size: "100%" },
+    오븐: { label: "오븐", icon: "/oven.png", size: "65%" },
+    OVEN: { label: "오븐", icon: "/oven.png", size: "65%" },
+    에어프라이어: { label: "에어프라이어", icon: "/air-fryer.png" },
+    AIR_FRYER: { label: "에어프라이어", icon: "/air-fryer.png" },
+    찜기: { label: "찜기", icon: "/food-steamer.png" },
+    STEAMER: { label: "찜기", icon: "/food-steamer.png" },
+    믹서기: { label: "믹서기", icon: "/blender.png" },
+    BLENDER: { label: "믹서기", icon: "/blender.png" },
+    착즙기: { label: "착즙기", icon: "/citrus-juicer.png" },
+    JUICER: { label: "착즙기", icon: "/citrus-juicer.png" },
+    커피머신: { label: "커피머신", icon: "/coffe-machine.png" },
+    COFFEE_MACHINE: { label: "커피머신", icon: "/coffe-machine.png" },
+    토스트기: { label: "토스트기", icon: "/toast-appliance.png" },
+    TOASTER: { label: "토스트기", icon: "/toast-appliance.png" },
+    와플메이커: { label: "와플메이커", icon: "/stovetop-waffle.png" },
+    WAFFLE_MAKER: { label: "와플메이커", icon: "/stovetop-waffle.png" },
   };
 
   // --- 회원 정보 로드 ---
@@ -418,7 +428,10 @@ export default function MyPage() {
                 <h3 className="section-title">주방 및 조리 도구</h3>
                 <div className="tool-grid">
                 {allUtensils.map(tool => {
-                  const iconData = TOOL_ICONS[tool.name] || { icon: "/default-tool.png" };
+                  const iconData = TOOL_METADATA[tool.name] || {
+                    label: tool.name,
+                    icon: "/default-tool.png",
+                  };
                   // 항상 "나" 프로필의 tools 사용 (회원 소유)
                   const myTools = profileData["나"]?.tools || [];
                   return (
@@ -426,12 +439,12 @@ export default function MyPage() {
                         <div className={`tool-box ${myTools.includes(tool.id) ? "selected" : ""}`}>
                         <img
                           src={iconData.icon}
-                          alt={tool.name}
+                          alt={iconData.label}
                           className="tool-icon-img"
                           style={iconData.size ? { width: iconData.size, height: iconData.size } : {}}
                         />
                         </div>
-                        <span className="tool-label">{tool.name}</span>
+                        <span className="tool-label">{iconData.label}</span>
                     </div>
                   );
                 })}

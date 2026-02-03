@@ -61,6 +61,11 @@
   border-radius: 14px;
 }
 
+.clipboard-board.is-empty {
+  min-height: calc(100vh - 240px);
+  height: calc(100vh - 240px);
+}
+
 /* ===============================
    제목
 ================================ */
@@ -85,7 +90,7 @@
 }
 
 .recipes-empty {
-  min-height: calc(100vh - 280px);
+  min-height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
