@@ -25,7 +25,7 @@ export default function CookCompletePage() {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
   const handleSaveRecipe = async () => {
     try {
