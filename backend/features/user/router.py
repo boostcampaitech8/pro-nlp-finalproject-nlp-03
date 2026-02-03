@@ -168,8 +168,8 @@ async def get_mypage_data(member_id: int = Query(default=0)):
 
 @router.put("/personalization")
 async def update_personalization(
-    member_id: int,
-    data: PersonalizationUpdate
+    data: PersonalizationUpdate,
+    member_id: int = Query(...)
 ):
     """회원 본인 개인화 수정"""
     if member_id == 0:
@@ -199,8 +199,8 @@ async def update_personalization(
 
 @router.post("/family")
 async def create_family(
-    member_id: int,
-    data: FamilyCreate
+    data: FamilyCreate,
+    member_id: int = Query(...)
 ):
     """가족 구성원 추가"""
     if member_id == 0:
@@ -223,8 +223,8 @@ async def create_family(
 @router.put("/family/{family_id}")
 async def update_family_member(
     family_id: int,
-    member_id: int,
-    data: FamilyUpdate
+    data: FamilyUpdate,
+    member_id: int = Query(...)
 ):
     """가족 구성원 수정 (관계 + 개인화)"""
     if member_id == 0:
@@ -286,8 +286,8 @@ async def get_utensils():
 
 @router.put("/utensils")
 async def update_member_utensils(
-    member_id: int,
-    data: UtensilsUpdate
+    data: UtensilsUpdate,
+    member_id: int = Query(...)
 ):
     """회원 조리도구 전체 교체"""
     if member_id == 0:
