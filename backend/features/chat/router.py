@@ -16,6 +16,18 @@ router = APIRouter()
 
 chat_sessions: Dict[str, dict] = {}
 
+
+# ─────────────────────────────────────────────
+# 타이밍 로그 헬퍼
+# ─────────────────────────────────────────────
+def _t():
+    return time.time()
+
+def _log_step(label: str, start: float, end: float):
+    elapsed = (end - start) * 1000  # ms 단위
+    print(f"  ⏱️  [{label}] {elapsed:.0f}ms")
+
+
 @router.websocket("/ws/{session_id}")
 async def chat_websocket(
     websocket: WebSocket,
@@ -63,8 +75,11 @@ async def chat_websocket(
     
     try:
         while True:
+            # ── 타이밍: 메시지 수신 & 파싱 ──
+            t_recv_start = _t()
             data = await websocket.receive_text()
             message = json.loads(data)
+            _log_step("WS 수신 & JSON 파싱", t_recv_start, _t())
             
             msg_type = message.get("type")
             print(f"[WS] 메시지 수신: {msg_type}")
@@ -77,10 +92,15 @@ async def chat_websocket(
             
             elif msg_type == "user_message":
                 content = message.get("content", "")
-                print(f"[WS] 사용자 메시지: {content}")
+                print(f"\n{'='*50}")
+                print(f"  💬 [WS] 사용자 메시지: \"{content}\"")
+                print(f"{'='*50}")
+
+                # ── 타이밍: 전체 처리 시작점 ──
+                t_total_start = _t()
                 
-                start_time = time.time()
-                
+                # ── 타이밍: 세션 상태 구성 ──
+                t_state_start = _t()
                 chat_sessions[session_id]["messages"].append({
                     "role": "user",
                     "content": content
@@ -90,11 +110,6 @@ async def chat_websocket(
                     f"{msg['role']}: {msg['content']}"
                     for msg in chat_sessions[session_id]["messages"]
                 ]
-                
-                await websocket.send_json({
-                    "type": "thinking",
-                    "message": "생각 중..."
-                })
                 
                 agent_state = {
                     "question": content,
@@ -106,8 +121,14 @@ async def chat_websocket(
                     "user_constraints": chat_sessions[session_id]["user_constraints"],
                     "constraint_warning": ""
                 }
+                _log_step("agent_state 구성", t_state_start, _t())
 
                 print(f"[WS] user_constraints: {chat_sessions[session_id]['user_constraints']}")
+                
+                await websocket.send_json({
+                    "type": "thinking",
+                    "message": "생각 중..."
+                })
                 
                 async def progress_notifier():
                     steps = [
@@ -120,7 +141,7 @@ async def chat_websocket(
                     
                     for delay, msg in steps:
                         await asyncio.sleep(delay if delay == 0 else 3)
-                        elapsed_now = time.time() - start_time
+                        elapsed_now = time.time() - t_total_start
                         if elapsed_now < 20:
                             await websocket.send_json({
                                 "type": "progress",
@@ -132,16 +153,18 @@ async def chat_websocket(
                 notifier_task = asyncio.create_task(progress_notifier())
                 
                 try:
+                    # ── 타이밍: Agent invoke (run_in_executor) ──
+                    t_agent_start = _t()
                     async def run_agent():
                         import asyncio
                         loop = asyncio.get_event_loop()
                         return await loop.run_in_executor(None, agent.invoke, agent_state)
                     
                     result = await asyncio.wait_for(run_agent(), timeout=20.0)
+                    _log_step("Agent invoke (전체)", t_agent_start, _t())
                     
-                    elapsed = time.time() - start_time
-                    print(f"[WS] ✅ Agent 완료 ({elapsed:.1f}초)")
-                    
+                    # ── 타이밍: 응답 파싱 & 전송 ──
+                    t_send_start = _t()
                     response = result.get("generation", "답변을 생성할 수 없습니다.")
 
                     if response == "NOT_RECIPE_RELATED":
@@ -156,6 +179,9 @@ async def chat_websocket(
                             "type": "not_recipe_related",
                             "content": "죄송합니다. 저는 요리 레시피만 도와드릴 수 있어요! 🍳\n일반적인 질문은 다른 AI 챗봇을 이용해주세요."
                         })
+                        _log_step("응답 파싱 & WS 전송", t_send_start, _t())
+                        _log_step("💥 전체 처리 합계", t_total_start, _t())
+                        print(f"{'='*50}\n")
                         continue
                     
                     chat_sessions[session_id]["messages"].append({
@@ -167,10 +193,17 @@ async def chat_websocket(
                         "type": "agent_message",
                         "content": response
                     })
+                    _log_step("응답 파싱 & WS 전송", t_send_start, _t())
+
+                    # ── 전체 합계 ──
+                    _log_step("💥 전체 처리 합계", t_total_start, _t())
+                    print(f"{'='*50}\n")
                 
                 except asyncio.TimeoutError:
-                    elapsed = time.time() - start_time
+                    elapsed = time.time() - t_total_start
                     print(f"[WS] ⏱️ Agent 타임아웃 ({elapsed:.1f}초)")
+                    _log_step("💥 전체 처리 합계 (TIMEOUT)", t_total_start, _t())
+                    print(f"{'='*50}\n")
                     
                     await websocket.send_json({
                         "type": "agent_message",
@@ -178,10 +211,12 @@ async def chat_websocket(
                     })
                 
                 except Exception as e:
-                    elapsed = time.time() - start_time
+                    elapsed = time.time() - t_total_start
                     print(f"[WS] ⚠️ Agent 실행 에러 ({elapsed:.1f}초): {e}")
                     import traceback
                     traceback.print_exc()
+                    _log_step("💥 전체 처리 합계 (ERROR)", t_total_start, _t())
+                    print(f"{'='*50}\n")
                     
                     await websocket.send_json({
                         "type": "error",
