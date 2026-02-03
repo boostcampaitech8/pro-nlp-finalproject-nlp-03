@@ -5,11 +5,11 @@ from contextlib import asynccontextmanager
 
 from app.config import settings
 from core.dependencies import get_rag_system, get_recipe_db
+from features.auth.router import router as auth_router
 from features.chat.router import router as chat_router
 from features.recipe.router import router as recipe_router
 from features.cooking.router import router as cooking_router
 from features.user.router import router as user_router
-from features.auth.router import router as auth_router
 
 
 @asynccontextmanager
