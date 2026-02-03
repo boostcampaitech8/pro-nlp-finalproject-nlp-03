@@ -10,7 +10,7 @@ from lib.ranking_crawling import process_ranking_to_recipes
 
 default_args = {
     "owner": "airflow",
-    "start_date": datetime(2026, 2, 1),
+    "start_date": datetime(2026, 2, 2),
 }
 
 with DAG(
