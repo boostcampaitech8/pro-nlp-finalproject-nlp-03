@@ -1,0 +1,20 @@
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# Env
+.env
+.env.*
+
+# Vite
+.vite/
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
