@@ -56,6 +56,150 @@ def mysql_cursor():
         conn.close()
 
 
+def init_all_tables():
+    """모든 필요한 테이블 자동 생성 (서버 시작 시 호출)"""
+    logger.info("🔧 [init] 모든 테이블 자동 생성 시작...")
+    with mysql_cursor() as cur:
+        # 1. member 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS member (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                naver_id VARCHAR(100) UNIQUE,
+                email VARCHAR(255),
+                nickname VARCHAR(100),
+                mem_photo VARCHAR(500),
+                to_cnt INT DEFAULT 1,
+                frst_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 2. family 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS family (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT NOT NULL,
+                relationship VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+        # 3. personalization 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS personalization (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT,
+                family_id INT,
+                scope ENUM('MEMBER', 'FAMILY') DEFAULT 'MEMBER',
+                allergies JSON,
+                dislikes JSON,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_member_id (member_id),
+                INDEX idx_family_id (family_id)
+            )
+        """)
+
+        # 4. utensil 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS utensil (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 5. member_utensil 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS member_utensil (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT NOT NULL,
+                utensil_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_member_utensil (member_id, utensil_id)
+            )
+        """)
+
+        # 6. session 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS session (
+                session_id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+        # 7. chatbot 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS chatbot (
+                chat_id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT NOT NULL,
+                session_id INT NOT NULL,
+                role ENUM('user', 'assistant') NOT NULL,
+                text TEXT,
+                type VARCHAR(50),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_session_id (session_id),
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+        # 8. generate 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS generate (
+                generate_id INT AUTO_INCREMENT PRIMARY KEY,
+                session_id INT NOT NULL,
+                member_id INT NOT NULL,
+                recipe_name VARCHAR(255),
+                ingredients JSON,
+                steps JSON,
+                gen_type VARCHAR(50),
+                gen_order INT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_session_id (session_id),
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+        # 9. my_recipe 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS my_recipe (
+                my_recipe_id INT AUTO_INCREMENT PRIMARY KEY,
+                member_id INT NOT NULL,
+                session_id INT,
+                generate_id INT,
+                recipe_name VARCHAR(255),
+                ingredients JSON,
+                steps JSON,
+                rating INT DEFAULT 0,
+                image_url VARCHAR(500),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+        # 10. voice 테이블
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS voice (
+                voice_id INT AUTO_INCREMENT PRIMARY KEY,
+                chat_id INT NOT NULL,
+                member_id INT NOT NULL,
+                voice_type VARCHAR(50),
+                context TEXT,
+                voice_file VARCHAR(500),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_chat_voice (chat_id, voice_type),
+                INDEX idx_chat_id (chat_id),
+                INDEX idx_member_id (member_id)
+            )
+        """)
+
+    logger.info("🔧 [init] 모든 테이블 생성 완료!")
+
+
 def _serialize_datetime(row: dict) -> dict:
     """datetime 필드를 ISO 문자열로 변환"""
     if not row:

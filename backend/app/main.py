@@ -12,7 +12,7 @@ from features.user.router import router as user_router
 from features.auth.router import router as auth_router
 from features.mypage.router import router as mypage_router, init_utensils
 from features.whether.router import router as weather_router
-from models.mysql_db import get_mysql_connection
+from models.mysql_db import get_mysql_connection, init_all_tables
 
 
 def check_mysql_connection() -> bool:
@@ -37,6 +37,12 @@ async def lifespan(app: FastAPI):
 
     if check_mysql_connection():
         print("MySQL DB 연결 확인 완료")
+        # 모든 테이블 자동 생성
+        try:
+            init_all_tables()
+            print("DB 테이블 자동 생성 완료")
+        except Exception as e:
+            print(f"DB 테이블 생성 실패: {e}")
     else:
         print("MySQL DB 연결 실패!")
 
