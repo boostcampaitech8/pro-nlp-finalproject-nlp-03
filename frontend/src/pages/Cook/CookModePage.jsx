@@ -1,167 +1,141 @@
 "use client";
 
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import RecipeLayout from "@/layouts/RecipeLayout";
 import "./CookModePage.css";
 
-export default function RecipeRecommendation() {
+export default function CookModePage() {
   const navigate = useNavigate();
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const location = useLocation();
 
-  const recipeSteps = [
-    {
-      id: 1,
-      text: "먼저 종이컵 기준 물 2컵에 떡볶이떡을 넣고 센불에서 팔팔 끓여 줍니다.",
-    },
-    {
-      id: 2,
-      text: "물이 팔팔 끓으면 양념을 다 넣어준 뒤 잘 풀어주고 또 자글자글 끓여 줍니다.",
-    },
-    {
-      id: 3,
-      text: "국물이 줄어들면 대파를 가위로 쫑쫑 썰어 넣어주시고 통깨 약간 뿌려 주시면 끝!",
-    },
-    { id: 4, text: "너무 간단한데 맛있어서 놀라는 분식집 떡볶이 완성입니다!" },
-    {
-      id: 5,
-      text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^",
-    },
-    {
-      id: 6,
-      text: "한개 먹어보니 어머머!정말 분식집에서 파는 떡볶이 맛이 나면서 넘 맛있어요. 너무 간단한데 맛있어서 놀랬어요^^",
-    },
-  ];
+  // CookModeAudioPage에서 돌아올 때 currentStepIndex, elapsedTime 유지
+  const passedStepIndex = location.state?.currentStepIndex ?? 0;
+  const passedElapsedTime = location.state?.elapsedTime ?? 0;
+  const [currentStepIndex, setCurrentStepIndex] = useState(passedStepIndex);
+  const [elapsedTime, setElapsedTime] = useState(passedElapsedTime);
+
+  // RecipeResultPage 또는 CookModeAudioPage에서 전달받은 recipe 데이터
+  const recipe = location.state?.recipe || {
+    name: "레시피 없음",
+    intro: "",
+    time: "0분",
+    level: "초급",
+    servings: "1인분",
+    ingredients: [],
+    steps: [{ step: 1, description: "레시피 정보가 없습니다." }],
+  };
+
+  const recipeSteps = recipe.steps || [];
+
+  // 타이머
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
 
   const handlePrev = () =>
     setCurrentStepIndex((prev) => (prev > 0 ? prev - 1 : prev));
   const handleNext = () =>
     setCurrentStepIndex((prev) =>
-      prev < recipeSteps.length - 1 ? prev + 1 : prev,
+      prev < recipeSteps.length - 1 ? prev + 1 : prev
     );
 
-  // 녹음 버튼 클릭 시 CookModeAudioPage로 이동 (현재 단계 전달)
   const handleRecordClick = () => {
     navigate("/cook-audio", {
       state: {
         currentStepIndex,
         recipeSteps,
+        recipe,
+        elapsedTime,
       },
     });
   };
 
+  // RecipeBottomSheet용 steps - 이미 { no, desc } 형태로 옴
+  const formattedSteps = recipeSteps.map((step, index) => ({
+    no: step.no || index + 1,
+    desc: step.desc || "",
+  }));
+
   return (
-    <div className="recipe-container">
-      <div className="mascot-wrapper">
+    <RecipeLayout
+      steps={formattedSteps}
+      currentStep={currentStepIndex + 1}
+      onStepClick={(index) => setCurrentStepIndex(index)}
+    >
+      {/* 레시피 제목 */}
+      <h1 className="cook-recipe-title">{recipe.name}</h1>
+
+      {/* 소요시간 & 스톱워치 아이콘 */}
+      <div className="cook-time-row">
+        <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
         <img
-          src="/chef-mascot.png"
-          alt="요리사 마스코트"
-          className="mascot-image"
+          src="/stopwatch.png"
+          alt="스톱워치"
+          className="cook-stopwatch-icon"
+          onError={(e) => (e.target.style.display = "none")}
         />
       </div>
 
-      <div className="main-card">
-        <button className="close-button" onClick={() => navigate("/home")}>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path
-              d="M18 6L6 18M6 6l12 12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+      {/* 단계 설명 박스 */}
+      <div className="cook-step-box">
+        <span className="cook-step-label">
+          STEP {recipeSteps[currentStepIndex]?.no || currentStepIndex + 1}
+        </span>
+        <p className="cook-step-description">
+          {recipeSteps[currentStepIndex]?.desc || "단계 정보가 없습니다."}
+        </p>
+      </div>
+
+      {/* 이미지 + 화살표 네비게이션 */}
+      <div className="cook-image-nav">
+        <button
+          className="cook-nav-btn"
+          onClick={handlePrev}
+          disabled={currentStepIndex === 0}
+        >
+          <span className="cook-arrow">‹</span>
         </button>
 
-        <div className="recipe-display-section">
-          <div className="step-indicator">
-            Step {recipeSteps[currentStepIndex].id}
-          </div>
-          <p className="step-description">
-            {recipeSteps[currentStepIndex].text}
-          </p>
+        <div className="cook-food-image-wrapper">
+          <img
+            src={recipeSteps[currentStepIndex]?.image || "/images/default-food.jpg"}
+            alt="조리 이미지"
+            className="cook-food-image"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/200?text=No+Image";
+            }}
+          />
         </div>
 
-        <div className="image-nav-container">
-          <button
-            className="nav-btn"
-            onClick={handlePrev}
-            disabled={currentStepIndex === 0}
-          >
-            <span className="arrow-icon">〈</span>
-          </button>
-
-          <div className="food-image-wrapper">
-            <img
-              src="/images/tteokbokki.jpg"
-              alt="레시피 이미지"
-              className="food-image-content"
-              onError={(e) => {
-                e.target.src = "https://via.placeholder.com/150?text=No+Image";
-              }}
-            />
-          </div>
-
-          <button
-            className="nav-btn"
-            onClick={handleNext}
-            disabled={currentStepIndex === recipeSteps.length - 1}
-          >
-            <span className="arrow-icon">〉</span>
-          </button>
-        </div>
-
-        <div className="record-section-spacer">
-          {/* onClick 핸들러 추가됨 */}
-          <button className="btn-record-giant" onClick={handleRecordClick}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
-              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-            </svg>
-          </button>
-        </div>
-
-        <div
-          className="bottom-sheet-trigger"
-          onClick={() => setIsBottomSheetOpen(true)}
+        <button
+          className="cook-nav-btn"
+          onClick={handleNext}
+          disabled={currentStepIndex === recipeSteps.length - 1}
         >
-          <div className="drag-indicator" />
-          <span className="view-all-text">레시피 전체보기</span>
-        </div>
+          <span className="cook-arrow">›</span>
+        </button>
       </div>
 
-      <div
-        className={`bottom-sheet-overlay ${isBottomSheetOpen ? "active" : ""}`}
-        onClick={() => setIsBottomSheetOpen(false)}
-      />
-      <div className={`bottom-sheet ${isBottomSheetOpen ? "active" : ""}`}>
-        <div className="bottom-sheet-header">
-          <div className="bottom-sheet-handle" />
-          <h2 className="bottom-sheet-title">레시피 전체보기</h2>
-        </div>
-        <div className="bottom-sheet-content">
-          <ul className="recipe-list">
-            {recipeSteps.map((step, index) => (
-              <li
-                key={step.id}
-                className={`recipe-item ${index === currentStepIndex ? "current" : ""}`}
-                onClick={() => {
-                  setCurrentStepIndex(index);
-                  setIsBottomSheetOpen(false);
-                }}
-              >
-                <span className="step-number">{step.id}.</span>
-                <span className="step-text">{step.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* 녹음 버튼 */}
+      <div className="cook-record-wrapper">
+        <button className="cook-record-btn" onClick={handleRecordClick}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+          </svg>
+        </button>
       </div>
-    </div>
+    </RecipeLayout>
   );
 }
