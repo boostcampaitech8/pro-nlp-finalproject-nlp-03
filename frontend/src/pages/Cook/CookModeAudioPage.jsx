@@ -13,9 +13,9 @@ import "./CookModeAudioPage.css";
  */
 
 // ====== API endpoints ======
-const STT_BASE_URL = "http://213.173.102.218:19929";
-const LLM_BASE_URL = "http://213.173.102.218:19931";
-const TTS_BASE_URL = "http://213.173.102.218:19930";
+const STT_BASE_URL = "http://213.173.102.218:14184";
+const LLM_BASE_URL = "http://213.173.102.218:14186";
+const TTS_BASE_URL = "http://213.173.102.218:14185";
 
 const STT_ENDPOINT = "/transcribe_bytes";
 const LLM_ENDPOINT = "/classify";
