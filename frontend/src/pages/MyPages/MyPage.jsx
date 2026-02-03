@@ -120,9 +120,6 @@ export default function MyPage() {
           <button className="nav-btn" onClick={() => navigate(-1)}>
             <img src="/left-arrow.png" alt="뒤로" className="nav-icon"/>
           </button>
-          <div className="nav-home-icon">
-            <img src="/house.png"alt="back-home" className="home-icon"/>
-          </div>
         </div>
 
         <div className="mypage-board">
