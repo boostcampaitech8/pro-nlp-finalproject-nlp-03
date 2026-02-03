@@ -1,23 +1,116 @@
 // src/pages/Home/HomePage.jsx
+// src/pages/Home/HomePage.jsx
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";  // useState, useEffect 추가
 import BottomNav from "@/components/BottomNav";
 import "./HomePage.css";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";  // 추가
+  
+  // 날씨 상태 추가
+  const [weather, setWeather] = useState({
+    temp: "3°",
+    desc: "약간흐림",
+    icon: "/main-weather.png"
+  });
+  
+  const [loading, setLoading] = useState(true);
+
+  // 날씨 데이터 가져오기
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  const fetchWeather = async () => {
+    try {
+      // 1. 브라우저에서 현재 위치 가져오기
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            console.log(`현재 위치: 위도 ${lat}, 경도 ${lon}`);
+            
+            // 2. 백엔드 API에 위도/경도 전달
+            const response = await fetch(
+              `${API_URL}/api/weather/location?lat=${lat}&lon=${lon}`
+            );
+            
+            if (response.ok) {
+              const data = await response.json();
+              setWeather({
+                temp: `${Math.round(data.temp)}°`,
+                desc: data.weather_desc,
+                icon: `/main-weather.png`
+              });
+            } else {
+              console.error("날씨 데이터 가져오기 실패");
+              // 실패 시 기본값 유지
+            }
+            setLoading(false);
+          },
+          (error) => {
+            // 위치 정보 거부 또는 에러 시
+            console.error("위치 정보 가져오기 실패:", error.message);
+            
+            // 3. 위치 정보 실패 시 서울 강남구로 폴백
+            fetchWeatherByCity("서울강남구");
+          },
+          {
+            enableHighAccuracy: false, // 배터리 절약
+            timeout: 5000,            // 5초 타임아웃
+            maximumAge: 300000        // 5분간 캐시 사용
+          }
+        );
+      } else {
+        // Geolocation 미지원 브라우저
+        console.log("Geolocation 미지원 - 기본 위치 사용");
+        fetchWeatherByCity("서울강남구");
+      }
+    } catch (error) {
+      console.error("날씨 API 에러:", error);
+      setLoading(false);
+    }
+  };
+
+// 폴백용 함수: 도시명으로 날씨 가져오기
+const fetchWeatherByCity = async (city) => {
+  try {
+    const response = await fetch(`${API_URL}/api/weather/current?city=${city}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      setWeather({
+        temp: `${Math.round(data.temp)}°`,
+        desc: data.weather_desc,
+        icon: `/main-weather.png`
+      });
+    }
+  } catch (error) {
+    console.error("폴백 날씨 API 에러:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="home-container">
       <div className="home-bg" />
 
+      {/* 날씨 박스 - 동적 데이터로 변경 */}
       <div className="weather-box">
-        <img src="/main-weather.png" alt="날씨" />
-        <span className="weather-temp">3°</span>
-        <span className="weather-desc">약간흐림</span>
+        <img src={weather.icon} alt="날씨" />
+        <span className="weather-temp">{weather.temp}</span>
+        <span className="weather-desc">{weather.desc}</span>
       </div>
 
       <img
-        src="/potato-face.png"
+        src="/main-profile.png"
         alt="프로필"
         className="profile-icon"
         onClick={() => navigate("/mypage")}

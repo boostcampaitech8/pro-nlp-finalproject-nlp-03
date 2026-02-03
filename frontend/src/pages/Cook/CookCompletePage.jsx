@@ -25,10 +25,35 @@ export default function CookCompletePage() {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleSaveRecipe = () => {
-    // 마이레시피에 저장 로직 (나중에 구현)
-    console.log("레시피 저장:", recipe.name, "별점:", rating);
-    navigate("/home");
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+  const handleSaveRecipe = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/recipe/save-my-recipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: "사용자",  // 실제 로그인 시스템이 있다면 사용자 ID 사용
+          recipe: recipe,
+          constraints: {},
+          rating: rating,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert("담기 완료!");  // 알림 표시
+        console.log("레시피 저장 성공:", data);
+        navigate("/home");
+      } else {
+        alert("저장에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (error) {
+      console.error("레시피 저장 에러:", error);
+      alert("저장 중 오류가 발생했습니다.");
+    }
   };
 
   const handleSkip = () => {
