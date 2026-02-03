@@ -23,6 +23,7 @@
 }
 
 .result-title .highlight {
+  font-family: "JejuStoneWall", sans-serif;
   color: #ff5b32;
   font-weight: 700;
   text-decoration: underline;

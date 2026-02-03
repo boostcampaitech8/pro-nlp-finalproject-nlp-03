@@ -135,9 +135,18 @@
   transition-delay: 0s;
 }
 
-.recipe-step-item:hover {
+/* 클릭 가능한 아이템 스타일 */
+.recipe-step-item.clickable {
+  cursor: pointer;
+}
+
+.recipe-step-item.clickable:hover {
   transform: translateX(4px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.recipe-step-item.clickable:active {
+  transform: scale(0.98);
 }
 
 .recipe-step-item.active {

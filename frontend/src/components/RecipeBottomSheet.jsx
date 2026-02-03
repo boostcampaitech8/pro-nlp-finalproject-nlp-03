@@ -2,12 +2,23 @@
 import { useState } from "react";
 import "./RecipeBottomSheet.css";
 
-export default function RecipeBottomSheet({ steps, currentStep = 1 }) {
+export default function RecipeBottomSheet({
+  steps,
+  currentStep = 1,
+  onStepClick = null  // 클릭 핸들러 (없으면 클릭 비활성화)
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!steps || steps.length === 0) {
     return null;
   }
+
+  const handleStepClick = (index) => {
+    if (onStepClick) {
+      onStepClick(index);
+      setIsOpen(false);
+    }
+  };
 
   return (
     <>
@@ -32,11 +43,13 @@ export default function RecipeBottomSheet({ steps, currentStep = 1 }) {
               {steps.map((step, index) => {
                 const stepNumber = step.no || step.id || index + 1;
                 const stepText = step.desc || step.text || "";
+                const isClickable = !!onStepClick;
 
                 return (
                   <div
                     key={index}
-                    className={`recipe-step-item ${stepNumber === currentStep ? "active" : ""}`}
+                    className={`recipe-step-item ${stepNumber === currentStep ? "active" : ""} ${isClickable ? "clickable" : ""}`}
+                    onClick={() => handleStepClick(index)}
                   >
                     <span className="step-num">{stepNumber}.</span>
                     <span className="step-desc">{stepText}</span>
