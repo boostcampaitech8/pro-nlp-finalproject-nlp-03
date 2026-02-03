@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = "sqlite:///./recipes.db"
+
+    # MySQL
+    MYSQL_HOST: str = "localhost"
+    MYSQL_PORT: int = 3306
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = ""
+    MYSQL_DATABASE: str = "recipeu"
     
     # 사용자 프로필 (테스트용 - 기본값)
     USER_NAME: str = "나영"
