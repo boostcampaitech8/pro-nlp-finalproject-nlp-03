@@ -65,6 +65,7 @@ jobs:
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
             cd ~/pro-nlp-finalproject-nlp-03
-            git pull origin infra/pipeline
+            git config --global credential.helper store
+            git pull https://${{ secrets.GCP_PAT }}@github.com/boostcampaitech8/pro-nlp-finalproject-nlp-03.git infra/pipeline
             sudo docker compose build
             sudo docker compose up -d
