@@ -17,7 +17,7 @@ export default function HomePage() {
       </div>
 
       <img
-        src="/main-profile.png"
+        src="/potato-face.png"
         alt="프로필"
         className="profile-icon"
         onClick={() => navigate("/mypage")}
