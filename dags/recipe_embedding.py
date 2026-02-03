@@ -21,7 +21,7 @@ with DAG(
     embed_recipes = PythonOperator(
         task_id="embed_recipes",
         python_callable=run_embedding_pipeline,
-        op_kwargs={"limit": 100},
+        op_kwargs={"limit": 150},
     )
 
     embed_recipes
