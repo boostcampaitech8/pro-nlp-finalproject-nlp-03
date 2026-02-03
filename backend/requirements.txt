@@ -34,3 +34,4 @@ python-multipart==0.0.22
 
 pymongo
 pymysql
+pymysql
