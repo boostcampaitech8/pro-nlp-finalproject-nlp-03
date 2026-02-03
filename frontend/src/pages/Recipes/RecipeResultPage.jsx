@@ -108,12 +108,12 @@ export default function RecipeResultPage() {
     imageUrl || recipe?.image || recipe?.img_url || "/default-food.jpg";
 
   return (
-    <RecipeLayout steps={recipe.steps || []} currentStep={1}>
+    <RecipeLayout steps={recipe.steps || []} currentStep={0}>
       {/* 나머지 동일 */}
       <div className="result-title-section">
         <p className="result-subtitle">오늘의 추천 레시피는</p>
         <h1 className="result-title">
-          <span className="highlight">{recipe.title}</span> 입니다
+          <span className="highlight">{recipe.title}</span> <span className="result-subtitle">입니다</span>
         </h1>
       </div>
 
