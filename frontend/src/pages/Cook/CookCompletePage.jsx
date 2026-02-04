@@ -34,36 +34,43 @@ export default function CookCompletePage() {
   const memberId = member?.id || 0;
 
   const handleSaveRecipe = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/recipe/save-my-recipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          member_id: memberId,
-          recipe: recipe,
-          constraints: {},
-          rating: rating,
-        }),
-      });
+  try {
+    const payload = {
+      user_id: memberId,
+      recipe: recipe,
+      constraints: {},
+      rating: rating,
+    };
+    
+    console.log("저장 요청 데이터:", JSON.stringify(payload, null, 2));
+    
+    const response = await fetch(`${API_URL}/api/recipe/save-my-recipe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("레시피 저장 성공:", data);
-        setSaveStatus("success");
-        // setTimeout(() => navigate("/home"), 1500);
-        setTimeout(() => setSaveStatus(null), 2500);
-      } else {
-        setSaveStatus("fail");
-        setTimeout(() => setSaveStatus(null), 2500);
-      }
-    } catch (error) {
-      console.error("레시피 저장 에러:", error);
+    console.log("응답 상태:", response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log("레시피 저장 성공:", data);
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus(null), 2500);
+    } else {
+      const errorText = await response.text();
+      console.error("저장 실패 응답:", errorText);
       setSaveStatus("fail");
       setTimeout(() => setSaveStatus(null), 2500);
     }
-  };
+  } catch (error) {
+    console.error("레시피 저장 에러:", error);
+    setSaveStatus("fail");
+    setTimeout(() => setSaveStatus(null), 2500);
+  }
+};
 
   const handleSkip = () => {
     navigate("/home");
@@ -125,9 +132,15 @@ export default function CookCompletePage() {
 
       {/* 버튼 영역 */}
       <div className="complete-buttons">
-        <button className="btn-save" onClick={handleSaveRecipe}>
-          마이레시피에<br />담을래요
-        </button>
+        {memberId !== 0 ? (
+          <button className="btn-save" onClick={handleSaveRecipe}>
+            마이레시피에<br />담을래요
+          </button>
+        ) : (
+          <button className="btn-save" disabled style={{opacity: 0.5}}>
+            저장 불가<br />(로그인 필요)
+          </button>
+        )}
         <button className="btn-skip" onClick={handleSkip}>
           안담을래요
         </button>
