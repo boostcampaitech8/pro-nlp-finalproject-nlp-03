@@ -16,7 +16,7 @@ default_args = {
 with DAG(
     dag_id="recipe_ranking",
     default_args=default_args,
-    schedule_interval="* 22 * * *",
+    schedule_interval="0 22 * * *",
     max_active_runs=1,
     catchup=False,
     tags=["ai-tech"],
