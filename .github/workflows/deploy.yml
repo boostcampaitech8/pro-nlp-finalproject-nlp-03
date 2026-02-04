@@ -1,4 +1,4 @@
-name: Deploy to NCP
+name: Deploy Feature to NCP
 
 on:
   push:
@@ -10,19 +10,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH Deploy
+      - name: Extract branch name
+        id: branch
+        run: echo "name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+      - name: Deploy Feature Branch
         uses: appleboy/ssh-action@master
         with:
           host: 211.188.62.72
           username: root
           key: ${{ secrets.NCP_SSH_KEY }}
           script: |
-            cd ~/recipe-app/backend
-            git pull origin feature/backend
-            cd ~/recipe-app/frontend
-            git pull origin feature/frontend
-            cd ~/recipe-app
-            sudo docker compose down
-            sudo docker compose build --no-cache
-            sudo docker compose up -d
-            sudo docker compose logs backend | tail -20
+            BRANCH="${{ steps.branch.outputs.name }}"
+            
+            if [[ "$BRANCH" == "feature/backend" ]]; then
+              echo "🔨 Backend 기능 배포"
+              cd ~/recipe-app
+              git fetch origin
+              git checkout feature/backend
+              git pull origin feature/backend
+              sudo docker compose build backend
+              sudo docker compose up -d backend
+              sudo docker compose logs backend --tail 30
+              
+            elif [[ "$BRANCH" == "feature/frontend" ]]; then
+              echo "🔨 Frontend 기능 배포"
+              cd ~/recipe-app
+              git fetch origin
+              git checkout feature/frontend
+              git pull origin feature/frontend
+              sudo docker compose build frontend
+              sudo docker compose up -d frontend
+              sudo docker compose logs frontend --tail 30
+            fi
