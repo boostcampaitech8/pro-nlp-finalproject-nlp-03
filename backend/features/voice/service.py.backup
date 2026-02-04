@@ -1,0 +1,335 @@
+# features/voice/service.py
+"""
+음성 처리 서비스 (STT → LLM → TTS)
+외부 API URL은 여기서만 관리
+
+Intent 종류 (LLM 프롬프트 기준):
+  Next, Prev, Finish,
+  Missing Ingredient, Missing Tool, Failure,
+  Out of Scope
+"""
+import httpx
+import base64
+import logging
+from enum import Enum
+from typing import AsyncGenerator, Dict, Any
+
+
+# ============================================================================
+# 외부 API 엔드포인트 (백엔드에서만 관리)
+# ============================================================================
+STT_BASE_URL = "http://213.173.102.218:17062"
+LLM_BASE_URL = "http://213.173.102.218:17064"
+TTS_BASE_URL = "http://213.173.102.218:17063"
+
+STT_ENDPOINT = "/transcribe_bytes"
+LLM_ENDPOINT = "/classify"
+TTS_ENDPOINT = "/synthesize/stream"
+
+
+# ============================================================================
+# Intent 매핑 (LLM 출력 → 내부 코드)
+# ============================================================================
+class Intent(str, Enum):
+    NEXT = "next_step"
+    PREV = "prev_step"
+    FINISH = "finish"
+    SUB_ING = "substitute_ingredient"
+    SUB_TOOL = "substitute_tool"
+    FAILURE = "failure"
+    OUT_OF_SCOPE = "out_of_scope"
+
+
+# LLM이 반환하는 Intent 문자열 → 내부 Intent enum
+# raw_output 형태(Missing Ingredient)와 파싱된 형태(substitute_ingredient) 모두 지원
+INTENT_MAP = {
+    # raw_output 형태 (LLM 원본)
+    "Next": Intent.NEXT,
+    "Prev": Intent.PREV,
+    "Finish": Intent.FINISH,
+    "Missing Ingredient": Intent.SUB_ING,
+    "Missing Tool": Intent.SUB_TOOL,
+    "Failure": Intent.FAILURE,
+    "Out of Scope": Intent.OUT_OF_SCOPE,
+    # API 파싱된 형태 (소문자/언더스코어)
+    "next_step": Intent.NEXT,
+    "prev_step": Intent.PREV,
+    "finish": Intent.FINISH,
+    "substitute_ingredient": Intent.SUB_ING,
+    "substitute_tool": Intent.SUB_TOOL,
+    "failure": Intent.FAILURE,
+    "out_of_scope": Intent.OUT_OF_SCOPE,
+}
+
+
+def map_intent(raw_intent: str) -> Intent:
+    """LLM 원본 intent 문자열을 내부 Intent로 변환"""
+    return INTENT_MAP.get(raw_intent, Intent.OUT_OF_SCOPE)
+
+
+# ============================================================================
+# STT
+# ============================================================================
+async def transcribe_audio(audio_bytes: bytes) -> str:
+    """STT: 음성 바이트 → 텍스트"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{STT_BASE_URL}{STT_ENDPOINT}",
+            content=audio_bytes,
+            headers={"Content-Type": "application/octet-stream"}
+        )
+        response.raise_for_status()
+        result = response.json()
+        return result.get("text", "").strip()
+
+
+# ============================================================================
+# LLM
+# ============================================================================
+async def classify_intent(user_text: str, current_step: str) -> Dict[str, Any]:
+    """
+    LLM: 텍스트 분류 및 응답 생성
+
+    LLM 응답 형식:
+      {"Intent": "Next", "Response": null}
+      {"Intent": "Missing Ingredient", "Response": "대체재료는 ..."}
+    """
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            f"{LLM_BASE_URL}{LLM_ENDPOINT}",
+            json={"text": user_text, "current_step": current_step}
+        )
+        response.raise_for_status()
+        result = response.json()
+
+        # ★ 디버그: LLM 원본 응답 전체 출력
+        print(f"[LLM 원본 응답] keys={list(result.keys())}, 전체={result}")
+
+        # LLM 응답 파싱 (대소문자 키 모두 지원)
+        raw_intent = (
+            result.get("Intent")
+            or result.get("intent")
+            or result.get("label")
+            or result.get("category")
+            or ""
+        )
+        response_text = (
+            result.get("Response")
+            or result.get("responseText")
+            or result.get("response")
+            or result.get("text")
+            or result.get("answer")
+            or ""
+        )
+
+        print(f"[LLM 파싱] raw_intent='{raw_intent}', response_text='{str(response_text)[:80]}...'")
+
+        # Intent 매핑
+        intent = map_intent(raw_intent)
+        print(f"[LLM 매핑] '{raw_intent}' → {intent.value}")
+
+        return {
+            "intent": intent,
+            "response_text": response_text.strip() if response_text else ""
+        }
+
+
+# ============================================================================
+# TTS (스트리밍)
+# ============================================================================
+async def synthesize_speech_stream(
+    text: str,
+    tone: str = "kiwi",
+    text_lang: str = "ko",
+    speed_factor: float = 1.0
+) -> AsyncGenerator[Dict[str, Any], None]:
+    """TTS: 텍스트 → 음성 스트림 (청크 단위로 yield)"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        async with client.stream(
+            "POST",
+            f"{TTS_BASE_URL}{TTS_ENDPOINT}",
+            json={
+                "text": text,
+                "tone": tone,
+                "text_lang": text_lang,
+                "speed_factor": speed_factor
+            }
+        ) as response:
+            response.raise_for_status()
+
+            sample_rate = int(response.headers.get("X-Sample-Rate", "32000"))
+            first_chunk = True
+
+            async for chunk in response.aiter_bytes(chunk_size=4096):
+                if chunk:
+                    audio_base64 = base64.b64encode(chunk).decode("utf-8")
+
+                    if first_chunk:
+                        yield {"audio": audio_base64, "sample_rate": sample_rate}
+                        first_chunk = False
+                    else:
+                        yield {"audio": audio_base64}
+
+
+# ============================================================================
+# 전체 파이프라인: STT → LLM → (조건부) TTS
+# ============================================================================
+async def process_voice_pipeline(
+    audio_bytes: bytes,
+    current_step: str,
+    step_index: int = 0,
+    total_steps: int = 1
+) -> AsyncGenerator[Dict[str, Any], None]:
+    """
+    전체 파이프라인: STT → LLM → TTS (SSE 스트리밍)
+
+    Intent별 처리:
+      NEXT: step만 변경, TTS 없음. 마지막 step이면 종료 안내 + TTS
+      PREV: step만 변경, TTS 없음. 첫 step이면 안내 + TTS
+      FINISH: voice 모드 종료, TTS 없음
+      SUB_ING / SUB_TOOL / FAILURE: LLM 응답 + TTS
+      OUT_OF_SCOPE: 고정 응답 + TTS
+    """
+
+    # ── 1. STT ──
+    try:
+        user_text = await transcribe_audio(audio_bytes)
+
+        if not user_text:
+            yield {"type": "error", "message": "음성을 인식하지 못했어요."}
+            return
+
+        yield {"type": "stt", "text": user_text}
+
+    except Exception as e:
+        yield {"type": "error", "message": f"STT 오류: {str(e)}"}
+        return
+
+    # ── 2. LLM ──
+    try:
+        llm_result = await classify_intent(user_text, current_step)
+        intent = llm_result["intent"]       # Intent enum
+        llm_text = llm_result["response_text"]
+
+    except Exception as e:
+        yield {"type": "error", "message": f"LLM 오류: {str(e)}"}
+        return
+
+    # ── 3. Intent별 분기 처리 ──
+    print(f"[파이프라인] intent={intent}, intent.value={intent.value}, llm_text='{llm_text[:80]}...' step_index={step_index}, total_steps={total_steps}")
+    is_first_step = (step_index <= 0)
+    is_last_step = (step_index >= total_steps - 1)
+
+    if intent == Intent.NEXT:
+        if is_last_step:
+            # 마지막 단계 → 종료 안내 + TTS + 5초 대기 후 종료
+            response_text = "마지막 단계예요. 음성 모드를 종료합니다."
+            yield {
+                "type": "llm",
+                "intent": intent.value,
+                "text": response_text,
+                "action": "end_cooking",
+                "delay_seconds": 5
+            }
+            # TTS 재생
+            try:
+                async for tts_chunk in synthesize_speech_stream(response_text):
+                    yield {"type": "tts_chunk", **tts_chunk}
+            except Exception as e:
+                yield {"type": "error", "message": f"TTS 오류: {str(e)}"}
+        else:
+            # 다음 단계 → 안내 + TTS + step 변경
+            response_text = "다음 단계로 넘어갈게요."
+            yield {
+                "type": "llm",
+                "intent": intent.value,
+                "text": response_text,
+                "action": "step_change"
+            }
+            try:
+                async for tts_chunk in synthesize_speech_stream(response_text):
+                    yield {"type": "tts_chunk", **tts_chunk}
+            except Exception as e:
+                yield {"type": "error", "message": f"TTS 오류: {str(e)}"}
+
+        yield {"type": "done"}
+        return
+
+    elif intent == Intent.PREV:
+        if is_first_step:
+            # 첫 단계 → 이동 불가 안내 + TTS
+            response_text = "이전 단계로 이동할 수 없습니다."
+            yield {
+                "type": "llm",
+                "intent": intent.value,
+                "text": response_text,
+                "action": "blocked"
+            }
+            try:
+                async for tts_chunk in synthesize_speech_stream(response_text):
+                    yield {"type": "tts_chunk", **tts_chunk}
+            except Exception as e:
+                yield {"type": "error", "message": f"TTS 오류: {str(e)}"}
+        else:
+            # 이전 단계 → 안내 + TTS + step 변경
+            response_text = "이전 단계로 돌아갈게요."
+            yield {
+                "type": "llm",
+                "intent": intent.value,
+                "text": response_text,
+                "action": "step_change"
+            }
+            try:
+                async for tts_chunk in synthesize_speech_stream(response_text):
+                    yield {"type": "tts_chunk", **tts_chunk}
+            except Exception as e:
+                yield {"type": "error", "message": f"TTS 오류: {str(e)}"}
+
+        yield {"type": "done"}
+        return
+
+    elif intent == Intent.FINISH:
+        # voice 모드 종료 → 안내 + TTS + 5초 대기 후 종료
+        response_text = "음성모드를 종료합니다."
+        yield {
+            "type": "llm",
+            "intent": intent.value,
+            "text": response_text,
+            "action": "finish",
+            "delay_seconds": 5
+        }
+        try:
+            async for tts_chunk in synthesize_speech_stream(response_text):
+                yield {"type": "tts_chunk", **tts_chunk}
+        except Exception as e:
+            yield {"type": "error", "message": f"TTS 오류: {str(e)}"}
+        yield {"type": "done"}
+        return
+
+    elif intent in (Intent.SUB_ING, Intent.SUB_TOOL, Intent.FAILURE):
+        # LLM 응답 그대로 사용 + TTS
+        response_text = llm_text if llm_text else "처리할 수 없어요."
+        yield {
+            "type": "llm",
+            "intent": intent.value,
+            "text": response_text
+        }
+
+    else:
+        # OUT_OF_SCOPE → 고정 응답 + TTS
+        response_text = "답변이 불가능한 질문이에요."
+        yield {
+            "type": "llm",
+            "intent": intent.value,
+            "text": response_text
+        }
+
+    # ── 4. TTS (SUB_ING, SUB_TOOL, FAILURE, OUT_OF_SCOPE만 여기 도달) ──
+    try:
+        async for tts_chunk in synthesize_speech_stream(response_text):
+            yield {"type": "tts_chunk", **tts_chunk}
+
+        yield {"type": "done"}
+
+    except Exception as e:
+        yield {"type": "error", "message": f"TTS 오류: {str(e)}"}

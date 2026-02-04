@@ -37,7 +37,22 @@ except ImportError:
 
 from pymilvus import connections, utility
 
+import time
+
 load_dotenv()
+
+
+# ─────────────────────────────────────────────
+# 타이밍 로그 헬퍼
+# ─────────────────────────────────────────────
+def _t():
+    """현재 시간 반환 (time.time())"""
+    return time.time()
+
+def _log_step(label: str, start: float, end: float):
+    """단계별 타이밍 로그 출력"""
+    elapsed = (end - start) * 1000  # ms 단위
+    print(f"  ⏱️  [{label}] {elapsed:.0f}ms")
 
 
 class ClovaStudioReranker:
@@ -262,7 +277,11 @@ class RecipeRAGLangChain:
         """pymilvus 직접 호출 - 이미지 조회 안 함!"""
         from pymilvus import Collection
         
+        # ── 타이밍: 쿼리 embedding ──
+        t_emb_start = _t()
         query_embedding = self.embeddings.embed_query(query)
+        _log_step("Embedding 생성", t_emb_start, _t())
+
         collection = self.vectorstore.col
         
         ef = max(k * 2, 50)
@@ -271,6 +290,8 @@ class RecipeRAGLangChain:
         # 이미지 필드 체크 안 함, MongoDB 조회 안 함!
         output_fields = ["text", "title", "level", "cook_time", "source", "recipe_id"]
         
+        # ── 타이밍: Milvus ANN 검색 ──
+        t_search_start = _t()
         results = collection.search(
             data=[query_embedding],
             anns_field="vector",
@@ -278,6 +299,7 @@ class RecipeRAGLangChain:
             limit=k,
             output_fields=output_fields
         )
+        _log_step("Milvus ANN 검색", t_search_start, _t())
         
         docs_with_scores = []
         for hit in results[0]:
@@ -305,16 +327,27 @@ class RecipeRAGLangChain:
         use_rerank: bool = None
     ) -> List[Dict]:
         """레시피 검색 (with optional CLOVA Studio reranking + image)"""
+
+        print(f"\n  📍 [search_recipes] 시작 (k={k}, rerank={use_rerank})")
+        t_total_start = _t()
+
         use_rerank = use_rerank if use_rerank is not None else self.use_reranker
 
         if use_rerank and self.reranker:
             search_k = min(k * 3, 20)
+
+            # ── 타이밍: Milvus 검색 (embedding 포함) ──
+            t_milvus_start = _t()
             docs_with_scores = self._milvus_search(query, search_k)
+            _log_step("Milvus 전체 (embedding+검색)", t_milvus_start, _t())
             
             docs = [doc for doc, score in docs_with_scores]
             vector_scores = {id(doc): float(score) for doc, score in docs_with_scores}
             
+            # ── 타이밍: Reranker API ──
+            t_rerank_start = _t()
             reranked_results = self._rerank_documents(query, docs, top_n=k)
+            _log_step("Reranker API", t_rerank_start, _t())
             
             results = []
             for doc, rerank_score in reranked_results:
@@ -331,7 +364,10 @@ class RecipeRAGLangChain:
                     "image": doc.metadata.get("image_url", ""),
                 })
         else:
+            # ── 타이밍: Milvus 검색만 (rerank 없음) ──
+            t_milvus_start = _t()
             docs_with_scores = self._milvus_search(query, k)
+            _log_step("Milvus 전체 (rerank 없음)", t_milvus_start, _t())
 
             results = []
             for doc, score in docs_with_scores:
@@ -347,6 +383,8 @@ class RecipeRAGLangChain:
                     "image": doc.metadata.get("image_url", ""),
                 })
 
+        _log_step("search_recipes 합계", t_total_start, _t())
+        print(f"  📍 [search_recipes] 완료\n")
         return results
 
     def generate_answer(
@@ -356,6 +394,10 @@ class RecipeRAGLangChain:
         system_prompt: Optional[str] = None
     ) -> str:
         """LangChain을 사용한 답변 생성"""
+
+        print(f"  📍 [generate_answer] 시작")
+        t_total_start = _t()
+
         if system_prompt is None:
             system_prompt = """당신은 한국 요리 전문가이자 친절한 레시피 어시스턴트입니다.
 
@@ -400,14 +442,19 @@ class RecipeRAGLangChain:
         # 체인 생성
         question_answer_chain = create_stuff_documents_chain(self.chat_model, prompt)
 
-        # 실행
+        # ── 타이밍: LLM 호출 ──
+        t_llm_start = _t()
         try:
             result = question_answer_chain.invoke({
                 "input": query,
                 "context": documents
             })
+            _log_step("LLM 호출 (generate_answer)", t_llm_start, _t())
+            _log_step("generate_answer 합계", t_total_start, _t())
+            print(f"  📍 [generate_answer] 완료\n")
             return result
         except Exception as e:
+            _log_step("LLM 호출 (FAILED)", t_llm_start, _t())
             print(f"답변 생성 오류: {e}")
             import traceback
             traceback.print_exc()
@@ -422,6 +469,9 @@ class RecipeRAGLangChain:
         system_prompt: Optional[str] = None,
     ) -> dict:
         """JSON 구조화된 레시피 생성"""
+
+        print(f"  📍 [generate_recipe_json] 시작")
+        t_total_start = _t()
         
         if system_prompt is None:
             system_prompt = """당신은 한국 요리 전문가입니다. 
@@ -488,20 +538,25 @@ class RecipeRAGLangChain:
         # 체인 생성
         question_answer_chain = create_stuff_documents_chain(self.chat_model, prompt)
 
-        # 실행
+        # ── 타이밍: LLM 호출 ──
+        t_llm_start = _t()
         try:
             result = question_answer_chain.invoke({
                 "input": user_message,
                 "context": documents,
             })
+            _log_step("LLM 호출 (generate_recipe_json)", t_llm_start, _t())
 
             response_text = result if isinstance(result, str) else str(result)
 
         except Exception as e:
+            _log_step("LLM 호출 (FAILED)", t_llm_start, _t())
             print(f"LLM 호출 오류: {e}")
+            _log_step("generate_recipe_json 합계", t_total_start, _t())
             return self._get_default_recipe()
 
-        # JSON 파싱
+        # ── 타이밍: JSON 파싱 ──
+        t_parse_start = _t()
         try:
             clean_result = response_text.strip()
             if clean_result.startswith("```json"):
@@ -512,11 +567,16 @@ class RecipeRAGLangChain:
                 clean_result = clean_result[:-3]
 
             parsed_json = json.loads(clean_result.strip())
+            _log_step("JSON 파싱", t_parse_start, _t())
             print(f"✅ 레시피 JSON 생성 성공: {parsed_json.get('title', 'N/A')}")
+            _log_step("generate_recipe_json 합계", t_total_start, _t())
+            print(f"  📍 [generate_recipe_json] 완료\n")
             return parsed_json
 
         except json.JSONDecodeError as e:
+            _log_step("JSON 파싱 (FAILED)", t_parse_start, _t())
             print(f"JSON 파싱 오류: {e}")
+            _log_step("generate_recipe_json 합계", t_total_start, _t())
             return self._get_default_recipe()
 
     def _get_default_recipe(self) -> dict:
@@ -540,6 +600,12 @@ class RecipeRAGLangChain:
         return_references: bool = True
     ) -> Dict[str, Any]:
         """질문에 대한 답변 생성 (검색 + 생성 통합)"""
+
+        print(f"\n{'='*50}")
+        print(f"  🔍 [query] 시작: \"{question[:40]}...\"")
+        print(f"{'='*50}")
+        t_query_start = _t()
+
         # 1. 검색
         retrieved_docs = self.search_recipes(question, k=top_k, use_rerank=use_rerank)
 
@@ -555,4 +621,6 @@ class RecipeRAGLangChain:
             result["references"] = retrieved_docs
             result["num_references"] = len(retrieved_docs)
 
+        _log_step("query() 전체 합계", t_query_start, _t())
+        print(f"{'='*50}\n")
         return result

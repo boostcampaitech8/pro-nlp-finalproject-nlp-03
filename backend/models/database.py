@@ -24,6 +24,7 @@ class RecipeDB:
             title TEXT,
             recipe_json TEXT,
             constraints_json TEXT,
+            rating INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
@@ -35,16 +36,18 @@ class RecipeDB:
         user_id: Optional[str],
         recipe: Dict[str, Any],
         constraints: Dict[str, Any],
+        rating: int = 0,
     ) -> int:
         conn = sqlite3.connect(self.path)
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO recipes(user_id, title, recipe_json, constraints_json) VALUES (?, ?, ?, ?)",
+            "INSERT INTO recipes(user_id, title, recipe_json, constraints_json, rating) VALUES (?, ?, ?, ?, ?)",
             (
                 user_id,
                 recipe.get("title"),
                 json.dumps(recipe, ensure_ascii=False),
                 json.dumps(constraints, ensure_ascii=False),
+                rating,
             ),
         )
         conn.commit()
@@ -57,12 +60,12 @@ class RecipeDB:
         cur = conn.cursor()
         if user_id:
             cur.execute(
-                "SELECT id, title, created_at FROM recipes WHERE user_id=? ORDER BY id DESC LIMIT ?",
+                "SELECT id, title, created_at, recipe_json, rating FROM recipes WHERE user_id=? ORDER BY id DESC LIMIT ?",
                 (user_id, limit),
             )
         else:
             cur.execute(
-                "SELECT id, title, created_at FROM recipes ORDER BY id DESC LIMIT ?",
+                "SELECT id, title, created_at, recipe_json, rating FROM recipes ORDER BY id DESC LIMIT ?",
                 (limit,),
             )
         rows = cur.fetchall()

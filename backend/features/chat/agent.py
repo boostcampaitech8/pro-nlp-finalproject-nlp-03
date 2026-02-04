@@ -3,6 +3,7 @@
 Chat Agent - Adaptive RAG
 """
 import os
+import time
 from typing import TypedDict, List, Literal
 from langgraph.graph import StateGraph, END
 from langchain_core.documents import Document
@@ -11,6 +12,24 @@ from langchain_core.output_parsers import StrOutputParser
 # prompts.py에서 프롬프트 import
 from .prompts import REWRITE_PROMPT, GRADE_PROMPT, GENERATE_PROMPT
 from services.search import get_search_service
+
+
+# ─────────────────────────────────────────────
+# 노드별 타이밍 래퍼
+# ─────────────────────────────────────────────
+# 누적 타이밍을 저장할 전역 딕셔너리 (요청당 초기화됨)
+_node_timings: dict = {}
+
+def timed_node(name: str, fn):
+    """노드 함수를 감싸서 실행 시간을 자동 로깅"""
+    def wrapper(state: "ChatAgentState") -> "ChatAgentState":
+        start = time.time()
+        result = fn(state)
+        elapsed_ms = (time.time() - start) * 1000
+        _node_timings[name] = elapsed_ms
+        print(f"  ⏱️  [Node: {name}] {elapsed_ms:.0f}ms")
+        return result
+    return wrapper
 
 
 class ChatAgentState(TypedDict):
@@ -327,13 +346,14 @@ def create_chat_agent(rag_system):
     
     workflow = StateGraph(ChatAgentState)
     
-    workflow.add_node("check_relevance", check_recipe_relevance)
-    workflow.add_node("rewrite", rewrite_query)
-    workflow.add_node("retrieve", retrieve)
-    workflow.add_node("check_constraints", check_constraints)
-    workflow.add_node("grade", grade_documents)
-    workflow.add_node("web_search", web_search)
-    workflow.add_node("generate", generate)
+    # ── 모든 노드를 timed_node로 감싸기 ──
+    workflow.add_node("check_relevance",  timed_node("check_relevance",  check_recipe_relevance))
+    workflow.add_node("rewrite",          timed_node("rewrite",          rewrite_query))
+    workflow.add_node("retrieve",         timed_node("retrieve",         retrieve))
+    workflow.add_node("check_constraints",timed_node("check_constraints",check_constraints))
+    workflow.add_node("grade",            timed_node("grade",            grade_documents))
+    workflow.add_node("web_search",       timed_node("web_search",       web_search))
+    workflow.add_node("generate",         timed_node("generate",         generate))
     
     workflow.set_entry_point("check_relevance")
     
