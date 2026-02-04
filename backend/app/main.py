@@ -1,4 +1,5 @@
 # backend/app/main.py
+import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -12,6 +13,7 @@ from features.user.router import router as user_router
 from features.auth.router import router as auth_router
 from features.mypage.router import router as mypage_router, init_utensils
 from features.weather.router import router as weather_router
+from features.ranking.router import router as ranking_router, load_today_ranking_cache
 from models.mysql_db import get_mysql_connection, init_all_tables
 
 
@@ -47,6 +49,15 @@ async def lifespan(app: FastAPI):
         print("MySQL DB 연결 실패!")
 
     init_utensils()
+    
+    try:
+        print("📦 랭킹 캐시 로딩 중...")
+        await load_today_ranking_cache()
+        print("📦 랭킹 캐시 완료")
+    except Exception as e:
+        print("❌ 랭킹 캐시 로딩 실패")
+        print(e)
+        traceback.print_exc()
 
     print("="*60 + "\n")
 
@@ -77,6 +88,7 @@ app.include_router(recipe_router, prefix="/api/recipe", tags=["Recipe"])
 app.include_router(cooking_router, prefix="/api/cook", tags=["Cooking"])
 app.include_router(mypage_router, prefix="/api/mypage", tags=["MyPage"])
 app.include_router(weather_router, prefix="/api/weather", tags=["Weather"])
+app.include_router(ranking_router, prefix="/api/rankings", tags=["Ranking"])
 
 @app.get("/")
 async def root():
