@@ -12,14 +12,27 @@
   width: 100%;
 }
 
-/* 소요시간 row */
-.cook-time-row {
+/* 소요시간 + 녹음 버튼 한 줄 (6:4) */
+.cook-time-record-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   margin-top: 10px;
-  position: relative;
+}
+
+.cook-time-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cook-record-section {
+  flex: 4;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .cook-time-text {
@@ -33,9 +46,6 @@
 .cook-stopwatch-icon {
   width: 47px;
   height: 47px;
-  position: absolute;
-  right: 0;
-  top: -15px;
 }
 
 /* 단계 설명 박스 */
@@ -103,7 +113,7 @@
 }
 
 .cook-food-image-wrapper {
-  width: 202px;
+  width: 245px;
   height: 245px;
   border-radius: 20px;
   overflow: hidden;
@@ -117,13 +127,9 @@
 }
 
 /* 녹음 버튼 */
-.cook-record-wrapper {
-  margin-top: 28px;
-}
-
 .cook-record-btn {
-  width: 74px;
-  height: 74px;
+  width: 45px;
+  height: 45px;
   background: #646667;
   border: none;
   border-radius: 50%;
@@ -132,4 +138,12 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 마지막 단계 종료 버튼 */
+.cook-finish-wrapper {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  width: 72%;
 }

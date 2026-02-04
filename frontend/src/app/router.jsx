@@ -13,7 +13,7 @@ import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
 import MyPage from "@/pages/MyPages/MyPage";
 import NaverCallbackPage from "@/pages/NaverCallback/NaverCallbackPage";
-
+import RankingRecipesPage from "@/pages/Rankings/RankingRecipesPage";
 import FixedLayout from "@/layouts/FixedLayout";
 import ScrollLayout from "@/layouts/ScrollLayout";
 import MobileLayout from "@/layouts/MobileLayout";
@@ -136,12 +136,12 @@ export default function Router() {
             }
           />
 
-          {/* 전체 레시피 - 스크롤 화면 */}
+          {/* 랭킹 레시피 - 스크롤 화면 */}
           <Route
             path="/recipes"
             element={
               <ScrollLayout>
-                <MyRecipesPage />
+                <RankingRecipesPage />
               </ScrollLayout>
             }
           />

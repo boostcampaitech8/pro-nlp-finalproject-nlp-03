@@ -3,6 +3,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import RecipeLayout from "@/layouts/RecipeLayout";
+import ButtonRed from "@/components/ButtonRed";
 import "./CookModePage.css";
 
 export default function CookModePage() {
@@ -61,6 +62,15 @@ export default function CookModePage() {
     });
   };
 
+  const handleFinishCook = () => {
+    navigate("/cook-complete", {
+      state: {
+        recipe,
+        elapsedTime,
+      },
+    });
+  };
+
   // RecipeBottomSheet용 steps - 이미 { no, desc } 형태로 옴
   const formattedSteps = recipeSteps.map((step, index) => ({
     no: step.no || index + 1,
@@ -73,18 +83,29 @@ export default function CookModePage() {
       currentStep={currentStepIndex + 1}
       onStepClick={(index) => setCurrentStepIndex(index)}
     >
-      {/* 레시피 제목 */}
+      {/* 레시피 제목 (한 줄) */}
       <h1 className="cook-recipe-title">{recipe.name}</h1>
 
-      {/* 소요시간 & 스톱워치 아이콘 */}
-      <div className="cook-time-row">
-        <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
-        <img
-          src="/stopwatch.png"
-          alt="스톱워치"
-          className="cook-stopwatch-icon"
-          onError={(e) => (e.target.style.display = "none")}
-        />
+      {/* 소요시간 + 녹음 버튼 (한 줄, 6:4) */}
+      <div className="cook-time-record-row">
+        <div className="cook-time-section">
+          <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
+          <img
+            src="/stopwatch.png"
+            alt="스톱워치"
+            className="cook-stopwatch-icon"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </div>
+
+        <div className="cook-record-section">
+          <button className="cook-record-btn" onClick={handleRecordClick}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* 단계 설명 박스 */}
@@ -109,7 +130,7 @@ export default function CookModePage() {
 
         <div className="cook-food-image-wrapper">
           <img
-            src={recipeSteps[currentStepIndex]?.image || "/images/default-food.jpg"}
+            src={recipeSteps[currentStepIndex]?.image || recipe.image || "/default-food.jpg"}
             alt="조리 이미지"
             className="cook-food-image"
             onError={(e) => {
@@ -127,15 +148,13 @@ export default function CookModePage() {
         </button>
       </div>
 
-      {/* 녹음 버튼 */}
-      <div className="cook-record-wrapper">
-        <button className="cook-record-btn" onClick={handleRecordClick}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-          </svg>
-        </button>
-      </div>
+      {/* 마지막 단계일 때 요리 종료하기 버튼 */}
+      {currentStepIndex === recipeSteps.length - 1 && (
+        <div className="cook-finish-wrapper">
+          <ButtonRed onClick={handleFinishCook}>요리 종료하기</ButtonRed>
+        </div>
+      )}
+
     </RecipeLayout>
   );
 }

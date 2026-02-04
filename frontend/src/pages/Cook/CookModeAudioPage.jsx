@@ -640,18 +640,33 @@ export default function CookModeAudioPage() {
       {/* hidden audio element */}
       <audio ref={ttsAudioRef} style={{ display: "none" }} />
 
-      {/* 레시피 제목 */}
+      {/* 레시피 제목 (한 줄) */}
       <h1 className="cook-recipe-title">{passedRecipe.name}</h1>
 
-      {/* 소요시간 & 스톱워치 아이콘 */}
-      <div className="cook-time-row">
-        <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
-        <img
-          src="/stopwatch.png"
-          alt="스톱워치"
-          className="cook-stopwatch-icon"
-          onError={(e) => (e.target.style.display = "none")}
-        />
+      {/* 소요시간 + 마이크 버튼 (한 줄, 6:4) */}
+      <div className="cook-time-record-row">
+        <div className="cook-time-section">
+          <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
+          <img
+            src="/stopwatch.png"
+            alt="스톱워치"
+            className="cook-stopwatch-icon"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </div>
+
+        <div className="cook-record-section">
+          <button
+            className={`cook-record-btn ${isListening ? "recording" : ""}`}
+            onClick={handleMicClick}
+            disabled={!supported}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* 단계 설명 박스 */}
@@ -687,19 +702,6 @@ export default function CookModeAudioPage() {
         <div className="audio-error-msg">{errorMsg}</div>
       )}
 
-      {/* 마이크 버튼 */}
-      <div className="cook-record-wrapper">
-        <button
-          className={`cook-record-btn ${isListening ? "recording" : ""}`}
-          onClick={handleMicClick}
-          disabled={!supported}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-          </svg>
-        </button>
-      </div>
     </RecipeLayout>
   );
 }

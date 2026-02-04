@@ -44,8 +44,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
-  const WS_URL = import.meta.env.VITE_WS_URL || "ws://211.188.62.72:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "";
+  const WS_URL = import.meta.env.VITE_WS_URL || "";
 
   // 디버깅용
   useEffect(() => {
@@ -79,13 +79,17 @@ export default function ChatPage() {
     const loadMyPersonalization = async () => {
       try {
         // 본인 개인화 정보 로드
-        const profileRes = await fetch(`${API_URL}/api/user/profile?member_id=${memberId}`);
+        const profileRes = await fetch(
+          `${API_URL}/api/user/profile?member_id=${memberId}`,
+        );
         const profileData = await profileRes.json();
 
         // 조리도구 로드
         let memberUtensils = [];
         if (memberId > 0) {
-          const utensilRes = await fetch(`${API_URL}/api/user/all-constraints?member_id=${memberId}`);
+          const utensilRes = await fetch(
+            `${API_URL}/api/user/all-constraints?member_id=${memberId}`,
+          );
           const utensilData = await utensilRes.json();
           memberUtensils = utensilData.utensils || [];
         }
@@ -110,14 +114,21 @@ export default function ChatPage() {
           infoLines.push(`- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`);
         }
         if (combined.cooking_tools.length > 0) {
-          infoLines.push(`- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`);
+          infoLines.push(
+            `- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`,
+          );
         }
 
         // 개인화 정보 유무 확인
-        const hasPersonalization = combined.allergies.length > 0 || combined.dislikes.length > 0 || combined.cooking_tools.length > 0;
+        const hasPersonalization =
+          combined.allergies.length > 0 ||
+          combined.dislikes.length > 0 ||
+          combined.cooking_tools.length > 0;
 
         if (!hasPersonalization) {
-          infoLines.push(`\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`);
+          infoLines.push(
+            `\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`,
+          );
         } else {
           infoLines.push(`\n이 정보가 맞나요?`);
         }
@@ -149,7 +160,8 @@ export default function ChatPage() {
         setMessages([
           {
             role: "assistant",
-            content: "개인화 정보를 불러오지 못했어요.\n그래도 요리를 시작할 수 있어요!",
+            content:
+              "개인화 정보를 불러오지 못했어요.\n그래도 요리를 시작할 수 있어요!",
             timestamp: new Date().toISOString(),
             showButtons: true,
             buttonType: "start_cooking",
@@ -292,12 +304,14 @@ export default function ChatPage() {
 
         if (info.type === "member") {
           // 본인 - /api/user/profile에서 로드
-          const res = await fetch(`${API_URL}/api/user/profile?member_id=${memberId}`);
+          const res = await fetch(
+            `${API_URL}/api/user/profile?member_id=${memberId}`,
+          );
           const data = await res.json();
           allMemberInfo.push({
             allergies: data.allergies || [],
             dislikes: data.dislikes || [],
-            cooking_tools: []
+            cooking_tools: [],
           });
         } else {
           // 가족 - /api/user/family/{family_id}에서 로드
@@ -306,7 +320,7 @@ export default function ChatPage() {
           allMemberInfo.push({
             allergies: data.allergies || [],
             dislikes: data.dislikes || [],
-            cooking_tools: []
+            cooking_tools: [],
           });
         }
       }
@@ -314,7 +328,9 @@ export default function ChatPage() {
       // 조리도구 로드 (회원 전체에 속함)
       let memberUtensils = [];
       if (memberId > 0) {
-        const utensilRes = await fetch(`${API_URL}/api/user/all-constraints?member_id=${memberId}`);
+        const utensilRes = await fetch(
+          `${API_URL}/api/user/all-constraints?member_id=${memberId}`,
+        );
         const utensilData = await utensilRes.json();
         memberUtensils = utensilData.utensils || [];
       }
@@ -343,15 +359,22 @@ export default function ChatPage() {
         infoLines.push(`- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`);
       }
       if (combined.cooking_tools.length > 0) {
-        infoLines.push(`- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`);
+        infoLines.push(
+          `- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`,
+        );
       }
 
       // 개인화 정보 유무 확인
-      const hasPersonalization = combined.allergies.length > 0 || combined.dislikes.length > 0 || combined.cooking_tools.length > 0;
+      const hasPersonalization =
+        combined.allergies.length > 0 ||
+        combined.dislikes.length > 0 ||
+        combined.cooking_tools.length > 0;
 
       if (!hasPersonalization) {
         // 개인화 정보 없음 - 안내 메시지만
-        infoLines.push(`\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`);
+        infoLines.push(
+          `\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`,
+        );
       } else {
         // 개인화 정보 있음 - 확인 질문
         infoLines.push(`\n이 정보가 맞나요?`);
@@ -370,8 +393,8 @@ export default function ChatPage() {
           role: "assistant",
           content: infoText,
           timestamp: new Date().toISOString(),
-          showButtons: true,  // 항상 버튼 표시
-          buttonType: hasPersonalization ? "confirm_info" : "start_cooking",  // 개인화 정보 없으면 바로 시작 버튼
+          showButtons: true, // 항상 버튼 표시
+          buttonType: hasPersonalization ? "confirm_info" : "start_cooking", // 개인화 정보 없으면 바로 시작 버튼
         },
       ]);
 

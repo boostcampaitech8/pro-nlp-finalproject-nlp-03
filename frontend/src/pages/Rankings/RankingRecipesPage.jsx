@@ -1,8 +1,10 @@
-// src/pages/MyRecipes/MyRecipesPage.jsx
+// src/pages/RankingRecipes/RankingRecipesPage.jsx
 import { useState, useEffect } from "react";
-import RecipeDetailModal from "./RecipeDetailModal";
+import RecipeDetailModal from "@/pages/MyRecipes/RecipeDetailModal";
 import BottomNav from "@/components/BottomNav";
-import "./MyRecipesPage.css";
+import "./RankingRecipesPage.css";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 function StarRating({ rating = 0, size = 11 }) {
   const stars = [];
@@ -20,32 +22,34 @@ function StarRating({ rating = 0, size = 11 }) {
   return <div className="card-star-overlay">{stars}</div>;
 }
 
-export default function MyRecipesPage() {
-  const API_URL = import.meta.env.VITE_API_URL || "";
+export default function RankingRecipesPage() {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // 로그인된 회원 정보
-  const memberStr = localStorage.getItem("member");
-  const member = memberStr ? JSON.parse(memberStr) : null;
-  const memberId = member?.id || 0;
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchMyRecipes();
+    fetchRankingRecipes();
   }, []);
 
-  const fetchMyRecipes = async () => {
+  const fetchRankingRecipes = async () => {
     try {
-      const res = await fetch(
-        `${API_URL}/api/recipe/list?member_id=${memberId}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setRecipes(data.recipes || []);
+      setLoading(true);
+      setError(null);
+
+      // 오늘의 랭킹 레시피 가져오기
+      const res = await fetch(`${API_URL}/api/rankings/today?limit=100`);
+
+      if (!res.ok) {
+        throw new Error("랭킹 데이터를 불러올 수 없습니다");
       }
+
+      const data = await res.json();
+      // RecipePreview 형식: { recipe_id, title, author, image }
+      setRecipes(data.recipes || []);
     } catch (err) {
-      console.log("레시피 목록 불러오기 실패:", err);
+      console.error("랭킹 레시피 불러오기 실패:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -53,42 +57,37 @@ export default function MyRecipesPage() {
 
   const handleRecipeClick = async (recipe) => {
     try {
-      const res = await fetch(`${API_URL}/api/recipe/${recipe.id}`);
+      // 레시피 상세 정보 가져오기
+      const res = await fetch(
+        `${RANKING_API_URL}/api/rankings/recipes/${recipe.recipe_id}`,
+      );
+
       if (res.ok) {
         const data = await res.json();
+        // RecipeDetail 형식으로 반환됨
         setSelectedRecipe(data);
+      } else {
+        // 상세 정보를 못 가져오면 기본 정보만 표시
+        setSelectedRecipe(recipe);
       }
     } catch (err) {
+      console.error("레시피 상세 정보 불러오기 실패:", err);
       setSelectedRecipe(recipe);
     }
   };
 
-  // 레시피 삭제
-  const handleDeleteRecipe = async (recipeId) => {
-    const res = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      throw new Error("삭제 실패");
-    }
-    // 목록에서 제거
-    setRecipes(recipes.filter((r) => r.id !== recipeId));
-  };
-
-  const isEmpty = !loading && recipes.length === 0;
-
   return (
-    <div className="my-recipes-page">
+    <div className="ranking-recipes-page">
       {/* 내부 스크롤 영역 */}
-      <div className={`my-recipes-scroll ${isEmpty ? "is-empty" : ""}`}>
+      <div className="ranking-recipes-scroll">
         {/* 클립 이미지 (베이지) */}
         <div className="clipboard-clip">
           <img src="/my-recipe-clip-beige.png" alt="clip" />
         </div>
 
         {/* 클립보드 본체 */}
-        <div className={`clipboard-board ${isEmpty ? "is-empty" : ""}`}>
-          <h1 className="clipboard-title">마이레시피</h1>
+        <div className="clipboard-board">
+          <h1 className="clipboard-title">오늘의 인기 레시피</h1>
 
           {loading && (
             <div className="recipes-loading">
@@ -96,20 +95,32 @@ export default function MyRecipesPage() {
             </div>
           )}
 
-          {isEmpty && (
-            <div className="recipes-empty">
-              <p className="empty-message">요리를 시작하러 가볼까요?</p>
+          {error && (
+            <div className="recipes-error">
+              <p className="error-message">{error}</p>
+              <button className="retry-button" onClick={fetchRankingRecipes}>
+                다시 시도
+              </button>
             </div>
           )}
 
-          {!isEmpty && !loading && (
+          {!loading && !error && recipes.length === 0 && (
+            <div className="recipes-empty">
+              <p className="empty-message">오늘의 랭킹 데이터가 없습니다</p>
+            </div>
+          )}
+
+          {!loading && !error && recipes.length > 0 && (
             <div className="recipes-grid">
-              {recipes.map((recipe) => (
+              {recipes.map((recipe, index) => (
                 <div
-                  key={recipe.id}
+                  key={recipe.recipe_id}
                   className="recipe-cards"
                   onClick={() => handleRecipeClick(recipe)}
                 >
+                  {/* 랭킹 번호 뱃지 */}
+                  <div className="ranking-badge">{index + 1}</div>
+
                   <div className="recipe-cards-image">
                     {recipe.image ? (
                       <img src={recipe.image} alt={recipe.title} />
@@ -138,9 +149,12 @@ export default function MyRecipesPage() {
                         </svg>
                       </div>
                     )}
-                    <StarRating rating={recipe.rating || 3} size={11} />
+                    {/* 별점은 랭킹 데이터에 없으므로 제거하거나, 기본값 표시 */}
                   </div>
-                  <span className="recipe-cards-title">{recipe.title}</span>
+
+                  <div className="recipe-cards-info">
+                    <span className="recipe-cards-title">{recipe.title}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -153,7 +167,6 @@ export default function MyRecipesPage() {
         <RecipeDetailModal
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
-          onDelete={handleDeleteRecipe}
         />
       )}
 

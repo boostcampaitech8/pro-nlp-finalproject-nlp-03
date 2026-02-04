@@ -1,14 +1,37 @@
 /* CookModeAudioPage.css - CookModePage.css 기반 + 채팅 박스 스타일 */
 
+/* ===== 소요시간 + 마이크 버튼 한 줄 (6:4) ===== */
+.cook-time-record-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.cook-time-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cook-record-section {
+  flex: 4;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 /* ===== 채팅 박스 (CookModeAudioPage 전용) ===== */
 .audio-chat-box {
   width: 100%;
   max-width: 365px;
-  min-height: 350px; 
+  min-height: 380px; 
   background: #FFFFFF;
   border-radius: 12px;
   margin-top: 15px;
-  padding: 16px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
   position: relative;

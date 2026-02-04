@@ -1,4 +1,4 @@
-/* src/pages/MyRecipes/MyRecipesPage.css */
+/* src/pages/RankingRecipes/RankingRecipesPage.css */
 @font-face {
   font-family: "EF_jejudoldam";
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2")
@@ -7,7 +7,7 @@
   font-style: normal;
 }
 
-.my-recipes-page {
+.ranking-recipes-page {
   position: relative;
   width: 100%;
   height: 100%;
@@ -16,10 +16,9 @@
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  font-family: "EF_jejudoldam", sans-serif;
 }
 
-.my-recipes-scroll {
+.ranking-recipes-scroll {
   position: absolute;
   top: 0;
   left: 0;
@@ -33,14 +32,8 @@
   scrollbar-width: none;
 }
 
-.my-recipes-scroll::-webkit-scrollbar {
+.ranking-recipes-scroll::-webkit-scrollbar {
   display: none;
-}
-
-.my-recipes-scroll.is-empty {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .clipboard-clip {
@@ -60,15 +53,11 @@
   position: relative;
   margin: 0 16px;
   min-height: 660px;
-  padding: 24px 16px 24px;
+  padding: 10px 16px 24px;
   background-image: url("/my-recipe-board.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border-radius: 14px;
-}
-
-.clipboard-board.is-empty {
-  flex: 1;
 }
 
 /* ===============================
@@ -85,29 +74,56 @@
   text-decoration-thickness: 3px;
 }
 
-.recipes-loading {
+/* ===============================
+   로딩/에러/빈 상태
+================================ */
+.recipes-loading,
+.recipes-error,
+.recipes-empty {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 300px;
-  color: #fff;
-  font-size: 16px;
+  gap: 16px;
 }
 
-.recipes-empty {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 40px;
-}
-
-.empty-message {
+.recipes-loading p,
+.recipes-error p,
+.recipes-empty p {
   font-family: "EF_jejudoldam", sans-serif;
-  font-size: 20px;
-  color: #8B6914;
+  font-size: 18px;
+  color: #ffffff;
   text-align: center;
 }
 
+.error-message {
+  color: #ffdddd !important;
+}
+
+.empty-message {
+  color: #8B6914 !important;
+}
+
+.retry-button {
+  font-family: "EF_jejudoldam", sans-serif;
+  font-size: 16px;
+  padding: 10px 24px;
+  background: #d35400;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.retry-button:active {
+  transform: scale(0.95);
+}
+
+/* ===============================
+   레시피 그리드
+================================ */
 .recipes-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -115,6 +131,7 @@
 }
 
 .recipe-cards {
+  position: relative;
   background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 6px;
@@ -128,6 +145,48 @@
   transform: scale(0.97);
 }
 
+/* ===============================
+   랭킹 번호 뱃지
+================================ */
+.ranking-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  background: rgba(211, 84, 0, 0.95);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "EF_jejudoldam", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 1~3위 특별 색상 */
+.recipe-cards:nth-child(1) .ranking-badge {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-color: #FFD700;
+}
+
+.recipe-cards:nth-child(2) .ranking-badge {
+  background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+  border-color: #E8E8E8;
+}
+
+.recipe-cards:nth-child(3) .ranking-badge {
+  background: linear-gradient(135deg, #CD7F32, #B8722C);
+  border-color: #E8B887;
+}
+
+/* ===============================
+   레시피 이미지
+================================ */
 .recipe-cards-image {
   position: relative;
   width: 100%;
@@ -156,6 +215,9 @@
   opacity: 0.4;
 }
 
+/* ===============================
+   별점 오버레이 (선택사항)
+================================ */
 .card-star-overlay {
   position: absolute;
   top: 6px;
@@ -176,16 +238,22 @@
   color: rgba(255, 255, 255, 0.4);
 }
 
+/* ===============================
+   레시피 정보
+================================ */
+.recipe-cards-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
 .recipe-cards-title {
   display: block;
-  font-family: "EF_jejudoldam", sans-serif;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   color: #ffffff;
-  background: #d35400;
-  padding: 5px 8px;
-  border-radius: 0 0 6px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: -2px;
 }
