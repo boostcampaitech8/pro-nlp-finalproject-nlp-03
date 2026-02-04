@@ -35,42 +35,13 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = "136.113.251.237"
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
-    
-    # Database
-    DATABASE_URL: str = "sqlite:///./recipes.db"
-    
-    # 사용자 프로필 (테스트용 - 기본값)
-    USER_NAME: str = "나영"
-    USER_ALLERGIES: List[str] = ["복숭아", "갑각류", "견과류"]
-    USER_DISLIKES: List[str] = ["가지", "시금치", "고수"]
-    
-    # 가족 구성원 정보 (추가!)
-    FAMILY_MEMBERS: Dict[str, Dict[str, Any]] = {
-        "나영": {
-            "role": "본인",
-            "allergies": ["복숭아", "갑각류", "견과류"],
-            "dislikes": ["가지", "시금치", "고수"],
-            "cooking_tools": ["인덕션", "에어프라이어", "전기밥솥", "냉장고", "냄비", "프라이팬"]
-        },
-        "엄마": {
-            "role": "어머니",
-            "allergies": ["땅콩"],
-            "dislikes": ["고수"],
-            "cooking_tools": ["가스레인지", "냄비", "프라이팬", "오븐", "믹서기"]
-        },
-        "아빠": {
-            "role": "아버지",
-            "allergies": [],
-            "dislikes": ["매운 음식"],
-            "cooking_tools": ["가스레인지", "냄비", "프라이팬", "전자레인지"]
-        },
-        "오빠": {
-            "role": "오빠",
-            "allergies": ["새우"],
-            "dislikes": ["버섯", "가지"],
-            "cooking_tools": ["전자레인지", "에어프라이어", "전기포트"]
-        }
-    }
+
+    # MySQL (Naver Cloud)
+    MYSQL_HOST: str = "db-wl3de.pub-cdb.ntruss.com"
+    MYSQL_PORT: int = 3306
+    MYSQL_USER: str = "recipeu"
+    MYSQL_PASSWORD: str = "recipe1234!"
+    MYSQL_DATABASE: str = "recipeu"
     
     class Config:
         env_file = ".env"

@@ -3,3 +3,17 @@ backend/.env.*
 .env
 env
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.db
+
+# macOS
+.DS_Store
+
+# frontend
+frontend
+
+nul

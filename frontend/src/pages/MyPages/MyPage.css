@@ -9,7 +9,6 @@
   height: 100%;            /* 100vh → 100% */
   overflow: hidden;
   background-color: #F7F8F9;
-  font-family: "EF_jejudoldam", sans-serif;
   display: flex;
   flex-direction: column;
 }
@@ -45,21 +44,135 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 .nav-btn {
   background: none; border: none; font-size: 24px; cursor: pointer;
   display: flex; align-items: center; margin-top: -2px;
 }
-.nav-home-icon { font-size: 22px; pointer-events: none; }
+
+/* 회원 프로필 카드 */
+.member-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #EAEAEA;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.10);
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.member-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FF5C35;
+}
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.member-nickname {
+  font-size: 16px;
+  font-weight: bold;
+  color: #48547B;
+}
+.member-email {
+  font-size: 12px;
+  color: #868E96;
+}
+.logout-btn {
+  margin-left: auto;
+  padding: 8px 14px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logout-btn:hover {
+  background: #FF5C35;
+  color: white;
+  border-color: #FF5C35;
+}
+
+/* 새로운 프로필 행 (박스 없는 인라인 스타일) */
+.member-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+.member-photo-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FF5C35;
+  flex-shrink: 0;
+}
+.member-info-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.member-nickname-inline {
+  font-size: 15px;
+  font-weight: bold;
+  color: #48547B;
+}
+.member-email-inline {
+  font-size: 11px;
+  color: #868E96;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logout-btn-inline {
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.logout-btn-inline:hover {
+  background: #FF5C35;
+  color: white;
+  border-color: #FF5C35;
+}
 
 /* 인사말 */
-.greeting { 
-  width: 100%; /* 이 줄 추가 */
+.greeting {
+  width: 100%;
+  font-weight: bold;
 }
-.greeting .hello { font-size: 17px; color: #48547B; margin: 0; }
-.greeting .user-name { font-size: 21px; color: #48547B; margin: 5px 0 20px; }
-.orange-text { color: #FF5C35; }
+.greeting .hello { 
+  font-size: 20px; 
+  color: #48547B; 
+  margin: 0; 
+}
+.greeting .user-name { 
+  font-size: 20px; 
+  color: #48547B; 
+  margin: 0px 0 20px; 
+}
+.orange-text { 
+  color: #FF5C35;
+  font-size: 24px;
+  font-family: "EF_jejudoldam", sans-serif; 
+}
 
 /* 프로필 탭 */
 .profile-selection { 
@@ -154,9 +267,20 @@
   margin: 0 0 12px !important;
   border-bottom: 1px solid #D1D3D4; 
   padding-bottom: 8px;
+  font-family: "EF_jejudoldam", sans-serif;
 }
-.tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-.tag { background: #F1F3F5; color: #868E96; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+.tag-list { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 8px; 
+  margin-top: 4px; 
+}
+.tag { 
+  background: #EBEBEB; 
+  color: #9FA1A5; 
+  padding: 5px 5px; 
+  border-radius: 8px; 
+  font-size: 13px; }
 .tag.editable { border: 1px dashed #FF5C35; cursor: pointer; }
 .tag-remove { margin-left: 4px; color: #FF5C35; font-weight: bold; }
 .tag-add-box { display: flex; align-items: center; gap: 4px; background: #f8f9fa; border-radius: 8px; padding: 2px 8px; }
@@ -170,11 +294,12 @@
 
 /* 도구 그리드 */
 .section-title { 
-    font-size: 17px; 
+    font-size: 19px; 
     color: #48547B; 
     margin-bottom: 15px; 
     border-bottom: 3px solid #D1D3D4;
     padding-bottom: 8px;
+    font-family: "EF_jejudoldam", sans-serif;
 }
 .tool-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px 5px; }
 .tool-item { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
@@ -192,7 +317,10 @@
   box-shadow: 0px 4px 3px rgba(0, 0, 0, 0.18);
 }
 .tool-box.selected { border: 2.5px solid #54A0FF; background: #f0f7ff; }
-.tool-label { font-size: 10px; color: #555; text-align: center; }
+.tool-label { 
+  font-size: 11px; 
+  color: #A0A2A7; 
+  text-align: center; }
 
 /* 모달 */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; }

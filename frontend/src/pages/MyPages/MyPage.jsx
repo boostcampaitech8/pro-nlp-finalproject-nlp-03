@@ -1,107 +1,334 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MyPage.css";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
 
 export default function MyPage() {
   const navigate = useNavigate();
 
+  // --- 로그인 회원 정보 ---
+  const [member, setMember] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   // --- 상태 관리 ---
   const [currentProfile, setCurrentProfile] = useState('나');
-  const [profiles, setProfiles] = useState(['나', '딸']);
+  const [profiles, setProfiles] = useState([]);  // [{id: null, name: '나'}, {id: 1, name: '딸'}]
   const [isEditing, setIsEditing] = useState(false);
   const [showInput, setShowInput] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [tagInput, setTagInput] = useState({ type: "", value: "" });
 
-  const [profileData, setProfileData] = useState({
-    '나': {
-      allergies: ["새우", "계란", "아몬드"],
-      dislikes: ["고추", "브로콜리", "파프리카", "회", "고등어"],
-      tools: ["밥솥", "전자레인지", "오븐", "에어프라이어", "찜기"]
-    },
-    '딸': {
-      allergies: ["새우"], dislikes: ["고추"], tools: ["밥솥"]
-    }
-  });
+  // 프로필별 데이터: { '나': {allergies:[], dislikes:[], tools:[]}, ... }
+  const [profileData, setProfileData] = useState({});
 
-  const TOOL_LIST = [
-    { name: "밥솥", icon: "/rice-cooker.png" }, { name: "전자레인지", icon: "/cooked.png", size: "100%" },
-    { name: "오븐", icon: "/oven.png", size: "65%" }, { name: "에어프라이어", icon: "/air-fryer.png" },
-    { name: "찜기", icon: "/food-steamer.png" }, { name: "믹서기", icon: "/blender.png" },
-    { name: "착즙기", icon: "/citrus-juicer.png" }, { name: "커피머신", icon: "/coffe-machine.png" },
-    { name: "토스트기", icon: "/toast-appliance.png" }, { name: "와플메이커", icon: "/stovetop-waffle.png" },
-  ];
+  // 전체 조리도구 목록 (DB에서 로드)
+  const [allUtensils, setAllUtensils] = useState([]);
 
-  // --- 데이터 로드 & 자동 저장 ---
+  const TOOL_METADATA = {
+    밥솥: { label: "밥솥", icon: "/rice-cooker.png" },
+    RICE_COOKER: { label: "밥솥", icon: "/rice-cooker.png" },
+    전자레인지: { label: "전자레인지", icon: "/cooked.png", size: "100%" },
+    MICROWAVE: { label: "전자레인지", icon: "/cooked.png", size: "100%" },
+    오븐: { label: "오븐", icon: "/oven.png", size: "65%" },
+    OVEN: { label: "오븐", icon: "/oven.png", size: "65%" },
+    에어프라이어: { label: "에어프라이어", icon: "/air-fryer.png" },
+    AIR_FRYER: { label: "에어프라이어", icon: "/air-fryer.png" },
+    찜기: { label: "찜기", icon: "/food-steamer.png" },
+    STEAMER: { label: "찜기", icon: "/food-steamer.png" },
+    믹서기: { label: "믹서기", icon: "/blender.png" },
+    BLENDER: { label: "믹서기", icon: "/blender.png" },
+    착즙기: { label: "착즙기", icon: "/citrus-juicer.png" },
+    JUICER: { label: "착즙기", icon: "/citrus-juicer.png" },
+    커피머신: { label: "커피머신", icon: "/coffe-machine.png" },
+    COFFEE_MACHINE: { label: "커피머신", icon: "/coffe-machine.png" },
+    토스트기: { label: "토스트기", icon: "/toast-appliance.png" },
+    TOASTER: { label: "토스트기", icon: "/toast-appliance.png" },
+    와플메이커: { label: "와플메이커", icon: "/stovetop-waffle.png" },
+    WAFFLE_MAKER: { label: "와플메이커", icon: "/stovetop-waffle.png" },
+  };
+
+  // --- 회원 정보 로드 ---
   useEffect(() => {
-    const saved = localStorage.getItem("mypage_storage");
+    const saved = localStorage.getItem("member");
     if (saved) {
-      const { profiles: sProfiles, profileData: sData } = JSON.parse(saved);
-      setProfiles(sProfiles);
-      setProfileData(sData);
+      try {
+        setMember(JSON.parse(saved));
+      } catch {}
     }
   }, []);
 
-  // 데이터 변경될 때마다 로컬 스토리지에 자동 저장 (나갔다 들어와도 유지됨)
+  // --- API에서 마이페이지 데이터 로드 ---
+  const loadMypageData = useCallback(async (memberId) => {
+    if (!memberId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 마이페이지 전체 데이터 로드
+      const res = await fetch(`${API_BASE}/api/user/mypage?member_id=${memberId}`);
+      if (!res.ok) throw new Error("Failed to load mypage data");
+
+      const data = await res.json();
+      console.log("[MyPage] API 데이터 로드:", data);
+
+      // 프로필 목록 구성 ('나' + 가족들)
+      const newProfiles = [{ id: null, name: "나" }];
+      const newProfileData = {
+        "나": {
+          allergies: data.personalization?.allergies || [],
+          dislikes: data.personalization?.dislikes || [],
+          tools: data.member_utensil_ids || []  // utensil_id 배열
+        }
+      };
+
+      // 가족 추가
+      for (const fam of data.families || []) {
+        const famName = fam.relationship || `가족${fam.id}`;
+        newProfiles.push({ id: fam.id, name: famName });
+        newProfileData[famName] = {
+          allergies: fam.allergies || [],
+          dislikes: fam.dislikes || [],
+          tools: []  // 가족은 조리도구 없음
+        };
+      }
+
+      setProfiles(newProfiles);
+      setProfileData(newProfileData);
+      setCurrentProfile("나");
+
+      // 전체 조리도구 목록 로드
+      setAllUtensils(data.utensils || []);
+
+    } catch (err) {
+      console.error("[MyPage] 데이터 로드 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const dataToSave = { profiles, profileData };
-    localStorage.setItem("mypage_storage", JSON.stringify(dataToSave));
-  }, [profiles, profileData]);
+    if (member?.id) {
+      loadMypageData(member.id);
+    } else {
+      setLoading(false);
+    }
+  }, [member, loadMypageData]);
 
   const currentData = profileData[currentProfile] || { allergies: [], dislikes: [], tools: [] };
+  const currentProfileObj = profiles.find(p => p.name === currentProfile);
+
+  // --- API 저장 함수들 ---
+  const savePersonalization = async (allergies, dislikes) => {
+    if (!member?.id) return;
+
+    try {
+      await fetch(`${API_BASE}/api/user/personalization?member_id=${member.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allergies, dislikes })
+      });
+    } catch (err) {
+      console.error("[MyPage] 개인화 저장 실패:", err);
+    }
+  };
+
+  const saveFamilyPersonalization = async (familyId, relationship, allergies, dislikes) => {
+    if (!member?.id || !familyId) return;
+
+    try {
+      await fetch(`${API_BASE}/api/user/family/${familyId}?member_id=${member.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relationship, allergies, dislikes })
+      });
+    } catch (err) {
+      console.error("[MyPage] 가족 개인화 저장 실패:", err);
+    }
+  };
+
+  const saveUtensils = async (utensilIds) => {
+    if (!member?.id) return;
+
+    try {
+      await fetch(`${API_BASE}/api/user/utensils?member_id=${member.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ utensil_ids: utensilIds })
+      });
+    } catch (err) {
+      console.error("[MyPage] 조리도구 저장 실패:", err);
+    }
+  };
 
   // --- 프로필 관련 ---
-  const handleAddProfile = () => {
+  const handleAddProfile = async () => {
     const name = newProfileName.trim();
-    if (name && !profiles.includes(name)) {
-      setProfiles([...profiles, name]);
+    if (!name || profiles.some(p => p.name === name)) {
+      setNewProfileName("");
+      setShowInput(false);
+      return;
+    }
+
+    if (!member?.id) {
+      // 비로그인: 로컬만
+      setProfiles([...profiles, { id: null, name }]);
       setProfileData({ ...profileData, [name]: { allergies: [], dislikes: [], tools: [] } });
       setCurrentProfile(name);
+    } else {
+      // 로그인: API 호출
+      try {
+        const res = await fetch(`${API_BASE}/api/user/family?member_id=${member.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ relationship: name })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          const newId = data.family.id;
+          setProfiles([...profiles, { id: newId, name }]);
+          setProfileData({ ...profileData, [name]: { allergies: [], dislikes: [], tools: [] } });
+          setCurrentProfile(name);
+        }
+      } catch (err) {
+        console.error("[MyPage] 가족 추가 실패:", err);
+      }
     }
+
     setNewProfileName("");
     setShowInput(false);
   };
 
-  const confirmDelete = () => {
-    const newProfiles = profiles.filter(p => p !== deleteTarget);
+  const confirmDelete = async () => {
+    const target = profiles.find(p => p.name === deleteTarget);
+    if (!target) {
+      setDeleteTarget(null);
+      return;
+    }
+
+    // '나'는 삭제 불가
+    if (target.id === null) {
+      setDeleteTarget(null);
+      return;
+    }
+
+    if (member?.id && target.id) {
+      // API 호출
+      try {
+        await fetch(`${API_BASE}/api/user/family/${target.id}?member_id=${member.id}`, {
+          method: "DELETE"
+        });
+      } catch (err) {
+        console.error("[MyPage] 가족 삭제 실패:", err);
+      }
+    }
+
+    const newProfiles = profiles.filter(p => p.name !== deleteTarget);
+    const newData = { ...profileData };
+    delete newData[deleteTarget];
+
     setProfiles(newProfiles);
-    setCurrentProfile(newProfiles[0] || "");
+    setProfileData(newData);
+    setCurrentProfile(newProfiles[0]?.name || "나");
     setDeleteTarget(null);
   };
 
   // --- 태그 관련 ---
-  const addTag = (type) => {
+  const addTag = async (type) => {
     const val = tagInput.value.trim();
-    if (val && !currentData[type].includes(val)) {
-      setProfileData({
-        ...profileData,
-        [currentProfile]: { ...currentData, [type]: [...currentData[type], val] }
-      });
+    if (!val || currentData[type].includes(val)) {
+      setTagInput({ type: "", value: "" });
+      return;
     }
+
+    const newTags = [...currentData[type], val];
+    const newProfileData = {
+      ...profileData,
+      [currentProfile]: { ...currentData, [type]: newTags }
+    };
+    setProfileData(newProfileData);
     setTagInput({ type: "", value: "" });
+
+    // API 저장
+    if (member?.id) {
+      if (currentProfileObj?.id === null) {
+        // 본인
+        const allergies = type === 'allergies' ? newTags : currentData.allergies;
+        const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
+        await savePersonalization(allergies, dislikes);
+      } else if (currentProfileObj?.id) {
+        // 가족
+        const allergies = type === 'allergies' ? newTags : currentData.allergies;
+        const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
+        await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+      }
+    }
   };
 
-  const removeTag = (type, targetTag) => {
+  const removeTag = async (type, targetTag) => {
     if (!isEditing) return;
-    setProfileData({
+
+    const newTags = currentData[type].filter(t => t !== targetTag);
+    const newProfileData = {
       ...profileData,
-      [currentProfile]: { ...currentData, [type]: currentData[type].filter(t => t !== targetTag) }
-    });
+      [currentProfile]: { ...currentData, [type]: newTags }
+    };
+    setProfileData(newProfileData);
+
+    // API 저장
+    if (member?.id) {
+      if (currentProfileObj?.id === null) {
+        const allergies = type === 'allergies' ? newTags : currentData.allergies;
+        const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
+        await savePersonalization(allergies, dislikes);
+      } else if (currentProfileObj?.id) {
+        const allergies = type === 'allergies' ? newTags : currentData.allergies;
+        const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
+        await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+      }
+    }
   };
 
-  // --- 조리도구 토글 (수정 모드가 아닐 때도 작동) ---
-  const toggleTool = (toolName) => {
-    const currentTools = currentData.tools;
-    const newTools = currentTools.includes(toolName)
-      ? currentTools.filter(t => t !== toolName)
-      : [...currentTools, toolName];
+  // --- 로그아웃 ---
+  const handleLogout = () => {
+    localStorage.removeItem("member");
+    localStorage.removeItem("access_token");
+    setMember(null);
+    navigate("/");
+  };
+
+  // --- 조리도구 토글 (회원 소유, 프로필 무관) ---
+  const toggleTool = async (utensilId) => {
+    // 항상 "나" 프로필의 tools를 수정 (회원 소유)
+    const myData = profileData["나"] || { allergies: [], dislikes: [], tools: [] };
+    const currentTools = myData.tools || [];
+    const newTools = currentTools.includes(utensilId)
+      ? currentTools.filter(t => t !== utensilId)
+      : [...currentTools, utensilId];
 
     setProfileData({
       ...profileData,
-      [currentProfile]: { ...currentData, tools: newTools }
+      "나": { ...myData, tools: newTools }
     });
+
+    // API 저장
+    if (member?.id) {
+      await saveUtensils(newTools);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="mypage-page">
+        <div className="mypage-scroll">
+          <div className="mypage-loading">로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mypage-page">
@@ -110,31 +337,47 @@ export default function MyPage() {
           <button className="nav-btn" onClick={() => navigate(-1)}>
             <img src="/left-arrow.png" alt="뒤로" className="nav-icon"/>
           </button>
-          <div className="nav-home-icon">
-            <img src="/house.png"alt="back-home" className="home-icon"/>
-          </div>
         </div>
 
         <div className="mypage-board">
           <section className="greeting">
             <p className="hello">안녕하세요,</p>
-            <h1 className="user-name"><span className="orange-text">두바이쫀득쿠키</span> 님</h1>
-            
+            <h1 className="user-name"><span className="orange-text">{member ? member.nickname : "게스트"}</span> 님</h1>
+
+            {/* 프로필 정보 행 */}
+            {member && (
+              <div className="member-profile-row">
+                <img
+                  src={member.mem_photo}
+                  alt="프로필"
+                  className="member-photo-circle"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="member-info-inline">
+                  <span className="member-nickname-inline">{member.nickname}</span>
+                  <span className="member-email-inline">{member.email}</span>
+                </div>
+                <button className="logout-btn-inline" onClick={handleLogout}>
+                  로그아웃
+                </button>
+              </div>
+            )}
+
             <div className="profile-selection">
               <div className="tab-group">
                 {profiles.map(p => (
-                  <div key={p} className="profile-tab-wrapper">
-                    <button 
-                      className={`profile-tab ${currentProfile === p ? 'active' : ''}`}
-                      onClick={() => setCurrentProfile(p)}
-                    >{p}</button>
-                    {isEditing && (
-                      <span className="delete-x" onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}>x</span>
+                  <div key={p.name} className="profile-tab-wrapper">
+                    <button
+                      className={`profile-tab ${currentProfile === p.name ? 'active' : ''}`}
+                      onClick={() => setCurrentProfile(p.name)}
+                    >{p.name}</button>
+                    {isEditing && p.id !== null && (
+                      <span className="delete-x" onClick={(e) => { e.stopPropagation(); setDeleteTarget(p.name); }}>x</span>
                     )}
                   </div>
                 ))}
                 {showInput && (
-                  <input 
+                  <input
                     className="profile-name-input"
                     value={newProfileName}
                     onChange={(e) => setNewProfileName(e.target.value)}
@@ -161,7 +404,7 @@ export default function MyPage() {
                     ))}
                     {isEditing && (
                     <div className="tag-add-box">
-                        <input 
+                        <input
                         placeholder="입력"
                         value={tagInput.type === type ? tagInput.value : ""}
                         onChange={(e) => setTagInput({ type, value: e.target.value })}
@@ -180,21 +423,31 @@ export default function MyPage() {
                 </button>
             </div>
 
+            {/* 조리도구: 항상 표시 (회원 소유, 가족과 무관) */}
             <section className="tools-section">
                 <h3 className="section-title">주방 및 조리 도구</h3>
                 <div className="tool-grid">
-                {TOOL_LIST.map(tool => (
-                    <div key={tool.name} className="tool-item" onClick={() => toggleTool(tool.name)}>
-                        <div className={`tool-box ${currentData.tools.includes(tool.name) ? "selected" : ""}`}>
-                        {tool.icon.startsWith("/") ? (
-                            <img src={tool.icon} alt={tool.name} className="tool-icon-img" style={tool.size ? { width: tool.size, height: tool.size } : {}} />
-                        ) : (
-                            tool.icon
-                        )}
+                {allUtensils.map(tool => {
+                  const iconData = TOOL_METADATA[tool.name] || {
+                    label: tool.name,
+                    icon: "/default-tool.png",
+                  };
+                  // 항상 "나" 프로필의 tools 사용 (회원 소유)
+                  const myTools = profileData["나"]?.tools || [];
+                  return (
+                    <div key={tool.id} className="tool-item" onClick={() => toggleTool(tool.id)}>
+                        <div className={`tool-box ${myTools.includes(tool.id) ? "selected" : ""}`}>
+                        <img
+                          src={iconData.icon}
+                          alt={iconData.label}
+                          className="tool-icon-img"
+                          style={iconData.size ? { width: iconData.size, height: iconData.size } : {}}
+                        />
                         </div>
-                        <span className="tool-label">{tool.name}</span>
+                        <span className="tool-label">{iconData.label}</span>
                     </div>
-                ))}
+                  );
+                })}
                 </div>
             </section>
           </div>

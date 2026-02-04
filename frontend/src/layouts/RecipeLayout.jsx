@@ -9,6 +9,7 @@ export default function RecipeLayout({
   steps = [],
   currentStep = 1,
   showBottomSheet = true,
+  onStepClick = null,  // 클릭 핸들러 (CookModePage에서만 전달)
 }) {
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -45,6 +46,7 @@ export default function RecipeLayout({
             currentStep={currentStep}
             isOpen={isSheetOpen}
             setIsOpen={setIsSheetOpen}
+            onStepClick={onStepClick}
           />
         )}
       </div>

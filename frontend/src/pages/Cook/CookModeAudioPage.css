@@ -1,72 +1,100 @@
-/* 채팅을 감싸는 흰색 박스 (테두리 포함) */
-.chat-outer-box {
-  background-color: #ffffff;
-  border: 1px solid #f0f0f0;
-  border-radius: 20px;
-  padding: 20px;
-  flex: 1;
+/* CookModeAudioPage.css - CookModePage.css 기반 + 채팅 박스 스타일 */
+
+/* ===== 채팅 박스 (CookModeAudioPage 전용) ===== */
+.audio-chat-box {
+  width: 100%;
+  max-width: 365px;
+  min-height: 350px; 
+  background: #FFFFFF;
+  border-radius: 12px;
+  margin-top: 15px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-bottom: 20px;
 }
 
-.chat-inner-list {
+.audio-chat-messages {
+  flex: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
+  min-height: 0;
+  padding-right: 4px;
 }
 
-/* 말풍선 방향: 사용자(우측), AI(좌측) */
-.chat-bubble-row.user { align-self: flex-end; }
-.chat-bubble-row.ai { align-self: flex-start; }
-
-.bubble {
-  padding: 12px 18px;
-  border-radius: 15px;
-  font-size: 14px;
-  max-width: 220px;
-  line-height: 1.4;
+/* 스크롤바 숨기기 */
+.audio-chat-messages::-webkit-scrollbar {
+  display: none;
 }
 
-/* 사용자 말풍선 (분홍색) */
-.user .bubble {
-  background-color: #ffe5e1;
-  color: #333;
-  border-bottom-right-radius: 2px;
+.audio-chat-messages {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* AI 말풍선 (연회색) */
-.ai .bubble {
-  background-color: #f1f1f1;
-  color: #333;
-  border-bottom-left-radius: 2px;
+/* 말풍선 */
+.audio-chat-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: "Pretendard", sans-serif;
+  font-size: 15px;
+  line-height: 18px;
+  color: #6B7280;
 }
 
-/* 녹음 버튼 위치 위로 올리기 */
-.mic-control-section {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 50px; /* 트리거와 겹치지 않게 간격 확보 */
+/* 사용자 말풍선 (오른쪽, 분홍색) */
+.audio-chat-bubble.user {
+  align-self: flex-end;
+  background: rgba(255, 91, 50, 0.2);
+  border-radius: 12px 12px 4px 12px;
 }
 
-.orange-mic-btn {
-  width: 75px; height: 75px;
+/* AI 말풍선 (왼쪽, 회색) */
+.audio-chat-bubble.ai {
+  align-self: flex-start;
+  background: #F5F5F5;
+  border-radius: 12px 12px 12px 4px;
+}
+
+.audio-bubble-content {
+  word-break: keep-all;
+}
+
+/* 로딩 스피너 */
+.audio-chat-loading {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+.audio-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #FF5B32;
   border-radius: 50%;
-  background-color: #ff5f40;
-  border: none;
-  box-shadow: 0 4px 15px rgba(255, 95, 64, 0.4);
+  animation: audio-spin 0.8s linear infinite;
 }
 
-/* 현재 STEP 박스 스타일 */
-.step-display-container {
-  background: white;
-  border-radius: 15px;
-  padding: 20px;
-  margin-bottom: 20px;
+@keyframes audio-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 에러 메시지 */
+.audio-error-msg {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #c00;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.step-number-tag { color: #ff7e5f; font-weight: 800; font-size: 13px; margin-bottom: 8px; }
-.step-main-text { font-size: 15px; font-weight: 600; color: #333; line-height: 1.5; }
+/* 녹음 중일 때 버튼 색상 변경 */
+.cook-record-btn.recording {
+  background: #FF5B32;
+  box-shadow: 0 4px 12px rgba(255, 91, 50, 0.4);
+}

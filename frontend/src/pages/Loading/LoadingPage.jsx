@@ -1,5 +1,4 @@
 // src/pages/Loading/LoadingPage.jsx
-
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./LoadingPage.css";

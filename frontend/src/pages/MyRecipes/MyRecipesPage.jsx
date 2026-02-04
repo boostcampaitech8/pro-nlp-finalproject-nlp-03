@@ -26,13 +26,18 @@ export default function MyRecipesPage() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 로그인된 회원 정보
+  const memberStr = localStorage.getItem("member");
+  const member = memberStr ? JSON.parse(memberStr) : null;
+  const memberId = member?.id || 0;
+
   useEffect(() => {
     fetchMyRecipes();
   }, []);
 
   const fetchMyRecipes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/recipe/list`);
+      const res = await fetch(`${API_URL}/api/recipe/list?member_id=${memberId}`);
       if (res.ok) {
         const data = await res.json();
         setRecipes(data.recipes || []);
@@ -61,14 +66,14 @@ export default function MyRecipesPage() {
   return (
     <div className="my-recipes-page">
       {/* 내부 스크롤 영역 */}
-      <div className="my-recipes-scroll">
+      <div className={`my-recipes-scroll ${isEmpty ? "is-empty" : ""}`}>
         {/* 클립 이미지 (베이지) */}
         <div className="clipboard-clip">
           <img src="/my-recipe-clip-beige.png" alt="clip" />
         </div>
 
         {/* 클립보드 본체 */}
-        <div className="clipboard-board">
+        <div className={`clipboard-board ${isEmpty ? "is-empty" : ""}`}>
           <h1 className="clipboard-title">마이레시피</h1>
 
           {loading && (
@@ -77,7 +82,11 @@ export default function MyRecipesPage() {
             </div>
           )}
 
-          {isEmpty && <div className="recipes-empty" />}
+          {isEmpty && (
+            <div className="recipes-empty">
+              <p className="empty-message">요리를 시작하러 가볼까요?</p>
+            </div>
+          )}
 
           {!isEmpty && !loading && (
             <div className="recipes-grid">

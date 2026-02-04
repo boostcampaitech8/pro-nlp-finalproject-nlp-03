@@ -2,19 +2,27 @@
 """
 LLM 헬퍼 함수
 """
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def create_system_prompt(
-    user_profile: Dict,
+    user_profile: Optional[Dict],
     template: str,
     **kwargs
 ) -> str:
-    """시스템 프롬프트 생성"""
+    """시스템 프롬프트 생성 (user_profile이 없으면 기본값 사용)"""
+    # user_profile이 None이거나 빈 딕셔너리인 경우 기본값 사용
+    if not user_profile:
+        user_profile = {}
+
+    user_name = user_profile.get("name", "사용자")
+    allergies = user_profile.get("allergies", [])
+    dislikes = user_profile.get("dislikes", user_profile.get("dislike", []))
+
     return template.format(
-        user_name=user_profile["name"],
-        allergies=", ".join(user_profile["allergies"]),
-        dislike=", ".join(user_profile["dislike"]),
+        user_name=user_name,
+        allergies=", ".join(allergies) if allergies else "없음",
+        dislike=", ".join(dislikes) if dislikes else "없음",
         **kwargs
     )
 

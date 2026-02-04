@@ -1,241 +1,135 @@
-/* 기본 컨테이너 */
-.recipe-container {
-  width: 393px;
-  height: 852px;
-  background: #c4a574;
+/* CookModePage.css - 내부 컴포넌트 스타일만 */
+
+/* 레시피 제목 */
+.cook-recipe-title {
+  font-family: "JejuStoneWall", sans-serif;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2;
+  color: #FF5B32;
+  margin: 0;
+  text-align: left;
+  width: 100%;
+}
+
+/* 소요시간 row */
+.cook-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
   position: relative;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  margin: 0 auto;
 }
 
-/* 마스코트: 카드 상단 왼쪽 경계에 걸침 */
-.mascot-wrapper {
+.cook-time-text {
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 21px;
+  color: #48547B;
+}
+
+.cook-stopwatch-icon {
+  width: 47px;
+  height: 47px;
   position: absolute;
-  top: 15px;
-  left: 20px;
-  z-index: 10;
-}
-
-.mascot-image {
-  width: 90px;
-  height: auto;
-  object-fit: contain;
-}
-
-/* 메인 카드 */
-.main-card {
-  position: absolute;
-  top: 95px;
-  left: 0;
   right: 0;
-  bottom: 0;
-  background: #fef6ed;
-  border-radius: 40px 40px 0 0;
-  padding: 50px 24px 24px;
+  top: -15px;
+}
+
+/* 단계 설명 박스 */
+.cook-step-box {
+  width: 100%;
+  max-width: 365px;
+  min-height: 78px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  margin-top: 24px;
+  padding: 14px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 1;
+  justify-content: center;
 }
 
-/* 닫기 버튼 */
-.close-button {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  padding: 8px;
-}
-
-/* 상단 단계 설명 */
-.recipe-display-section {
+.cook-step-label {
+  font-family: "Pretendard", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 16px;
   text-align: center;
-  margin-top: 10px;
-  margin-bottom: 25px;
-  width: 100%;
+  color: #FF5B32;
+  margin-bottom: 7px;
 }
 
-.step-indicator {
+.cook-step-description {
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
   font-size: 18px;
-  font-weight: 700;
-  color: #a8875a;
-  margin-bottom: 8px;
-}
-
-.step-description {
-  font-size: 17px;
-  color: #444;
-  line-height: 1.6;
+  line-height: 21px;
+  text-align: center;
+  color: #48547B;
+  margin: 0;
   word-break: keep-all;
 }
 
-/* 이미지 + 화살표 가로 배치 */
-.image-nav-container {
+/* 이미지 + 네비게이션 */
+.cook-image-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   width: 100%;
+  margin-top: 35px;
+  gap: 15px;
 }
 
-.nav-btn {
-  background: white;
+.cook-nav-btn {
+  background: transparent;
   border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  padding: 10px;
 }
 
-.nav-btn:disabled {
+.cook-nav-btn:disabled {
   opacity: 0.3;
 }
 
-.arrow-icon {
-  font-size: 18px;
-  color: #a8875a;
-  font-weight: bold;
+.cook-arrow {
+  font-size: 52px;
+  color: #646667;
+  font-weight: 300;
+  line-height: 1;
 }
 
-.food-image-wrapper {
-  width: 220px;
-  height: 220px;
-  border-radius: 24px;
+.cook-food-image-wrapper {
+  width: 202px;
+  height: 245px;
+  border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  border: 3px solid white;
 }
 
-.food-image-content {
+.cook-food-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* 하단 녹음 버튼 영역 */
-.record-section-spacer {
-  margin-top: auto;
-  margin-bottom: 50px;
+/* 녹음 버튼 */
+.cook-record-wrapper {
+  margin-top: 28px;
 }
 
-.btn-record-giant {
-  width: 80px;
-  height: 80px;
-  background: #e8734a;
+.cook-record-btn {
+  width: 74px;
+  height: 74px;
+  background: #646667;
   border: none;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 15px rgba(232, 115, 74, 0.3);
   cursor: pointer;
-}
-
-/* 바텀시트 트리거 */
-.bottom-sheet-trigger {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-}
-
-.drag-indicator {
-  width: 40px;
-  height: 4px;
-  background: #ddd;
-  border-radius: 2px;
-  margin-bottom: 10px;
-}
-
-.view-all-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #666;
-}
-
-/* 바텀시트 (배경 어둡게) */
-.bottom-sheet-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.3s;
-  z-index: 20;
-}
-.bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
-
-.bottom-sheet {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: white;
-  border-radius: 32px 32px 0 0;
-  transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  max-height: 80%;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-}
-.bottom-sheet.active { transform: translateY(0); }
-
-.bottom-sheet-header {
-  padding: 20px;
-  text-align: center;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.bottom-sheet-handle {
-  width: 40px;
-  height: 4px;
-  background: #eee;
-  border-radius: 2px;
-  margin: 0 auto 15px;
-}
-
-.bottom-sheet-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-}
-
-.bottom-sheet-content {
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.recipe-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.recipe-item {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  font-size: 16px;
-  color: #555;
-  line-height: 1.6;
-  cursor: pointer;
-}
-
-/* 현재 진행 단계 붉은색 강조 */
-.recipe-item.current {
-  color: #e8734a;
-  font-weight: 600;
-}
-
-.step-number {
-  font-weight: 700;
-  min-width: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
