@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
 
+    USE_RERANKER: bool = False
+
     # MySQL (Naver Cloud)
     MYSQL_HOST: str = ""
     MYSQL_PORT: int = 3306

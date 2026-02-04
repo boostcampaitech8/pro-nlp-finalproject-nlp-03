@@ -264,7 +264,6 @@ async def save_recipe_to_mypage(
     """요리 완료 후 마이레시피에 저장 (generate_id, session_id 연결)"""
     try:
         print(f"[Recipe API] 마이레시피 저장 요청 수신: {request}")
-
         # user_id 추출 (프론트엔드는 user_id로 전송)
         user_id = request.get("user_id")
         
