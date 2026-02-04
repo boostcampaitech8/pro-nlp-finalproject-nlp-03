@@ -158,13 +158,13 @@ RECIPE_REFINE_PROMPT = """전문 요리사입니다. 기본 레시피에 조건�
 - 인원수에 맞게 재료 양 조절
 
 # 출력 (JSON만!)
-{
+{{
   "title": "요리명",
   "intro": "한 줄 소개(짧게)",
   "cook_time": "조리시간",
   "level": "초급/중급/고급",
   "servings": "{servings}인분",
-  "ingredients": [{"name": "재료명", "amount": "양", "note": "비고"}],
-  "steps": [{"no": 1, "desc": "단계 설명"}],
+  "ingredients": [{{"name": "재료명", "amount": "양", "note": "비고"}}],
+  "steps": [{{"no": 1, "desc": "단계 설명"}}],
   "tips": ["팁"]
-}"""
+}}"""
