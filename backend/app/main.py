@@ -11,7 +11,7 @@ from features.cooking.router import router as cooking_router
 from features.user.router import router as user_router
 from features.auth.router import router as auth_router
 from features.mypage.router import router as mypage_router, init_utensils
-from features.whether.router import router as weather_router
+from features.weather.router import router as weather_router
 from models.mysql_db import get_mysql_connection, init_all_tables
 
 
