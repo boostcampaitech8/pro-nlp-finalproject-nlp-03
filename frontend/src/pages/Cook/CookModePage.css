@@ -12,6 +12,20 @@
   width: 100%;
 }
 
+/* 헤더 영역 (제목/시간 + 녹음 버튼) */
+.cook-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.cook-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
 /* 소요시간 row */
 .cook-time-row {
   display: flex;
@@ -118,12 +132,14 @@
 
 /* 녹음 버튼 */
 .cook-record-wrapper {
-  margin-top: 28px;
+  margin-top: 0;
 }
 
 .cook-record-btn {
-  width: 74px;
-  height: 74px;
+  width: 50px;
+  height: 50px;
+  margin-top: 15px;
+  margin-left: -6px;
   background: #646667;
   border: none;
   border-radius: 50%;
@@ -132,4 +148,12 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 마지막 단계 종료 버튼 */
+.cook-finish-wrapper {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  width: 72%;
 }
