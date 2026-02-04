@@ -29,7 +29,7 @@ export default function RecipeResultPage() {
 
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
   useEffect(() => {
     if (!recipe) {
@@ -114,7 +114,8 @@ export default function RecipeResultPage() {
       <div className="result-title-section">
         <p className="result-subtitle">오늘의 추천 레시피는</p>
         <h1 className="result-title">
-          <span className="highlight">{recipe.title}</span> <span className="result-subtitle">입니다</span>
+          <span className="highlight">{recipe.title}</span>{" "}
+          <span className="result-subtitle">입니다</span>
         </h1>
       </div>
 
@@ -167,7 +168,11 @@ export default function RecipeResultPage() {
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   recipe.ingredients.map((ingredient, idx) => (
                     <div key={idx} className="ingredient-item">
-                      <span className="ingredient-name">{ingredient.name}{ingredient.name}{ingredient.name}</span>
+                      <span className="ingredient-name">
+                        {ingredient.name}
+                        {ingredient.name}
+                        {ingredient.name}
+                      </span>
                       <span className="ingredient-amount">
                         {ingredient.amount}
                       </span>
