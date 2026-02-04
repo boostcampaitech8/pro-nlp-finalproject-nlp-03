@@ -13,7 +13,7 @@ import MyRecipesPage from "@/pages/MyRecipes/MyRecipesPage";
 import CookStartPage from "@/pages/Cook/CookStartPage";
 import MyPage from "@/pages/MyPages/MyPage";
 import NaverCallbackPage from "@/pages/NaverCallback/NaverCallbackPage";
-
+import RankingRecipesPage from "@/pages/Rankings/RankingRecipesPage";
 import FixedLayout from "@/layouts/FixedLayout";
 import ScrollLayout from "@/layouts/ScrollLayout";
 import MobileLayout from "@/layouts/MobileLayout";
@@ -141,7 +141,7 @@ export default function Router() {
             path="/recipes"
             element={
               <ScrollLayout>
-                <MyRecipesPage />
+                <RankingRecipesPage />
               </ScrollLayout>
             }
           />
