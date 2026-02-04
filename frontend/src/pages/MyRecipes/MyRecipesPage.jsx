@@ -61,6 +61,18 @@ export default function MyRecipesPage() {
     }
   };
 
+  // 레시피 삭제
+  const handleDeleteRecipe = async (recipeId) => {
+    const res = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      throw new Error("삭제 실패");
+    }
+    // 목록에서 제거
+    setRecipes(recipes.filter((r) => r.id !== recipeId));
+  };
+
   const isEmpty = !loading && recipes.length === 0;
 
   return (
@@ -139,6 +151,7 @@ export default function MyRecipesPage() {
         <RecipeDetailModal
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
+          onDelete={handleDeleteRecipe}
         />
       )}
 

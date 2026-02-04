@@ -251,3 +251,107 @@
   color: #999;
   margin: 8px 0;
 }
+
+/* ===============================
+   삭제 버튼
+================================ */
+.detail-delete {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 68, 68, 0.1);
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 102;
+  color: #ff4444;
+  transition: all 0.2s;
+}
+
+.detail-delete:hover {
+  background: #ff4444;
+  color: white;
+}
+
+/* ===============================
+   삭제 확인 모달
+================================ */
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.delete-confirm-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.delete-confirm-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px;
+}
+
+.delete-confirm-subtext {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 20px;
+}
+
+.delete-confirm-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.delete-confirm-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-confirm-btn.cancel {
+  background: #f1f3f5;
+  color: #666;
+}
+
+.delete-confirm-btn.cancel:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+.delete-confirm-btn.confirm {
+  background: #ff4444;
+  color: white;
+}
+
+.delete-confirm-btn.confirm:hover:not(:disabled) {
+  background: #e63939;
+}

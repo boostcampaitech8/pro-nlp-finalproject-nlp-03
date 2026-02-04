@@ -120,46 +120,74 @@ export default function MyPage() {
   const currentData = profileData[currentProfile] || { allergies: [], dislikes: [], tools: [] };
   const currentProfileObj = profiles.find(p => p.name === currentProfile);
 
+  // --- 저장 실패 알림 상태 ---
+  const [saveError, setSaveError] = useState(null);
+
   // --- API 저장 함수들 ---
   const savePersonalization = async (allergies, dislikes) => {
-    if (!member?.id) return;
+    if (!member?.id) return false;
 
     try {
-      await fetch(`${API_BASE}/api/user/personalization?member_id=${member.id}`, {
+      const res = await fetch(`${API_BASE}/api/user/personalization?member_id=${member.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ allergies, dislikes })
       });
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error("[MyPage] 개인화 저장 실패 - status:", res.status, errBody);
+        setSaveError("저장에 실패했습니다. 다시 시도해주세요.");
+        return false;
+      }
+      return true;
     } catch (err) {
-      console.error("[MyPage] 개인화 저장 실패:", err);
+      console.error("[MyPage] 개인화 저장 네트워크 오류:", err);
+      setSaveError("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.");
+      return false;
     }
   };
 
   const saveFamilyPersonalization = async (familyId, relationship, allergies, dislikes) => {
-    if (!member?.id || !familyId) return;
+    if (!member?.id || !familyId) return false;
 
     try {
-      await fetch(`${API_BASE}/api/user/family/${familyId}?member_id=${member.id}`, {
+      const res = await fetch(`${API_BASE}/api/user/family/${familyId}?member_id=${member.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ relationship, allergies, dislikes })
       });
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error("[MyPage] 가족 개인화 저장 실패 - status:", res.status, errBody);
+        setSaveError("저장에 실패했습니다. 다시 시도해주세요.");
+        return false;
+      }
+      return true;
     } catch (err) {
-      console.error("[MyPage] 가족 개인화 저장 실패:", err);
+      console.error("[MyPage] 가족 개인화 저장 네트워크 오류:", err);
+      setSaveError("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.");
+      return false;
     }
   };
 
   const saveUtensils = async (utensilIds) => {
-    if (!member?.id) return;
+    if (!member?.id) return false;
 
     try {
-      await fetch(`${API_BASE}/api/user/utensils?member_id=${member.id}`, {
+      const res = await fetch(`${API_BASE}/api/user/utensils?member_id=${member.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ utensil_ids: utensilIds })
       });
+      if (!res.ok) {
+        setSaveError("조리도구 저장에 실패했습니다.");
+        return false;
+      }
+      return true;
     } catch (err) {
       console.error("[MyPage] 조리도구 저장 실패:", err);
+      setSaveError("네트워크 오류가 발생했습니다.");
+      return false;
     }
   };
 
@@ -244,6 +272,7 @@ export default function MyPage() {
       return;
     }
 
+    const oldTags = [...currentData[type]];
     const newTags = [...currentData[type], val];
     const newProfileData = {
       ...profileData,
@@ -251,19 +280,29 @@ export default function MyPage() {
     };
     setProfileData(newProfileData);
     setTagInput({ type: "", value: "" });
+    setSaveError(null);
 
     // API 저장
     if (member?.id) {
+      let success = false;
       if (currentProfileObj?.id === null) {
         // 본인
         const allergies = type === 'allergies' ? newTags : currentData.allergies;
         const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
-        await savePersonalization(allergies, dislikes);
+        success = await savePersonalization(allergies, dislikes);
       } else if (currentProfileObj?.id) {
         // 가족
         const allergies = type === 'allergies' ? newTags : currentData.allergies;
         const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
-        await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+        success = await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+      }
+
+      // 저장 실패 시 롤백
+      if (!success && member?.id) {
+        setProfileData({
+          ...profileData,
+          [currentProfile]: { ...currentData, [type]: oldTags }
+        });
       }
     }
   };
@@ -271,23 +310,34 @@ export default function MyPage() {
   const removeTag = async (type, targetTag) => {
     if (!isEditing) return;
 
+    const oldTags = [...currentData[type]];
     const newTags = currentData[type].filter(t => t !== targetTag);
     const newProfileData = {
       ...profileData,
       [currentProfile]: { ...currentData, [type]: newTags }
     };
     setProfileData(newProfileData);
+    setSaveError(null);
 
     // API 저장
     if (member?.id) {
+      let success = false;
       if (currentProfileObj?.id === null) {
         const allergies = type === 'allergies' ? newTags : currentData.allergies;
         const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
-        await savePersonalization(allergies, dislikes);
+        success = await savePersonalization(allergies, dislikes);
       } else if (currentProfileObj?.id) {
         const allergies = type === 'allergies' ? newTags : currentData.allergies;
         const dislikes = type === 'dislikes' ? newTags : currentData.dislikes;
-        await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+        success = await saveFamilyPersonalization(currentProfileObj.id, currentProfile, allergies, dislikes);
+      }
+
+      // 저장 실패 시 롤백
+      if (!success && member?.id) {
+        setProfileData({
+          ...profileData,
+          [currentProfile]: { ...currentData, [type]: oldTags }
+        });
       }
     }
   };
@@ -305,6 +355,7 @@ export default function MyPage() {
     // 항상 "나" 프로필의 tools를 수정 (회원 소유)
     const myData = profileData["나"] || { allergies: [], dislikes: [], tools: [] };
     const currentTools = myData.tools || [];
+    const oldTools = [...currentTools];
     const newTools = currentTools.includes(utensilId)
       ? currentTools.filter(t => t !== utensilId)
       : [...currentTools, utensilId];
@@ -313,10 +364,18 @@ export default function MyPage() {
       ...profileData,
       "나": { ...myData, tools: newTools }
     });
+    setSaveError(null);
 
     // API 저장
     if (member?.id) {
-      await saveUtensils(newTools);
+      const success = await saveUtensils(newTools);
+      // 저장 실패 시 롤백
+      if (!success) {
+        setProfileData({
+          ...profileData,
+          "나": { ...myData, tools: oldTools }
+        });
+      }
     }
   };
 
@@ -463,6 +522,14 @@ export default function MyPage() {
               <button className="modal-btn confirm" onClick={confirmDelete}>삭제</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 저장 실패 알림 */}
+      {saveError && (
+        <div className="save-error-toast" onClick={() => setSaveError(null)}>
+          <span>{saveError}</span>
+          <button className="toast-close">×</button>
         </div>
       )}
     </div>
