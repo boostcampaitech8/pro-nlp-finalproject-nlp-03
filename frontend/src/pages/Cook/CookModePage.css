@@ -12,14 +12,27 @@
   width: 100%;
 }
 
-/* 소요시간 row */
-.cook-time-row {
+/* 소요시간 + 녹음 버튼 한 줄 (6:4) */
+.cook-time-record-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   margin-top: 10px;
-  position: relative;
+}
+
+.cook-time-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cook-record-section {
+  flex: 4;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .cook-time-text {
@@ -33,16 +46,13 @@
 .cook-stopwatch-icon {
   width: 47px;
   height: 47px;
-  position: absolute;
-  right: 0;
-  top: -15px;
 }
 
 /* 단계 설명 박스 */
 .cook-step-box {
   width: 100%;
   max-width: 365px;
-  min-height: 98px;
+  min-height: 78px;
   background: #FFFFFF;
   border-radius: 12px;
   margin-top: 24px;
@@ -51,6 +61,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .cook-step-label {
@@ -74,14 +87,55 @@
   word-break: keep-all;
 }
 
-/* 이미지 + 네비게이션 */
+/* 슬라이드 애니메이션 (cook-step-box에만 적용) */
+.cook-step-box.slide-left {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.cook-step-box.slide-right {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.cook-step-box.enter-from-right {
+  animation: enterFromRight 0.3s ease-out forwards;
+}
+
+.cook-step-box.enter-from-left {
+  animation: enterFromLeft 0.3s ease-out forwards;
+}
+
+@keyframes enterFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes enterFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 이미지 + 화살표 네비게이션 */
 .cook-image-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   margin-top: 35px;
-  gap: 15px;
+  gap: 12px;
 }
 
 .cook-nav-btn {
@@ -103,7 +157,7 @@
 }
 
 .cook-food-image-wrapper {
-  width: 202px;
+  width: 245px;
   height: 245px;
   border-radius: 20px;
   overflow: hidden;
@@ -117,13 +171,9 @@
 }
 
 /* 녹음 버튼 */
-.cook-record-wrapper {
-  margin-top: 28px;
-}
-
 .cook-record-btn {
-  width: 74px;
-  height: 74px;
+  width: 55px;
+  height: 55px;
   background: #646667;
   border: none;
   border-radius: 50%;
@@ -132,4 +182,12 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 마지막 단계 종료 버튼 */
+.cook-finish-wrapper {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  width: 72%;
 }

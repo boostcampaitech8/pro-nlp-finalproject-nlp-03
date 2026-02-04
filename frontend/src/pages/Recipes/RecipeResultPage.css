@@ -207,6 +207,9 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 10px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ingredient-item {

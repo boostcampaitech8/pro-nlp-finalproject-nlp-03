@@ -95,6 +95,7 @@ export default function RecipeResultPage() {
           servings: recipe.servings,
           ingredients: recipe.ingredients,
           steps: recipe.steps,
+          image: recipeImage,
         },
       },
     });
