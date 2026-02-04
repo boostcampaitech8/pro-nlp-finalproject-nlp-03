@@ -1,48 +1,45 @@
-name: Deploy to NCP
+name: Deploy Feature to NCP
 
 on:
   push:
     branches:
-      - main
+      - feature/backend
+      - feature/frontend
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2  # 이전 커밋과 비교
+      - name: Extract branch name
+        id: branch
+        run: echo "name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
 
-      - name: Check changed files
-        id: changes
-        run: |
-          echo "frontend=$(git diff --name-only HEAD~1 HEAD | grep '^frontend/' || echo '')" >> $GITHUB_OUTPUT
-          echo "backend=$(git diff --name-only HEAD~1 HEAD | grep '^backend/' || echo '')" >> $GITHUB_OUTPUT
-
-      - name: Deploy
+      - name: Deploy Feature Branch
         uses: appleboy/ssh-action@master
         with:
           host: 211.188.62.72
           username: root
           key: ${{ secrets.NCP_SSH_KEY }}
           script: |
-            cd ~/recipe-app
-            git pull origin main
+            BRANCH="${{ steps.branch.outputs.name }}"
             
-            # 변경된 부분만 빌드
-            if [ -n "${{ steps.changes.outputs.frontend }}" ]; then
-              echo "Frontend 빌드 중..."
-              sudo docker compose build frontend
-            fi
-            
-            if [ -n "${{ steps.changes.outputs.backend }}" ]; then
-              echo "Backend 빌드 중..."
+            if [[ "$BRANCH" == "feature/backend" ]]; then
+              echo "🔨 Backend 기능 배포"
+              cd ~/recipe-app
+              git fetch origin
+              git checkout feature/backend
+              git pull origin feature/backend
               sudo docker compose build backend
+              sudo docker compose up -d backend
+              sudo docker compose logs backend --tail 30
+              
+            elif [[ "$BRANCH" == "feature/frontend" ]]; then
+              echo "🔨 Frontend 기능 배포"
+              cd ~/recipe-app
+              git fetch origin
+              git checkout feature/frontend
+              git pull origin feature/frontend
+              sudo docker compose build frontend
+              sudo docker compose up -d frontend
+              sudo docker compose logs frontend --tail 30
             fi
-            
-            # 재시작
-            sudo docker compose up -d
-            
-            echo "Backend 로그:"
-            sudo docker compose logs backend --tail 30
