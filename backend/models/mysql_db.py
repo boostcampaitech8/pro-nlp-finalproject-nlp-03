@@ -81,7 +81,9 @@ def init_all_tables():
                 member_id INT NOT NULL,
                 relationship VARCHAR(100),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_member_id (member_id)
+                INDEX idx_member_id (member_id),
+                CONSTRAINT fk_family_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
 
@@ -89,15 +91,19 @@ def init_all_tables():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS personalization (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT,
+                member_id INT NOT NULL,
                 family_id INT,
-                scope ENUM('MEMBER', 'FAMILY') DEFAULT 'MEMBER',
+                scope ENUM('MEMBER', 'FAMILY') NOT NULL DEFAULT 'MEMBER',
                 allergies JSON,
                 dislikes JSON,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_member_id (member_id),
-                INDEX idx_family_id (family_id)
+                INDEX idx_family_id (family_id),
+                CONSTRAINT fk_p_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_p_family FOREIGN KEY (family_id)
+                    REFERENCES family(id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
 
@@ -280,7 +286,10 @@ def upsert_member(profile: dict) -> dict:
 
     serialized = _serialize_datetime(row)
     if serialized:
-        upsert_member_personalization(serialized["id"], [], [])
+        # 기존 personalization이 없을 때만 빈 행 생성 (기존 데이터 보호)
+        existing = get_member_personalization(serialized["id"])
+        if not existing:
+            upsert_member_personalization(serialized["id"], [], [])
     return serialized
 
 
@@ -307,7 +316,7 @@ def get_families(member_id: int) -> list:
 
 
 def add_family(member_id: int, relationship: str = "") -> dict:
-    """가족 추가"""
+    """가족 추가 (빈 personalization 행도 함께 생성)"""
     logger.info(f"👨‍👩‍👧 [family] INSERT - member_id: {member_id}, relationship: {relationship}")
     with mysql_cursor() as cur:
         cur.execute(
@@ -316,6 +325,15 @@ def add_family(member_id: int, relationship: str = "") -> dict:
         )
         new_id = cur.lastrowid
         logger.info(f"👨‍👩‍👧 [family] INSERT 완료 - family_id: {new_id}")
+
+        # 빈 personalization 행 생성
+        cur.execute(
+            "INSERT INTO personalization (member_id, family_id, scope, allergies, dislikes) "
+            "VALUES (%s, %s, 'FAMILY', '[]', '[]')",
+            (member_id, new_id),
+        )
+        logger.info(f"🍽️ [personalization] INSERT (empty) - family_id: {new_id}")
+
         cur.execute("SELECT * FROM family WHERE id = %s", (new_id,))
         return cur.fetchone()
 
