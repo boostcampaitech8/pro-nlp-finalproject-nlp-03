@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     "http://localhost:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174", 
-    "http://198.18.16.237:5173"]
+    "http://198.18.16.237:5173",
+    "https://recipeu.site",
+    "https://www.recipeu.site"
+    ]
     
     # CLOVA Studio
     CLOVASTUDIO_API_KEY: str
