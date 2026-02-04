@@ -1,11 +1,12 @@
 // src/pages/Loading/LoadingPage.jsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./LoadingPage.css";
 
 export default function LoadingPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const calledRef = useRef(false);
 
   const { memberInfo, chatHistory, sessionId, isRegeneration } =
     location.state || {};
@@ -13,6 +14,9 @@ export default function LoadingPage() {
   const API_URL = import.meta.env.VITE_API_URL || "";
 
   useEffect(() => {
+    if (calledRef.current) return; // 이미 실행됐으면 스킵
+    calledRef.current = true;
+
     const generateRecipe = async () => {
       if (!sessionId) {
         alert("세션 정보가 없습니다.");
@@ -21,7 +25,10 @@ export default function LoadingPage() {
       }
 
       try {
+        const tStart = performance.now();
         console.log("[LoadingPage] 레시피 생성 요청:", sessionId);
+
+        const totalSec = (performance.now() - tStart) / 1000;
 
         const response = await fetch(
           `${API_URL}/api/recipe/generate-from-chat?session_id=${sessionId}`,
@@ -69,7 +76,7 @@ export default function LoadingPage() {
     };
 
     generateRecipe();
-  }, [API_URL, sessionId, memberInfo, chatHistory, isRegeneration, navigate]);
+  }, []); // 의존성 비우기 (한 번만 실행용)
 
   return (
     <div className="loading-page">
