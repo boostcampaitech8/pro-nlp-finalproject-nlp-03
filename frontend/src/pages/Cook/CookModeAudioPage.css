@@ -1,17 +1,26 @@
 /* CookModeAudioPage.css - CookModePage.css 기반 + 채팅 박스 스타일 */
 
-/* ===== 헤더 영역 (제목/시간 + 마이크 버튼) ===== */
-.cook-header-row {
+/* ===== 소요시간 + 마이크 버튼 한 줄 (6:4) ===== */
+.cook-time-record-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
   width: 100%;
+  margin-top: 10px;
 }
 
-.cook-header-left {
-  flex: 1;
+.cook-time-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
+}
+
+.cook-record-section {
+  flex: 4;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 /* ===== 채팅 박스 (CookModeAudioPage 전용) ===== */

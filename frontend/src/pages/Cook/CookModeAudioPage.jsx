@@ -640,25 +640,22 @@ export default function CookModeAudioPage() {
       {/* hidden audio element */}
       <audio ref={ttsAudioRef} style={{ display: "none" }} />
 
-      <div className="cook-header-row">
-        <div className="cook-header-left">
-          {/* 레시피 제목 */}
-          <h1 className="cook-recipe-title">{passedRecipe.name}</h1>
+      {/* 레시피 제목 (한 줄) */}
+      <h1 className="cook-recipe-title">{passedRecipe.name}</h1>
 
-          {/* 소요시간 & 스톱워치 아이콘 */}
-          <div className="cook-time-row">
-            <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
-            <img
-              src="/stopwatch.png"
-              alt="스톱워치"
-              className="cook-stopwatch-icon"
-              onError={(e) => (e.target.style.display = "none")}
-            />
-          </div>
+      {/* 소요시간 + 마이크 버튼 (한 줄, 6:4) */}
+      <div className="cook-time-record-row">
+        <div className="cook-time-section">
+          <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
+          <img
+            src="/stopwatch.png"
+            alt="스톱워치"
+            className="cook-stopwatch-icon"
+            onError={(e) => (e.target.style.display = "none")}
+          />
         </div>
 
-        {/* 마이크 버튼 */}
-        <div className="cook-record-wrapper">
+        <div className="cook-record-section">
           <button
             className={`cook-record-btn ${isListening ? "recording" : ""}`}
             onClick={handleMicClick}

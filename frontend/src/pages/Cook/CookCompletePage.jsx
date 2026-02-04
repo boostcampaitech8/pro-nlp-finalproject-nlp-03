@@ -9,14 +9,15 @@ export default function CookCompletePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 전달받은 데이터 (나중에 연결)
+  // 전달받은 데이터
   const recipe = location.state?.recipe || {
     name: "바지락양념칼국수",
-    image: "/images/default-food.jpg",
+    image: "/default-food.jpg",
   };
   const elapsedTime = location.state?.elapsedTime || 874; // 00:14:34 = 874초
 
   const [rating, setRating] = useState(2); // 기본 별점 2개
+  const [saveStatus, setSaveStatus] = useState(null); // null | "success" | "fail"
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -49,15 +50,18 @@ export default function CookCompletePage() {
 
       if (response.ok) {
         const data = await response.json();
-        alert("담기 완료!");  // 알림 표시
         console.log("레시피 저장 성공:", data);
-        navigate("/home");
+        setSaveStatus("success");
+        // setTimeout(() => navigate("/home"), 1500);
+        setTimeout(() => setSaveStatus(null), 2500);
       } else {
-        alert("저장에 실패했습니다. 다시 시도해주세요.");
+        setSaveStatus("fail");
+        setTimeout(() => setSaveStatus(null), 2500);
       }
     } catch (error) {
       console.error("레시피 저장 에러:", error);
-      alert("저장 중 오류가 발생했습니다.");
+      setSaveStatus("fail");
+      setTimeout(() => setSaveStatus(null), 2500);
     }
   };
 
@@ -82,13 +86,28 @@ export default function CookCompletePage() {
       {/* 음식 이미지 */}
       <div className="complete-food-image-wrapper">
         <img
-          src={recipe.image || "/images/default-food.jpg"}
+          src={recipe.image || "/default-food.jpg"}
           alt={recipe.name}
           className="complete-food-image"
           onError={(e) => {
             e.target.src = "https://via.placeholder.com/238x289?text=Food";
           }}
         />
+        {/* 토스트 (이미지 하단 오버레이) */}
+        {saveStatus && (
+          <div className={`complete-saved-toast ${saveStatus === "fail" ? "fail" : ""}`}>
+            {saveStatus === "success" && (
+              <img
+                src="/cook-complete-alert.png"
+                alt="완료"
+                className="complete-saved-icon"
+              />
+            )}
+            <span className="complete-saved-text">
+              {saveStatus === "success" ? "담기 완료!" : "저장 실패"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 별점 */}
