@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MyPage.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function MyPage() {
   const navigate = useNavigate();

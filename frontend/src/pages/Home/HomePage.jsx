@@ -7,7 +7,7 @@ import "./HomePage.css";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";  // 추가
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";  // 추가
   
   // 날씨 상태 추가
   const [weather, setWeather] = useState({

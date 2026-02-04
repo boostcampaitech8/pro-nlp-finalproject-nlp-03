@@ -44,8 +44,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
-  const WS_URL = import.meta.env.VITE_WS_URL || "ws://211.188.62.72:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
 
   // 디버깅용
   useEffect(() => {
