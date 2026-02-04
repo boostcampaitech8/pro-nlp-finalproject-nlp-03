@@ -35,9 +35,10 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = "136.113.251.237"
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
+    USE_RERANKER: bool = False
 
     # MySQL (Naver Cloud)
-    MYSQL_HOST: str = "db-wl3de.pub-cdb.ntruss.com"
+    MYSQL_HOST: str = "db-3pf9sk-kr.vpc-pub-cdb.ntruss.com"
     MYSQL_PORT: int = 3306
     MYSQL_USER: str = "recipeu"
     MYSQL_PASSWORD: str = "recipe1234!"

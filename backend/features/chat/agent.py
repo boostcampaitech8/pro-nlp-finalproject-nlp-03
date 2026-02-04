@@ -27,7 +27,8 @@ def timed_node(name: str, fn):
         result = fn(state)
         elapsed_ms = (time.time() - start) * 1000
         _node_timings[name] = elapsed_ms
-        print(f"  ⏱️  [Node: {name}] {elapsed_ms:.0f}ms")
+        elapsed_sec = elapsed_ms / 1000
+        print(f"  ⏱️  [Node: {name}] {elapsed_sec:.1f}초")
         return result
     return wrapper
 
@@ -145,7 +146,8 @@ def create_chat_agent(rag_system):
         
         question = state["question"]
         
-        results = rag_system.search_recipes(question, k=5, use_rerank=True)
+        # use_rerank=None -> RAG 시스템 설정(USE_RERANKER) 따름
+        results = rag_system.search_recipes(question, k=3, use_rerank=None)
         
         documents = [
             Document(
