@@ -4,6 +4,8 @@ import RecipeDetailModal from "@/pages/MyRecipes/RecipeDetailModal";
 import BottomNav from "@/components/BottomNav";
 import "./RankingRecipesPage.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 function StarRating({ rating = 0, size = 11 }) {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
@@ -21,7 +23,6 @@ function StarRating({ rating = 0, size = 11 }) {
 }
 
 export default function RankingRecipesPage() {
-  const RANKING_API_URL = "http://211.188.62.72:8080"; // 랭킹 API URL
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,14 +36,14 @@ export default function RankingRecipesPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 오늘의 랭킹 레시피 가져오기
-      const res = await fetch(`${RANKING_API_URL}/api/rankings/today?limit=100`);
-      
+      const res = await fetch(`${API_URL}/api/rankings/today?limit=100`);
+
       if (!res.ok) {
         throw new Error("랭킹 데이터를 불러올 수 없습니다");
       }
-      
+
       const data = await res.json();
       // RecipePreview 형식: { recipe_id, title, author, image }
       setRecipes(data.recipes || []);
@@ -57,8 +58,10 @@ export default function RankingRecipesPage() {
   const handleRecipeClick = async (recipe) => {
     try {
       // 레시피 상세 정보 가져오기
-      const res = await fetch(`${RANKING_API_URL}/api/rankings/recipes/${recipe.recipe_id}`);
-      
+      const res = await fetch(
+        `${RANKING_API_URL}/api/rankings/recipes/${recipe.recipe_id}`,
+      );
+
       if (res.ok) {
         const data = await res.json();
         // RecipeDetail 형식으로 반환됨
@@ -95,10 +98,7 @@ export default function RankingRecipesPage() {
           {error && (
             <div className="recipes-error">
               <p className="error-message">{error}</p>
-              <button 
-                className="retry-button"
-                onClick={fetchRankingRecipes}
-              >
+              <button className="retry-button" onClick={fetchRankingRecipes}>
                 다시 시도
               </button>
             </div>
@@ -119,10 +119,8 @@ export default function RankingRecipesPage() {
                   onClick={() => handleRecipeClick(recipe)}
                 >
                   {/* 랭킹 번호 뱃지 */}
-                  <div className="ranking-badge">
-                    {index + 1}
-                  </div>
-                  
+                  <div className="ranking-badge">{index + 1}</div>
+
                   <div className="recipe-cards-image">
                     {recipe.image ? (
                       <img src={recipe.image} alt={recipe.title} />
@@ -153,7 +151,7 @@ export default function RankingRecipesPage() {
                     )}
                     {/* 별점은 랭킹 데이터에 없으므로 제거하거나, 기본값 표시 */}
                   </div>
-                  
+
                   <div className="recipe-cards-info">
                     <span className="recipe-cards-title">{recipe.title}</span>
                   </div>
