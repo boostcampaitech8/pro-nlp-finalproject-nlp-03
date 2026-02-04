@@ -1,0 +1,123 @@
+/* CookModeAudioPage.css - CookModePage.css 기반 + 채팅 박스 스타일 */
+
+/* ===== 소요시간 + 마이크 버튼 한 줄 (6:4) ===== */
+.cook-time-record-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.cook-time-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cook-record-section {
+  flex: 4;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* ===== 채팅 박스 (CookModeAudioPage 전용) ===== */
+.audio-chat-box {
+  width: 100%;
+  max-width: 365px;
+  min-height: 380px; 
+  background: #FFFFFF;
+  border-radius: 12px;
+  margin-top: 15px;
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.audio-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* 스크롤바 숨기기 */
+.audio-chat-messages::-webkit-scrollbar {
+  display: none;
+}
+
+.audio-chat-messages {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 말풍선 */
+.audio-chat-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: "Pretendard", sans-serif;
+  font-size: 15px;
+  line-height: 18px;
+  color: #6B7280;
+}
+
+/* 사용자 말풍선 (오른쪽, 분홍색) */
+.audio-chat-bubble.user {
+  align-self: flex-end;
+  background: rgba(255, 91, 50, 0.2);
+  border-radius: 12px 12px 4px 12px;
+}
+
+/* AI 말풍선 (왼쪽, 회색) */
+.audio-chat-bubble.ai {
+  align-self: flex-start;
+  background: #F5F5F5;
+  border-radius: 12px 12px 12px 4px;
+}
+
+.audio-bubble-content {
+  word-break: keep-all;
+}
+
+/* 로딩 스피너 */
+.audio-chat-loading {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+.audio-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #FF5B32;
+  border-radius: 50%;
+  animation: audio-spin 0.8s linear infinite;
+}
+
+@keyframes audio-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 에러 메시지 */
+.audio-error-msg {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #c00;
+  text-align: center;
+}
+
+/* 녹음 중일 때 버튼 색상 변경 */
+.cook-record-btn.recording {
+  background: #FF5B32;
+  box-shadow: 0 4px 12px rgba(255, 91, 50, 0.4);
+}
