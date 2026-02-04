@@ -14,6 +14,7 @@ from features.auth.router import router as auth_router
 from features.mypage.router import router as mypage_router, init_utensils
 from features.weather.router import router as weather_router
 from features.ranking.router import router as ranking_router, load_today_ranking_cache
+from features.voice.router import router as voice_router
 from models.mysql_db import get_mysql_connection, init_all_tables
 
 
@@ -89,6 +90,7 @@ app.include_router(cooking_router, prefix="/api/cook", tags=["Cooking"])
 app.include_router(mypage_router, prefix="/api/mypage", tags=["MyPage"])
 app.include_router(weather_router, prefix="/api/weather", tags=["Weather"])
 app.include_router(ranking_router, prefix="/api/rankings", tags=["Ranking"])
+app.include_router(voice_router, prefix="/api/voice", tags=["Voice"])
 
 @app.get("/")
 async def root():
