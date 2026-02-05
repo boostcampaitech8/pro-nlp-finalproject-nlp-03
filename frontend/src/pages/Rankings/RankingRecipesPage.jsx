@@ -12,14 +12,14 @@ function StarRating({ rating = 0, size = 11 }) {
     stars.push(
       <span
         key={i}
-        className={`star ${i <= rating ? "star-filled" : "star-empty"}`}
+        className={`ranking-star ${i <= rating ? "ranking-star-filled" : "ranking-star-empty"}`}
         style={{ fontSize: size }}
       >
         ★
       </span>,
     );
   }
-  return <div className="card-star-overlay">{stars}</div>;
+  return <div className="ranking-card-star-overlay">{stars}</div>;
 }
 
 export default function RankingRecipesPage() {
@@ -81,51 +81,51 @@ export default function RankingRecipesPage() {
       {/* 내부 스크롤 영역 */}
       <div className="ranking-recipes-scroll">
         {/* 클립 이미지 (베이지) */}
-        <div className="clipboard-clip">
+        <div className="ranking-clipboard-clip">
           <img src="/my-recipe-clip-beige.png" alt="clip" />
         </div>
 
         {/* 클립보드 본체 */}
-        <div className="clipboard-board">
-          <h1 className="clipboard-title">오늘의 인기 레시피</h1>
+        <div className="ranking-clipboard-board">
+          <h1 className="ranking-clipboard-title">오늘의 인기 레시피</h1>
 
           {loading && (
-            <div className="recipes-loading">
+            <div className="ranking-recipes-loading">
               <p>불러오는 중...</p>
             </div>
           )}
 
           {error && (
-            <div className="recipes-error">
-              <p className="error-message">{error}</p>
-              <button className="retry-button" onClick={fetchRankingRecipes}>
+            <div className="ranking-recipes-error">
+              <p className="ranking-error-message">{error}</p>
+              <button className="ranking-retry-button" onClick={fetchRankingRecipes}>
                 다시 시도
               </button>
             </div>
           )}
 
           {!loading && !error && recipes.length === 0 && (
-            <div className="recipes-empty">
-              <p className="empty-message">오늘의 랭킹 데이터가 없습니다</p>
+            <div className="ranking-recipes-empty">
+              <p className="ranking-empty-message">오늘의 랭킹 데이터가 없습니다</p>
             </div>
           )}
 
           {!loading && !error && recipes.length > 0 && (
-            <div className="recipes-grid">
+            <div className="ranking-recipes-grid">
               {recipes.map((recipe, index) => (
                 <div
                   key={recipe.recipe_id}
-                  className="recipe-cards"
+                  className="ranking-recipe-cards"
                   onClick={() => handleRecipeClick(recipe)}
                 >
                   {/* 랭킹 번호 뱃지 */}
                   <div className="ranking-badge">{index + 1}</div>
 
-                  <div className="recipe-cards-image">
+                  <div className="ranking-recipe-cards-image">
                     {recipe.image ? (
                       <img src={recipe.image} alt={recipe.title} />
                     ) : (
-                      <div className="recipe-cards-placeholder">
+                      <div className="ranking-recipe-cards-placeholder">
                         <svg
                           width="32"
                           height="32"
@@ -149,12 +149,9 @@ export default function RankingRecipesPage() {
                         </svg>
                       </div>
                     )}
-                    {/* 별점은 랭킹 데이터에 없으므로 제거하거나, 기본값 표시 */}
                   </div>
 
-                  <div className="recipe-cards-info">
-                    <span className="recipe-cards-title">{recipe.title}</span>
-                  </div>
+                  <span className="ranking-recipe-cards-title">{recipe.title}</span>
                 </div>
               ))}
             </div>

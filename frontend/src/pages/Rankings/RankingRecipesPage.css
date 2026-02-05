@@ -18,6 +18,7 @@
   background-repeat: no-repeat;
 }
 
+
 .ranking-recipes-scroll {
   position: absolute;
   top: 0;
@@ -36,7 +37,7 @@
   display: none;
 }
 
-.clipboard-clip {
+.ranking-clipboard-clip {
   display: flex;
   justify-content: center;
   position: relative;
@@ -44,26 +45,35 @@
   margin-bottom: -14px;
 }
 
-.clipboard-clip img {
+.ranking-clipboard-clip img {
   width: 70px;
   height: auto;
 }
 
-.clipboard-board {
+.ranking-clipboard-board {
   position: relative;
   margin: 0 16px;
   min-height: 660px;
-  padding: 10px 16px 24px;
-  background-image: url("/my-recipe-board.png");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  padding: 24px 16px 24px;
+  
+  /* [수정] 이미지가 늘어나서 찌그러지는 것을 방지하기 위해 배경색으로 변경 */
+  background-color: #FFE1BC; /* 기존 보드 이미지와 가장 비슷한 베이지색 */
+  /* 만약 외곽선이 필요하다면 아래 줄 추가 */
+  /* border: 2px solid #E6D2B5; */
+  
   border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* 약간의 그림자로 보드 느낌 추가 */
+  border: 3px solid #FFCF94;
+}
+
+.ranking-clipboard-board.is-empty {
+  flex: 1;
 }
 
 /* ===============================
    제목
 ================================ */
-.clipboard-title {
+.ranking-clipboard-title {
   font-family: "EF_jejudoldam", sans-serif;
   font-size: 26px;
   font-weight: 700;
@@ -77,35 +87,44 @@
 /* ===============================
    로딩/에러/빈 상태
 ================================ */
-.recipes-loading,
-.recipes-error,
-.recipes-empty {
+.ranking-recipes-loading{
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 300px;
-  gap: 16px;
+  color: #fff;
+  font-size: 16px;
+}
+.ranking-recipes-error,
+
+.ranking-recipes-empty {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
 }
 
-.recipes-loading p,
-.recipes-error p,
-.recipes-empty p {
+.ranking-recipes-loading p,
+.ranking-recipes-error p,
+.ranking-recipes-empty p {
   font-family: "EF_jejudoldam", sans-serif;
   font-size: 18px;
   color: #ffffff;
   text-align: center;
 }
 
-.error-message {
+.ranking-error-message {
   color: #ffdddd !important;
 }
 
-.empty-message {
+.ranking-empty-message {
+  font-family: "EF_jejudoldam", sans-serif;
+  font-size: 20px;
+  text-align: center;
   color: #8B6914 !important;
 }
 
-.retry-button {
+.ranking-retry-button {
   font-family: "EF_jejudoldam", sans-serif;
   font-size: 16px;
   padding: 10px 24px;
@@ -117,31 +136,30 @@
   transition: transform 0.15s ease;
 }
 
-.retry-button:active {
+.ranking-retry-button:active {
   transform: scale(0.95);
 }
 
 /* ===============================
    레시피 그리드
 ================================ */
-.recipes-grid {
+.ranking-recipes-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.recipe-cards {
+.ranking-recipe-cards {
   position: relative;
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
   border-radius: 10px;
   padding: 6px;
   cursor: pointer;
   transition: transform 0.15s ease;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
   overflow: hidden;
 }
 
-.recipe-cards:active {
+.ranking-recipe-cards:active {
   transform: scale(0.97);
 }
 
@@ -169,17 +187,17 @@
 }
 
 /* 1~3위 특별 색상 */
-.recipe-cards:nth-child(1) .ranking-badge {
+.ranking-recipe-cards:nth-child(1) .ranking-badge {
   background: linear-gradient(135deg, #FFD700, #FFA500);
   border-color: #FFD700;
 }
 
-.recipe-cards:nth-child(2) .ranking-badge {
+.ranking-recipe-cards:nth-child(2) .ranking-badge {
   background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
   border-color: #E8E8E8;
 }
 
-.recipe-cards:nth-child(3) .ranking-badge {
+.ranking-recipe-cards:nth-child(3) .ranking-badge {
   background: linear-gradient(135deg, #CD7F32, #B8722C);
   border-color: #E8B887;
 }
@@ -187,7 +205,7 @@
 /* ===============================
    레시피 이미지
 ================================ */
-.recipe-cards-image {
+.ranking-recipe-cards-image {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
@@ -196,13 +214,13 @@
   background: #b8856a;
 }
 
-.recipe-cards-image img {
+.ranking-recipe-cards-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.recipe-cards-placeholder {
+.ranking-recipe-cards-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
@@ -211,14 +229,14 @@
   background: #b8856a;
 }
 
-.recipe-cards-placeholder svg {
+.ranking-recipe-cards-placeholder svg {
   opacity: 0.4;
 }
 
 /* ===============================
    별점 오버레이 (선택사항)
 ================================ */
-.card-star-overlay {
+.ranking-card-star-overlay {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -226,34 +244,33 @@
   gap: 1px;
 }
 
-.star {
+.ranking-star {
   line-height: 1;
 }
 
-.star-filled {
+.ranking-star-filled {
   color: #ffd700;
 }
 
-.star-empty {
+.ranking-star-empty {
   color: rgba(255, 255, 255, 0.4);
 }
 
 /* ===============================
    레시피 정보
 ================================ */
-.recipe-cards-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
-}
 
-.recipe-cards-title {
+
+.ranking-recipe-cards-title {
   display: block;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
   color: #ffffff;
+  background: #d35400;
+  padding: 5px 8px;
+  border-radius: 0 0 6px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: -2px;
+  
 }

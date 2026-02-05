@@ -126,13 +126,6 @@
   font-family: "EF_jejudoldam", sans-serif;
 }
 
-.detail-title-line {
-  border: none;
-  border-top: 2px solid #d35400;
-  width: 60%;
-  margin: 0 auto 6px;
-}
-
 /* ===============================
    이전 소요시간
 ================================ */
@@ -140,7 +133,7 @@
   text-align: center;
   font-size: 13px;
   color: #666;
-  margin: 0 0 14px;
+  margin: 10px 0 14px;
 }
 
 /* ===============================
@@ -376,4 +369,26 @@
 
 .delete-confirm-btn.confirm:hover:not(:disabled) {
   background: #e63939;
+}
+
+.detail-action-area {
+  margin-top: 2px;
+  padding-top: 10px;
+}
+
+.start-cook-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #FE6A4D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.start-cook-btn:hover {
+  background-color: #ff5233;
 }

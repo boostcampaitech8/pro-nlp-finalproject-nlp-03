@@ -1,8 +1,10 @@
 // src/pages/MyRecipes/RecipeDetailModal.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./RecipeDetailModal.css";
 
 export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
+  const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const recipeData =
@@ -54,6 +56,31 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
     }
   };
 
+  // 요리 시작 핸들러
+  const handleStartCook = () => {
+    const recipeImage = imageUrl || "/default-food.jpg";
+    
+    navigate("/recipe-result", {
+      state: {
+        recipe: {
+          title: title,
+          intro: recipeData.intro || "",
+          cook_time: cookTime,
+          level: level,
+          servings: recipeData.servings || "2인분",
+          ingredients: ingredients,
+          steps: steps,
+          image: recipeImage,
+        },
+        imageUrl: recipeImage,
+        // RecipeResultPage에서 필요한 다른 정보들 (선택사항)
+        userId: null, // 필요시 props로 받아서 전달
+        sessionId: null, // 저장된 레시피이므로 세션 없음
+        remainingCount: 0, // 저장된 레시피는 재생성 불가
+      },
+    });
+  };
+
   return (
     <div className="detail-overlay" onClick={onClose}>
       <div className="detail-page-wrap" onClick={(e) => e.stopPropagation()}>
@@ -86,7 +113,7 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
 
             {/* 제목 + 밑줄 */}
             <h2 className="detail-title">{title}</h2>
-            <hr className="detail-title-line" />
+            
 
             {/* 이전 소요시간 */}
             <p className="detail-prev-time">
@@ -193,10 +220,17 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
                 )}
               </ol>
             </div>
+            
+            {/* 하단 요리 시작 버튼 영역 */}
+            <div className="detail-action-area">
+              <button className="start-cook-btn" onClick={handleStartCook}>
+                요리 시작하기
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
+      
       {/* 삭제 확인 모달 */}
       {showDeleteConfirm && (
         <div className="delete-confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
