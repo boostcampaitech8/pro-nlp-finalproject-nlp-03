@@ -57,6 +57,7 @@ async def get_profile(member_id: int = Query(default=0)):
         "id": member.get("id"),
         "name": member.get("nickname", "사용자"),
         "email": member.get("email"),
+        "birthday": member.get("birthday", ""),
         "allergies": psnl.get("allergies", []) if psnl else [],
         "dislikes": psnl.get("dislikes", []) if psnl else []
     }
