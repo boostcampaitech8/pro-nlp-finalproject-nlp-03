@@ -30,6 +30,11 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
 
   // 이전 소요시간
   const prevTime = recipe.cooking_time || recipeData.cooking_time || "";
+  
+  // 재료를 2개 컬럼으로 나누기
+  const midPoint = Math.ceil(ingredients.length / 2);
+  const leftColumn = ingredients.slice(0, midPoint);
+  const rightColumn = ingredients.slice(midPoint);
 
   // 삭제 처리
   const handleDelete = async () => {
@@ -146,16 +151,28 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
               <hr className="detail-section-line" />
               <div className="detail-ingredients">
                 {ingredients.length > 0 ? (
-                  <div className="ingredients-columns">
-                    {ingredients.map((ing, idx) => (
-                      <div key={idx} className="ingredient-item">
-                        <span>• </span>
-                        <span>
-                          {ing.name} {ing.amount}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <>
+                    <div className="ingredients-columns">
+                      {leftColumn.map((ing, idx) => (
+                        <div key={idx} className="ingredient-item">
+                          <span>• </span>
+                          <span>
+                            {ing.name} {ing.amount}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="ingredients-columns">
+                      {rightColumn.map((ing, idx) => (
+                        <div key={idx} className="ingredient-item">
+                          <span>• </span>
+                          <span>
+                            {ing.name} {ing.amount}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <p className="detail-empty-text">재료 정보가 없습니다</p>
                 )}
