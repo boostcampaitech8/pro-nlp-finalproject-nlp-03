@@ -10,11 +10,25 @@ export default function SplashPage() {
     navigate("/home");
   };
 
+  const goPyuExperience = () => {
+    // 퓨 사용자 정보를 localStorage에 저장
+    const pyuUser = {
+      id: 1, // 퓨의 고유 member_id (DB에 생성할 ID)
+      nickname: "퓨",
+      email: "pyu@recipeu.com",
+      name: "퓨",
+      profile_image: null,
+    };
+
+    localStorage.setItem("member", JSON.stringify(pyuUser));
+    navigate("/home");
+  };
+
   const goNaverLogin = async () => {
     try {
       const callbackUrl = `${window.location.origin}/naver-callback`;
       const res = await fetch(
-        `${API_URL}/api/auth/login-url?callback_url=${encodeURIComponent(callbackUrl)}`
+        `${API_URL}/api/auth/login-url?callback_url=${encodeURIComponent(callbackUrl)}`,
       );
       const data = await res.json();
 
@@ -54,7 +68,10 @@ export default function SplashPage() {
           className="splash-naver-btn-img"
         />
       </button>
-
+      {/* 퓨로 체험해보기 */}
+      <button className="splash-pyu-btn" onClick={goPyuExperience}>
+        🥔 퓨로 체험해보기
+      </button>
       {/* 로그인 없이 사용해보기 */}
       <button className="splash-guest-btn" onClick={goHome}>
         로그인 없이 사용해보기

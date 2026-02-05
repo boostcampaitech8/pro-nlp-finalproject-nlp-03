@@ -479,6 +479,11 @@ export default function MyPage() {
                     {member.nickname}
                   </span>
                   <span className="member-email-inline">{member.email}</span>
+                  {member.birthday && (
+                    <span className="member-birthday-inline">
+                      {member.birthday}
+                    </span>
+                  )}
                 </div>
                 <button className="logout-btn-inline" onClick={handleLogout}>
                   로그아웃

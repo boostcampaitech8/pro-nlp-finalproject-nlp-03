@@ -104,3 +104,42 @@
   width: 250px;
   height: auto;
 }
+
+.splash-pyu-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 770px; /* 720px → 760px (더 아래로) */
+
+  width: 150px; /* 250px → 200px (더 작게) */
+  height: 42px; /* 50px → 42px (더 작게) */
+
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  border: none;
+  border-radius: 21px; /* 25px → 21px (높이에 맞춤) */
+
+  color: #5d4037;
+  font-family: "Pretendard", sans-serif;
+  font-size: 14px; /* 16px → 14px (더 작게) */
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 3px 12px rgba(255, 152, 0, 0.3); /* 그림자도 약간 작게 */
+
+  overflow: hidden;
+
+  transition: all 0.3s ease;
+
+  z-index: 10;
+}
+
+.splash-pyu-btn:hover {
+  background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%);
+  box-shadow: 0 5px 16px rgba(255, 152, 0, 0.4);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.splash-pyu-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
