@@ -263,6 +263,7 @@ async def save_recipe_to_mypage(
 ):
     """요리 완료 후 마이레시피에 저장 (generate_id, session_id 연결)"""
     try:
+        print(f"[Recipe API] 마이레시피 저장 요청 수신: {request}")
         # user_id 추출 (프론트엔드는 user_id로 전송)
         user_id = request.get("user_id")
         
@@ -295,15 +296,28 @@ async def save_recipe_to_mypage(
             session_id = None
 
         recipe = request.get("recipe", {})
-        
+
         # name → title 변환 (프론트엔드 호환성)
         recipe_title = recipe.get("title") or recipe.get("name", "마이레시피")
-        
+
+        # 재료와 레시피 단계 추출
+        ingredients = recipe.get("ingredients", [])
+        steps = recipe.get("steps", [])
+
+        print(f"[Recipe API] 저장할 레시피: {recipe_title}")
+        print(f"[Recipe API] ingredients 개수: {len(ingredients)}, 내용: {ingredients[:2] if ingredients else '없음'}...")
+        print(f"[Recipe API] steps 개수: {len(steps)}, 내용: {steps[:2] if steps else '없음'}...")
+
+        if not ingredients:
+            print(f"[Recipe API] 경고: ingredients가 비어있습니다!")
+        if not steps:
+            print(f"[Recipe API] 경고: steps가 비어있습니다!")
+
         result = save_my_recipe(
             member_id=member_id,
             recipe_name=recipe_title,
-            ingredients=recipe.get("ingredients", []),
-            steps=recipe.get("steps", []),
+            ingredients=ingredients,
+            steps=steps,
             rating=request.get("rating"),
             image_url=recipe.get("image", ""),
             session_id=session_id,

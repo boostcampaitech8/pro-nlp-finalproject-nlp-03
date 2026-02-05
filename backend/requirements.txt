@@ -36,3 +36,5 @@ pymongo
 pymysql
 polars
 motor
+
+kiwipiepy

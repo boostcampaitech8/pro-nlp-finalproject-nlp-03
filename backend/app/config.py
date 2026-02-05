@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     CLOVA_TTS_CLIENT_ID: str = ""
     CLOVA_TTS_CLIENT_SECRET: str = ""
 
+    # CLOVA Speech (STT)
+    CLOVA_STT_INVOKE_URL: str = ""
+    CLOVA_STT_SECRET_KEY: str = ""
+
     # NAVER
     NAVER_CLIENT_ID: Optional[str] = None
     NAVER_CLIENT_SECRET: Optional[str] = None
@@ -41,6 +45,8 @@ class Settings(BaseSettings):
     MILVUS_HOST: str = ""
     MILVUS_PORT: str = "19530"
     COLLECTION_NAME: str = "recipe_docs"
+
+    USE_RERANKER: bool = False
 
     # MySQL (Naver Cloud)
     MYSQL_HOST: str = ""
