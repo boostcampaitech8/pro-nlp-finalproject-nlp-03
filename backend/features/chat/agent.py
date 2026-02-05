@@ -48,7 +48,7 @@ class ChatAgentState(TypedDict):
 def create_chat_agent(rag_system):
     """Chat Agent 생성 - Adaptive RAG + 네이버 검색"""
 
-    search_engine = os.getenv("SEARCH_ENGINE", "naver")
+    search_engine = os.getenv("SEARCH_ENGINE", "serper")
     search_service = get_search_service(search_engine)
     print(f"[Agent] 검색 엔진: {search_engine}")
     
