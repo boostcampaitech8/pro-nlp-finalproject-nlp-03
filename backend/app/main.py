@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from core.dependencies import get_rag_system
 from features.chat.router import router as chat_router
+from features.chat_external.router import router as chat_external_router
 from features.recipe.router import router as recipe_router
 from features.cooking.router import router as cooking_router
 from features.user.router import router as user_router
@@ -85,6 +86,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user_router, prefix="/api/user", tags=["User"])
 app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
+app.include_router(chat_external_router, prefix="/api/chat-external", tags=["External Chat"])
 app.include_router(recipe_router, prefix="/api/recipe", tags=["Recipe"])
 app.include_router(cooking_router, prefix="/api/cook", tags=["Cooking"])
 app.include_router(mypage_router, prefix="/api/mypage", tags=["MyPage"])
