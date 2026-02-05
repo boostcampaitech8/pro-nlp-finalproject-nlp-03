@@ -59,7 +59,7 @@ export default function RankingRecipesPage() {
     try {
       // 레시피 상세 정보 가져오기
       const res = await fetch(
-        `${RANKING_API_URL}/api/rankings/recipes/${recipe.recipe_id}`,
+        `${API_URL}/api/rankings/recipes/${recipe.recipe_id}`,
       );
 
       if (res.ok) {
