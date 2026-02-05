@@ -61,14 +61,12 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
         <div className="detail-clip">
           <img src="/my-recipe-clip-orange.png" alt="clip" />
         </div>
-
         {/* 모달 본체 - 클립보드 보드와 동일 위치/크기 */}
         <div className="detail-modal">
           {/* 닫기 버튼 */}
           <button className="detail-close" onClick={onClose}>
-            <img src="/my-recipe-close.png" alt="close" />
+              <img src="/my-recipe-close.png" alt="close" />
           </button>
-
           {/* 삭제 버튼 */}
           {onDelete && (
             <button
