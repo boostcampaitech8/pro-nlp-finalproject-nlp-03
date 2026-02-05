@@ -20,9 +20,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [myRecipeCount, setMyRecipeCount] = useState(0);
   const [speechBubble, setSpeechBubble] = useState({
-    comment: "날이 많이 쌀쌀하네요! 오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
+    comment: "날이 많이 쌀쌀하네요!\n오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
     recommendation: ""
   });
+  const [isBirthday, setIsBirthday] = useState(false);
 
   const memberStr = localStorage.getItem("member");
   const member = memberStr ? JSON.parse(memberStr) : null;
@@ -30,8 +31,12 @@ export default function HomePage() {
 
   // 날씨 데이터 가져오기
   useEffect(() => {
-    fetchWeather();
-    fetchMyRecipeCount();
+    const init = async () => {
+      const isBirthdayToday = await checkBirthday(); // 생일 체크를 먼저 실행하고 결과 받기
+      fetchWeather(isBirthdayToday); // 생일 여부를 전달하며 날씨 정보 가져오기
+      fetchMyRecipeCount();
+    };
+    init();
   }, []);
 
   // 날씨 상태에 따른 아이콘 매핑 함수
@@ -116,64 +121,51 @@ export default function HomePage() {
 
     // 매칭 실패 시 기본값
     return {
-      comment: "날이 많이 쌀쌀하네요! 오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
+      comment: "날이 많이 쌀쌀하네요!\n오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
       recommendation: ""
     };
   };
 
 
-  const fetchWeather = async () => {
+  const fetchWeather = async (isBirthdayToday = false) => {
     try {
-      // 1. 브라우저에서 현재 위치 가져오기
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
-            
-            console.log(`현재 위치: 위도 ${lat}, 경도 ${lon}`);
-            
-            // 2. 백엔드 API에 위도/경도 전달
+
             const response = await fetch(
               `${API_URL}/api/weather/location?lat=${lat}&lon=${lon}`
             );
 
             if (response.ok) {
               const data = await response.json();
-              console.log('날씨 데이터:', data.weather_desc);
-              console.log('선택된 아이콘:', getWeatherIcon(data.weather_desc));
-
               const bubbleContent = getWeatherComment(data.temp, data.weather_desc);
-              setSpeechBubble(bubbleContent);
+
+              if (!isBirthdayToday) {
+                setSpeechBubble(bubbleContent);
+              }
 
               setWeather({
                 temp: `${Math.round(data.temp)}°`,
                 desc: getShortWeatherDesc(data.weather_desc),
                 icon: getWeatherIcon(data.weather_desc)
               });
-            } else {
-              console.error("날씨 데이터 가져오기 실패");
-              // 실패 시 기본값 유지
             }
             setLoading(false);
           },
-          (error) => {
-            // 위치 정보 거부 또는 에러 시
-            console.error("위치 정보 가져오기 실패:", error.message);
-            
-            // 3. 위치 정보 실패 시 서울 강남구로 폴백
-            fetchWeatherByCity("서울강남구");
+          () => {
+            fetchWeatherByCity("서울강남구", isBirthdayToday);
           },
           {
-            enableHighAccuracy: false, // 배터리 절약
-            timeout: 5000,            // 5초 타임아웃
-            maximumAge: 300000        // 5분간 캐시 사용
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 300000
           }
         );
       } else {
-        // Geolocation 미지원 브라우저
-        console.log("Geolocation 미지원 - 기본 위치 사용");
-        fetchWeatherByCity("서울강남구");
+        fetchWeatherByCity("서울강남구", isBirthdayToday);
       }
     } catch (error) {
       console.error("날씨 API 에러:", error);
@@ -192,18 +184,71 @@ export default function HomePage() {
     }
   };
 
-// 폴백용 함수: 도시명으로 날씨 가져오기
-const fetchWeatherByCity = async (city) => {
+const checkBirthday = async () => {
+  try {
+    // 디버깅용: 임시로 오늘을 생일로 가정
+    const FORCE_BIRTHDAY_TEST = false;
+
+    if (FORCE_BIRTHDAY_TEST) {
+      setIsBirthday(true);
+      setSpeechBubble({
+        comment: "일 년 중 가장 소중한 생일을 진심으로 축하드려요!\n행복을 기원하며 따뜻한 미역국 한 그릇은 어떨까요?",
+        recommendation: ""
+      });
+      return true;
+    }
+
+    if (memberId === 0) {
+      return false;
+    }
+
+    const response = await fetch(`${API_URL}/api/user/profile?member_id=${memberId}`);
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+    const birthday = data.birthday;
+
+    if (!birthday) {
+      return false;
+    }
+
+    const today = new Date();
+    const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const todayDay = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${todayMonth}-${todayDay}`;
+
+    if (birthday === todayStr || birthday === `${todayMonth}${todayDay}`) {
+      setIsBirthday(true);
+      setSpeechBubble({
+        comment: "일 년 중 가장 소중한 생일을 진심으로 축하드려요!\n행복을 기원하며 따뜻한 미역국 한 그릇은 어떨까요?",
+        recommendation: ""
+      });
+      return true;
+    } else {
+      setIsBirthday(false);
+      return false;
+    }
+  } catch (error) {
+    console.error("생일 확인 실패:", error);
+    return false;
+  }
+};
+
+
+const fetchWeatherByCity = async (city, isBirthdayToday = false) => {
   try {
     const response = await fetch(`${API_URL}/api/weather/current?city=${city}`);
 
     if (response.ok) {
       const data = await response.json();
-      console.log('날씨 데이터:', data.weather_desc);
-      console.log('선택된 아이콘:', getWeatherIcon(data.weather_desc));
-
       const bubbleContent = getWeatherComment(data.temp, data.weather_desc);
-      setSpeechBubble(bubbleContent);
+
+      if (!isBirthdayToday) {
+        setSpeechBubble(bubbleContent);
+      }
 
       setWeather({
         temp: `${Math.round(data.temp)}°`,
@@ -238,10 +283,19 @@ const fetchWeatherByCity = async (city) => {
       />
 
       <div className="speech-bubble">
-        {speechBubble.comment}
+          {speechBubble.comment.split('\n').map((line, i) => (
+          <span key={i}>
+            {line}
+            {i < speechBubble.comment.split('\n').length - 1 && <br />}
+          </span>
+        ))}
       </div>
 
-      <img src="/main-character.png" alt="캐릭터" className="main-character" />
+      <img
+        src={isBirthday ? "/birthday-main-character.png" : "/main-character.png"}
+        alt="캐릭터"
+        className="main-character"
+      />
 
       <div className="home-scroll">
         {/* 메인 카드 - 채팅으로 이동 */}
