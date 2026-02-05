@@ -62,9 +62,11 @@
   background-image: url("/my-recipe-borderline-beige.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  background-color: #FFECD2;
+  background-color: #ffecd2;
   border-radius: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
 }
 
 /* ===============================
@@ -115,14 +117,14 @@
   text-align: center;
   font-size: 22px;
   font-weight: 700;
-  color: #D35400;
+  color: #d35400;
   margin: 0 0 2px;
-  font-family: 'EF_jejudoldam', sans-serif;
+  font-family: "EF_jejudoldam", sans-serif;
 }
 
 .detail-title-line {
   border: none;
-  border-top: 2px solid #D35400;
+  border-top: 2px solid #d35400;
   width: 60%;
   margin: 0 auto 6px;
 }
@@ -146,7 +148,7 @@
   margin: 0 auto 10px;
   border-radius: 12px;
   overflow: hidden;
-  background: #E8C9A0;
+  background: #e8c9a0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -196,7 +198,7 @@
 }
 
 .detail-section-title {
-  font-family: 'EF_jejudoldam', sans-serif;
+  font-family: "EF_jejudoldam", sans-serif;
   font-size: 17px;
   font-weight: 700;
   color: #1a3a5c;
@@ -209,7 +211,7 @@
 
 .detail-section-line {
   border: none;
-  border-top: 1.5px solid #D4A574;
+  border-top: 1.5px solid #d4a574;
   margin: 0 0 10px;
 }
 
@@ -232,7 +234,7 @@
    조리법
 ================================ */
 .detail-steps {
-  padding-left: 8px;
+  padding-left: 20px;
   margin: 0;
   list-style: none;
 }

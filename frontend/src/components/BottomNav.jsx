@@ -25,7 +25,7 @@ export default function BottomNav() {
       inactiveIcon: "/nav-my-non.png",
     },
     {
-      path: "/chat",
+      path: "/out-chat",
       label: "챗봇",
       activeIcon: "/nav-chat-click.png",
       inactiveIcon: "/nav-chat-non.png",

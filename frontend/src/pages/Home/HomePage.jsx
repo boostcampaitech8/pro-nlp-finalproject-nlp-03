@@ -128,8 +128,13 @@ export default function HomePage() {
         <span className="weather-desc">{weather.desc}</span>
       </div>
 
+      {/* 마이페이지 박스 */}
+      <div className="mypage-box">
+        <span className="mypage-desc">마이페이지</span>
+      </div>
+
       <img
-        src="/main-profile.png"
+        src="/potato-face.png"
         alt="프로필"
         className="profile-icon"
         onClick={() => navigate("/mypage")}
@@ -173,8 +178,8 @@ export default function HomePage() {
         >
           <img src="/main-profile.png" className="card-icon" alt="감자" />
           <div className="card-text">
-            <h3>요리하다가 궁금한게 있으신가요?</h3>
-            <p>요리 도우미 챗봇에게 언제든지 물어보세요!</p>
+            <h3 className="card-h3">사용하다가 불편한 점이 있으셨나요?</h3>
+            <p>리포트를 보내주시면 레시퓨의 발전에 큰 도움이 됩니다!</p>
           </div>
         </div>
 

@@ -6,7 +6,7 @@
   font-weight: 400;
   font-size: 30px;
   line-height: 1.2;
-  color: #FF5B32;
+  color: #ff5b32;
   margin: 0;
   text-align: left;
   width: 100%;
@@ -40,7 +40,7 @@
   font-weight: 500;
   font-size: 18px;
   line-height: 21px;
-  color: #48547B;
+  color: #48547b;
 }
 
 .cook-stopwatch-icon {
@@ -53,7 +53,7 @@
   width: 100%;
   max-width: 365px;
   min-height: 78px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 12px;
   margin-top: 24px;
   padding: 14px 10px;
@@ -61,6 +61,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition:
+    transform 0.25s ease-in-out,
+    opacity 0.25s ease-in-out;
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .cook-step-label {
@@ -69,7 +74,7 @@
   font-size: 13px;
   line-height: 16px;
   text-align: center;
-  color: #FF5B32;
+  color: #ff5b32;
   margin-bottom: 7px;
 }
 
@@ -79,19 +84,60 @@
   font-size: 18px;
   line-height: 21px;
   text-align: center;
-  color: #48547B;
+  color: #48547b;
   margin: 0;
   word-break: keep-all;
 }
 
-/* 이미지 + 네비게이션 */
+/* 슬라이드 애니메이션 (cook-step-box에만 적용) */
+.cook-step-box.slide-left {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.cook-step-box.slide-right {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.cook-step-box.enter-from-right {
+  animation: enterFromRight 0.3s ease-out forwards;
+}
+
+.cook-step-box.enter-from-left {
+  animation: enterFromLeft 0.3s ease-out forwards;
+}
+
+@keyframes enterFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes enterFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 이미지 + 화살표 네비게이션 */
 .cook-image-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   margin-top: 35px;
-  gap: 15px;
+  gap: 12px;
 }
 
 .cook-nav-btn {
@@ -128,8 +174,8 @@
 
 /* 녹음 버튼 */
 .cook-record-btn {
-  width: 45px;
-  height: 45px;
+  width: 55px;
+  height: 55px;
   background: #646667;
   border: none;
   border-radius: 50%;

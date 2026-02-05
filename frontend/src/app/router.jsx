@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SplashPage from "@/pages/Splash/SplashPage";
 import HomePage from "@/pages/Home/HomePage";
 import ChatPage from "@/pages/Chat/ChatPage";
+import ChatPageOut from "@/pages/Chat/ChatPageOut";
 import LoadingPage from "@/pages/Loading/LoadingPage";
 import RecipeResultPage from "@/pages/Recipes/RecipeResultPage";
 import CookModePage from "@/pages/Cook/CookModePage";
@@ -62,6 +63,16 @@ export default function Router() {
             element={
               <FixedLayout>
                 <ChatPage />
+              </FixedLayout>
+            }
+          />
+
+          {/* Chat - 고정 화면 (입력창 고정) */}
+          <Route
+            path="/out-chat"
+            element={
+              <FixedLayout>
+                <ChatPageOut />
               </FixedLayout>
             }
           />

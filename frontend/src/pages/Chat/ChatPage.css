@@ -63,6 +63,36 @@
   justify-content: flex-start;
 }
 
+/* message.assistant 안의 confirm-group */
+.message.assistant .confirm-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  max-width: 75%; /* 버블과 동일 */
+  width: 100%; /* 부모(.message.assistant)에 맞춤 */
+}
+
+.message.assistant .confirm-group .btn-option {
+  flex: none;
+  width: 90%;
+  text-align: center;
+  padding: 10px 0;
+  border: 1.5px solid #ddd;
+  border-radius: 15px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.message.assistant .confirm-group .btn-option:hover {
+  border-color: #ff5b32;
+  background: #fff0ec;
+  color: #ff5b32;
+}
+
 .bubble {
   max-width: 75%;
   padding: 12px 16px;
@@ -137,11 +167,13 @@
 }
 
 /* ===== 예/아니오 확인 버튼 ===== */
+/* ===== 예/아니오 확인 버튼 ===== */
 .confirm-group {
   display: flex;
   gap: 8px;
   margin-top: 4px;
-  width: 71%;
+  width: auto; /* 71% → auto 변경 */
+  max-width: 75%; /* 버블과 동일 */
 }
 
 .confirm-group .btn-option {
@@ -153,6 +185,16 @@
 .confirm-group .btn-option:hover {
   border-color: #ff5b32;
   color: #ff5b32;
+}
+
+/* 단일 버튼일 때 (요리 시작하기) */
+.confirm-group .btn-confirm {
+  flex: none; /* flex: 1 해제 */
+  width: 100%; /* confirm-group 넓이에 맞춤 */
+}
+
+.confirm-group .btn-edit {
+  flex: 1;
 }
 
 /* ===== 생각 중 ===== */
@@ -295,7 +337,6 @@
   position: absolute;
   top: 41px;
   left: 20px;
-  background: rgba(0, 0, 0, 0.4);
   border: none;
   width: 32px;
   height: 32px;
@@ -306,10 +347,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
-}
-
-.header-closed:hover {
-  background: rgba(0, 0, 0, 0.6);
+  background-color: transparent;
 }
 
 .closed-icon {

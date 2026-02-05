@@ -209,6 +209,7 @@
   padding: 10px 0;
   max-height: 200px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ingredient-item {

@@ -4,6 +4,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ButtonRed from "@/components/ButtonRed";
 import "./ChatPage.css";
 
+// 볼드 포맷팅 함수
+function formatBoldText(text) {
+  return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+}
+
 export default function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -487,7 +492,7 @@ export default function ChatPage() {
     <div className="chat-page">
       {/* 헤더 */}
       <button className="header-closed" onClick={() => navigate(-1)}>
-        <img src="/exit-icon.png" alt="닫기" className="closed-icon" />
+        <img src="/back-icon.png" alt="닫기" className="closed-icon" />
       </button>
       <div className="chat-header">
         <h1>조리 전, 마지막으로 확인할게요</h1>
@@ -506,9 +511,13 @@ export default function ChatPage() {
           {messages.map((msg, idx) => (
             <div key={idx}>
               <div className={`message ${msg.role}`}>
-                <div className="bubble">{msg.content}</div>
+                <div
+                  className="bubble"
+                  dangerouslySetInnerHTML={{
+                    __html: formatBoldText(msg.content),
+                  }}
+                />
               </div>
-
               {msg.image && (
                 <div className="message-image-wrapper">
                   <img
@@ -521,18 +530,16 @@ export default function ChatPage() {
                   />
                 </div>
               )}
-
               {msg.showHomeButton && (
                 <div className="home-button-wrapper">
                   <button
                     className="btn-confirm-selection"
-                    onClick={() => navigate("/home")}
+                    onClick={() => navigate("/out-chat")}
                   >
                     외부 챗봇으로 이동
                   </button>
                 </div>
               )}
-
               {msg.showButtons && msg.buttonType === "select_member" && (
                 <div className="selection-area">
                   <div className="button-group">
@@ -556,7 +563,6 @@ export default function ChatPage() {
                   </button>
                 </div>
               )}
-
               {msg.showButtons && msg.buttonType === "confirm_info" && (
                 <div className="button-group confirm-group">
                   <button
@@ -573,15 +579,16 @@ export default function ChatPage() {
                   </button>
                 </div>
               )}
-
               {msg.showButtons && msg.buttonType === "start_cooking" && (
-                <div className="button-group confirm-group">
-                  <button
-                    className="btn-option btn-confirm"
-                    onClick={() => handleConfirmInfo(true)}
-                  >
-                    요리 시작하기
-                  </button>
+                <div className="message assistant">
+                  <div className="button-group confirm-group">
+                    <button
+                      className="btn-option btn-confirm"
+                      onClick={() => handleConfirmInfo(true)}
+                    >
+                      요리 시작하기
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

@@ -9,12 +9,19 @@ export default function CookCompletePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 전달받은 데이터
+  // 전달받은 데이터 (ingredients, steps 포함)
   const recipe = location.state?.recipe || {
     name: "바지락양념칼국수",
     image: "/default-food.jpg",
+    ingredients: [],
+    steps: [],
   };
   const elapsedTime = location.state?.elapsedTime || 874; // 00:14:34 = 874초
+
+  // 디버깅: 전달받은 recipe 데이터 확인
+  console.log("[CookCompletePage] 전달받은 recipe:", recipe);
+  console.log("[CookCompletePage] ingredients:", recipe.ingredients);
+  console.log("[CookCompletePage] steps:", recipe.steps);
 
   const [rating, setRating] = useState(2); // 기본 별점 2개
   const [saveStatus, setSaveStatus] = useState(null); // null | "success" | "fail"
@@ -36,14 +43,33 @@ export default function CookCompletePage() {
 
   const handleSaveRecipe = async () => {
     try {
+      // 저장할 레시피 데이터 (ingredients, steps 명시적으로 포함)
+      const recipeData = {
+        name: recipe.name || recipe.title,
+        title: recipe.name || recipe.title,
+        image: recipe.image || "",
+        ingredients: recipe.ingredients || [],
+        steps: recipe.steps || [],
+      };
+
       const payload = {
         user_id: memberId,
-        recipe: recipe,
+        recipe: recipeData,
         constraints: {},
         rating: rating,
       };
 
       console.log("저장 요청 데이터:", JSON.stringify(payload, null, 2));
+
+      console.log(
+        "[CookCompletePage] 저장 요청 데이터:",
+        JSON.stringify(payload, null, 2),
+      );
+      console.log(
+        "[CookCompletePage] ingredients 개수:",
+        recipeData.ingredients.length,
+      );
+      console.log("[CookCompletePage] steps 개수:", recipeData.steps.length);
 
       const response = await fetch(`${API_URL}/api/recipe/save-my-recipe`, {
         method: "POST",
