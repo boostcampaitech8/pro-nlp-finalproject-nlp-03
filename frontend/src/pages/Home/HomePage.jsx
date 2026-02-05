@@ -3,6 +3,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";  // useState, useEffect 추가
 import BottomNav from "@/components/BottomNav";
+import weatherComments from "@/data/weatherComments.json";
 import "./HomePage.css";
 
 export default function HomePage() {
@@ -18,6 +19,10 @@ export default function HomePage() {
   
   const [loading, setLoading] = useState(true);
   const [myRecipeCount, setMyRecipeCount] = useState(0);
+  const [speechBubble, setSpeechBubble] = useState({
+    comment: "날이 많이 쌀쌀하네요! 오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
+    recommendation: ""
+  });
 
   const memberStr = localStorage.getItem("member");
   const member = memberStr ? JSON.parse(memberStr) : null;
@@ -28,6 +33,94 @@ export default function HomePage() {
     fetchWeather();
     fetchMyRecipeCount();
   }, []);
+
+  // 날씨 상태에 따른 아이콘 매핑 함수
+  const getWeatherIcon = (weatherDesc) => {
+    const desc = weatherDesc.toLowerCase();
+
+    if (desc.includes('맑') || desc.includes('clear') || desc.includes('sunny')) {
+      return '/sun.png';
+    } else if (desc.includes('비') || desc.includes('rain')) {
+      return '/rain.png';
+    } else if (desc.includes('눈') || desc.includes('snow')) {
+      return '/snow.png';
+    } else if (desc.includes('번개') || desc.includes('thunder') || desc.includes('storm')) {
+      return '/storm.png';
+    } else if (desc.includes('바람') || desc.includes('wind')) {
+      return '/wind.png';
+    } else if (desc.includes('흐') || desc.includes('구름') || desc.includes('cloud')) {
+      return '/cloud.png';
+    } else {
+      return '/main-weather.png';
+    }
+  };
+
+  // 날씨 설명 짧게 변환하는 함수
+  const getShortWeatherDesc = (weatherDesc) => {
+    const desc = weatherDesc.toLowerCase();
+
+    if (desc.includes('맑')) return '맑음';
+    if (desc.includes('비')) return '비';
+    if (desc.includes('눈')) return '눈';
+    if (desc.includes('번개') || desc.includes('storm')) return '천둥번개';
+    if (desc.includes('바람')) return '바람';
+    if (desc.includes('흐') || desc.includes('구름')) return '흐림';
+
+    return weatherDesc;
+  };
+
+  // 시간대 계산 함수
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return '아침';
+    if (hour >= 12 && hour < 18) return '점심';
+    if (hour >= 18 && hour < 24) return '저녁';
+    return '새벽';
+  };
+
+  // 온도 범주 계산 함수
+  const getTempCategory = (temp) => {
+    if (temp < 10) return '추움';
+    if (temp > 25) return '더움';
+    return '쾌적';
+  };
+
+  // 날씨 카테고리 매핑 함수
+  const getWeatherCategory = (weatherDesc) => {
+    const desc = weatherDesc.toLowerCase();
+    if (desc.includes('맑') || desc.includes('clear')) return '맑음';
+    if (desc.includes('비') || desc.includes('rain')) return '비옴';
+    if (desc.includes('눈') || desc.includes('snow')) return '눈옴';
+    return '구름 낌';
+  };
+
+  // 날씨 기반 코멘트 가져오기
+  const getWeatherComment = (temp, weatherDesc) => {
+    const timeOfDay = getTimeOfDay();
+    const tempCategory = getTempCategory(temp);
+    const weatherCategory = getWeatherCategory(weatherDesc);
+
+    const matchedComment = weatherComments.find(
+      (item) =>
+        item.time === timeOfDay &&
+        item.temp === tempCategory &&
+        item.weather === weatherCategory
+    );
+
+    if (matchedComment) {
+      return {
+        comment: matchedComment.comment,
+        recommendation: matchedComment.recommendation
+      };
+    }
+
+    // 매칭 실패 시 기본값
+    return {
+      comment: "날이 많이 쌀쌀하네요! 오늘은 김이 모락모락 나는 국물 요리 어떠세요?",
+      recommendation: ""
+    };
+  };
+
 
   const fetchWeather = async () => {
     try {
@@ -44,13 +137,19 @@ export default function HomePage() {
             const response = await fetch(
               `${API_URL}/api/weather/location?lat=${lat}&lon=${lon}`
             );
-            
+
             if (response.ok) {
               const data = await response.json();
+              console.log('날씨 데이터:', data.weather_desc);
+              console.log('선택된 아이콘:', getWeatherIcon(data.weather_desc));
+
+              const bubbleContent = getWeatherComment(data.temp, data.weather_desc);
+              setSpeechBubble(bubbleContent);
+
               setWeather({
                 temp: `${Math.round(data.temp)}°`,
-                desc: data.weather_desc,
-                icon: `/main-weather.png`
+                desc: getShortWeatherDesc(data.weather_desc),
+                icon: getWeatherIcon(data.weather_desc)
               });
             } else {
               console.error("날씨 데이터 가져오기 실패");
@@ -97,13 +196,19 @@ export default function HomePage() {
 const fetchWeatherByCity = async (city) => {
   try {
     const response = await fetch(`${API_URL}/api/weather/current?city=${city}`);
-    
+
     if (response.ok) {
       const data = await response.json();
+      console.log('날씨 데이터:', data.weather_desc);
+      console.log('선택된 아이콘:', getWeatherIcon(data.weather_desc));
+
+      const bubbleContent = getWeatherComment(data.temp, data.weather_desc);
+      setSpeechBubble(bubbleContent);
+
       setWeather({
         temp: `${Math.round(data.temp)}°`,
-        desc: data.weather_desc,
-        icon: `/main-weather.png`
+        desc: getShortWeatherDesc(data.weather_desc),
+        icon: getWeatherIcon(data.weather_desc)
       });
     }
   } catch (error) {
@@ -112,8 +217,6 @@ const fetchWeatherByCity = async (city) => {
     setLoading(false);
   }
 };
-
-
 
   return (
     <div className="home-container">
@@ -135,9 +238,7 @@ const fetchWeatherByCity = async (city) => {
       />
 
       <div className="speech-bubble">
-        날이 많이 쌀쌀하네요!
-        <br />
-        오늘은 김이 모락모락 나는 국물 요리 어떠세요?
+        {speechBubble.comment}
       </div>
 
       <img src="/main-character.png" alt="캐릭터" className="main-character" />

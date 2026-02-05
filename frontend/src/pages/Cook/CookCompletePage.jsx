@@ -18,6 +18,7 @@ export default function CookCompletePage() {
 
   const [rating, setRating] = useState(2); // 기본 별점 2개
   const [saveStatus, setSaveStatus] = useState(null); // null | "success" | "fail"
+  const [isSaved, setIsSaved] = useState(false); // 저장 완료 여부
 
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
@@ -58,6 +59,7 @@ export default function CookCompletePage() {
       const data = await response.json();
       console.log("레시피 저장 성공:", data);
       setSaveStatus("success");
+      setIsSaved(true); // 저장 완료 상태로 변경
       setTimeout(() => setSaveStatus(null), 2500);
     } else {
       const errorText = await response.text();
@@ -133,15 +135,25 @@ export default function CookCompletePage() {
       {/* 버튼 영역 */}
       <div className="complete-buttons">
         {memberId !== 0 ? (
-          <button className="btn-save" onClick={handleSaveRecipe}>
-            마이레시피에<br />담을래요
+          <button
+            className="btn-save"
+            onClick={handleSaveRecipe}
+            disabled={isSaved}
+            style={isSaved ? {opacity: 0.5, cursor: 'not-allowed'} : {}}
+          >
+            {isSaved ? '담기 완료!' : '마이레시피에'}<br />{isSaved ? '' : '담을래요'}
           </button>
         ) : (
           <button className="btn-save" disabled style={{opacity: 0.5}}>
             저장 불가<br />(로그인 필요)
           </button>
         )}
-        <button className="btn-skip" onClick={handleSkip}>
+        <button
+          className="btn-skip"
+          onClick={handleSkip}
+          disabled={isSaved}
+          style={isSaved ? {opacity: 0.5, cursor: 'not-allowed'} : {}}
+        >
           안담을래요
         </button>
       </div>
