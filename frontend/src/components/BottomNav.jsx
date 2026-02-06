@@ -1,5 +1,6 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import "./BottomNav.css";
+import { RECIPE_IMAGES } from "@/images";
 
 export default function BottomNav() {
   const navigate = useNavigate();
@@ -9,26 +10,26 @@ export default function BottomNav() {
     {
       path: "/home",
       label: "홈",
-      activeIcon: "/nav-home-click.png",
-      inactiveIcon: "/nav-home-non.png",
+      activeIcon: RECIPE_IMAGES["nav-home-click"],
+      inactiveIcon: RECIPE_IMAGES["nav-home-non"],
     },
     {
       path: "/cook-start",
       label: "조리모드",
-      activeIcon: "/nav-cook-click.png",
-      inactiveIcon: "/nav-cook-non.png",
+      activeIcon: RECIPE_IMAGES["nav-cook-click"],
+      inactiveIcon: RECIPE_IMAGES["nav-cook-non"],
     },
     {
       path: "/recipes/my",
       label: "마이 레시피",
-      activeIcon: "/nav-my-click.png",
-      inactiveIcon: "/nav-my-non.png",
+      activeIcon: RECIPE_IMAGES["nav-my-click"],
+      inactiveIcon: RECIPE_IMAGES["nav-my-non"],
     },
     {
-      path: "/chat",
+      path: "/out-chat",
       label: "챗봇",
-      activeIcon: "/nav-chat-click.png",
-      inactiveIcon: "/nav-chat-non.png",
+      activeIcon: RECIPE_IMAGES["nav-chat-click"],
+      inactiveIcon: RECIPE_IMAGES["nav-chat-non"],
     },
   ];
 
@@ -41,7 +42,7 @@ export default function BottomNav() {
           <button
             key={menu.path}
             className={`nav-item ${isActive ? "active" : ""}`}
-            onClick={() => navigate(menu.path)}
+            onClick={() => navigate({ to: menu.path })}
           >
             <img
               src={isActive ? menu.activeIcon : menu.inactiveIcon}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "@tanstack/react-router";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -27,9 +27,15 @@ export default function NaverCallbackPage() {
 
     // 백엔드에 code 전달 → 토큰 교환 + 회원 upsert
     const callbackUrl = `${window.location.origin}/naver-callback`;
-    const params = new URLSearchParams({ code, state, callback_url: callbackUrl });
+    const params = new URLSearchParams({
+      code,
+      state,
+      callback_url: callbackUrl,
+    });
 
-    fetch(`${API_URL}/api/auth/callback?${params.toString()}`, { method: "POST" })
+    fetch(`${API_URL}/api/auth/callback?${params.toString()}`, {
+      method: "POST",
+    })
       .then((res) => {
         if (!res.ok) throw new Error("로그인 처리 실패");
         return res.json();
@@ -37,7 +43,7 @@ export default function NaverCallbackPage() {
       .then((data) => {
         // 회원 정보를 로컬스토리지에 저장
         localStorage.setItem("member", JSON.stringify(data.member));
-        navigate("/home");
+        navigate({ to: "/home" });
       })
       .catch((err) => {
         console.error("네이버 로그인 콜백 처리 실패:", err);
@@ -49,7 +55,7 @@ export default function NaverCallbackPage() {
     return (
       <div style={{ padding: 32, textAlign: "center" }}>
         <p>{error}</p>
-        <button onClick={() => navigate("/")} style={{ marginTop: 16 }}>
+        <button onClick={() => navigate({ to: "/" })} style={{ marginTop: 16 }}>
           돌아가기
         </button>
       </div>

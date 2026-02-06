@@ -1,26 +1,30 @@
 // src/pages/Recipe/RecipeResultPage.jsx
-
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import RecipeLayout from "@/layouts/RecipeLayout";
 import ButtonRed from "@/components/ButtonRed";
 import ButtonWhite from "@/components/ButtonWhite";
+import { RECIPE_IMAGES } from "@/images";
 import "./RecipeResultPage.css";
 
 export default function RecipeResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // location.state에서 가져오기
   const {
     recipe,
     userId,
     title,
     constraints,
     sessionId,
+    dbSessionId,
+    generateId,
     memberInfo,
     chatHistory,
     remainingCount: initialCount,
     imageUrl,
+    fromMyPage,
   } = location.state || {};
 
   const [remainingCount, setRemainingCount] = useState(
@@ -29,35 +33,86 @@ export default function RecipeResultPage() {
 
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
+  // useEffect 수정 - 한 번만 실행
   useEffect(() => {
     if (!recipe) {
-      console.error("[RecipeResultPage] 레시피 데이터 없음");
-      navigate("/home", { replace: true });
+      console.warn("[RecipeResultPage] 레시피 데이터 없음 - 대기 중...");
+
+      // 약간의 딜레이 후 다시 확인
+      const timer = setTimeout(() => {
+        if (!recipe && !location.state?.recipe) {
+          console.error("[RecipeResultPage] 레시피 데이터 최종 없음");
+          navigate({ to: "/home", replace: true });
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
     } else {
       console.log("[RecipeResultPage] 받은 레시피:", recipe);
+      console.log("[RecipeResultPage] 이미지:", recipe.image || recipe.img_url);
       console.log("[RecipeResultPage] 세션 ID:", sessionId);
       console.log("[RecipeResultPage] 남은 횟수:", remainingCount);
     }
-  }, [recipe, navigate, sessionId, remainingCount]);
+  }, [recipe, navigate, sessionId, remainingCount, location.state]);
 
+  // 초기 로딩 중에는 null 반환하지 않기
   if (!recipe) {
-    return null;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <p>레시피를 불러오는 중...</p>
+      </div>
+    );
   }
 
-  // 재생성 버튼 핸들러
   const handleRegenerate = async () => {
-    if (remainingCount <= 0) return;
+    console.log("[RecipeResult] ===== 재생성 시작 =====");
+    console.log("[RecipeResult] remainingCount:", remainingCount);
 
-    console.log("[RecipeResult] 재생성 버튼 클릭");
+    if (remainingCount <= 0) {
+      console.log("[RecipeResult] 남은 횟수 없음!");
+      return;
+    }
+
+    console.log("[RecipeResult] sessionId:", sessionId);
 
     if (!sessionId) {
       alert("세션 정보가 없습니다.");
       return;
     }
 
+    if (fromMyPage) {
+      console.log(
+        "[RecipeResult] 마이페이지 출처 - 레시피 전체로 ChatPage 이동",
+      );
+
+      navigate({
+        to: "/chat",
+        state: {
+          recipe: recipe,
+          memberInfo: memberInfo,
+          skipToChat: true,
+          fromRegenerate: true,
+          fromMyPage: true,
+        },
+      });
+      return;
+    }
+
     try {
+      console.log(
+        "[RecipeResult] 채팅 출처 - 세션 복원:",
+        `${API_URL}/api/chat/session/${sessionId}`,
+      );
+
       const response = await fetch(`${API_URL}/api/chat/session/${sessionId}`);
 
       if (!response.ok) {
@@ -65,18 +120,18 @@ export default function RecipeResultPage() {
       }
 
       const sessionData = await response.json();
+      console.log("[RecipeResult] 세션 복원 성공:", sessionData);
 
-      console.log("[RecipeResult] 세션 복원:", sessionData);
-
-      navigate("/chat", {
+      navigate({
+        to: "/chat",
         state: {
           sessionId: sessionId,
           existingMessages: sessionData.messages,
-          memberInfo: sessionData.user_constraints,
+          memberInfo: sessionData.user_constraints || memberInfo,
+          recipe: recipe,
           skipToChat: true,
           fromRegenerate: true,
         },
-        replace: true,
       });
     } catch (error) {
       console.error("[RecipeResult] 세션 복원 실패:", error);
@@ -85,20 +140,43 @@ export default function RecipeResultPage() {
   };
 
   const handleStartCooking = () => {
-    navigate("/cook", {
-      state: {
-        recipe: {
-          name: recipe.title,
-          intro: recipe.intro,
-          time: recipe.cook_time,
-          level: recipe.level,
-          servings: recipe.servings,
-          ingredients: recipe.ingredients,
-          steps: recipe.steps,
-          image: recipeImage,
-        },
+    console.log("[RecipeResult] 요리 시작하기 클릭");
+    console.log("[RecipeResult] recipe:", recipe);
+    console.log("[RecipeResult] imageUrl:", imageUrl);
+
+    const recipeImage =
+      imageUrl || recipe?.image || recipe?.img_url || "/default-food.jpg";
+
+    console.log("[RecipeResult] 최종 이미지:", recipeImage);
+
+    const cookState = {
+      recipe: {
+        name: recipe.title,
+        intro: recipe.intro || "",
+        time: recipe.cook_time || "30분",
+        level: recipe.level || "중급",
+        servings: recipe.servings || "2인분",
+        ingredients: recipe.ingredients || [],
+        steps: recipe.steps || [],
+        image: recipeImage,
       },
-    });
+      currentStepIndex: 0,
+      elapsedTime: 0,
+      dbSessionId: dbSessionId || null,
+      generateId: generateId || null,
+      sessionId: sessionId || null,
+      userId: userId || null,
+      memberInfo: memberInfo || null,
+      chatHistory: chatHistory || null,
+      remainingCount: remainingCount,
+      imageUrl: imageUrl || recipeImage,
+      fromMyPage: fromMyPage || false,
+    };
+
+    console.log("[RecipeResult] cookState 저장:", cookState);
+
+    localStorage.setItem("cookState", JSON.stringify(cookState));
+    navigate({ to: "/cook" });
   };
 
   const handleFlipCard = () => {
@@ -106,15 +184,22 @@ export default function RecipeResultPage() {
   };
 
   const recipeImage =
-    imageUrl || recipe?.image || recipe?.img_url || "/default-food.jpg";
+    imageUrl ||
+    recipe?.image ||
+    recipe?.img_url ||
+    "https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp";
+
+  if (!recipe) {
+    return null; // useEffect에서 리다이렉트 처리
+  }
 
   return (
     <RecipeLayout steps={recipe.steps || []} currentStep={0}>
-      {/* 나머지 동일 */}
       <div className="result-title-section">
         <p className="result-subtitle">오늘의 추천 레시피는</p>
         <h1 className="result-title">
-          <span className="highlight">{recipe.title}</span> <span className="result-subtitle">입니다</span>
+          <span className="highlight">{recipe.title}</span>{" "}
+          <span className="result-subtitle">입니다</span>
         </h1>
       </div>
 
@@ -132,20 +217,25 @@ export default function RecipeResultPage() {
                 onError={(e) => {
                   console.error(
                     "[RecipeResultPage] 이미지 로드 실패:",
-                    recipeImage,
+                    e.target.src,
                   );
-                  e.target.src = "/default-food.jpg";
+                  e.target.src =
+                    "https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp";
                 }}
               />
 
               <div className="result-image-info">
                 <div className="info-badge">
-                  <img src="/time-icon.png" alt="시간" className="badge-icon" />
-                  <span>{recipe.cook_time || "15분"}</span>
+                  <img
+                    src={RECIPE_IMAGES["time-icon"]}
+                    alt="시간"
+                    className="badge-icon"
+                  />
+                  <span>{recipe.cook_time || "30분"}</span>
                 </div>
                 <div className="info-badge">
                   <img
-                    src="/level-icon.png"
+                    src={RECIPE_IMAGES["level-icon"]}
                     alt="난이도"
                     className="badge-icon"
                   />
@@ -166,8 +256,8 @@ export default function RecipeResultPage() {
               <div className="ingredients-list">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   recipe.ingredients.map((ingredient, idx) => (
-                    <div key={idx} className="ingredient-item">
-                      <span className="ingredient-name">{ingredient.name}{ingredient.name}{ingredient.name}</span>
+                    <div key={idx} className="ingredient-items">
+                      <span className="ingredient-name">{ingredient.name}</span>
                       <span className="ingredient-amount">
                         {ingredient.amount}
                       </span>
@@ -185,7 +275,10 @@ export default function RecipeResultPage() {
       <div className="result-actions">
         <div className="result-button-wrapper">
           <ButtonRed
-            onClick={handleRegenerate}
+            onClick={() => {
+              console.log("[RecipeResult] 버튼 클릭됨!");
+              handleRegenerate();
+            }}
             disabled={remainingCount === 0}
             subText={
               remainingCount > 0 ? `${remainingCount}회 남음` : "재생성 불가"

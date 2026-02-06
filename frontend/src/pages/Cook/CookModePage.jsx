@@ -1,35 +1,132 @@
+// src/pages/Cook/CookModePage.jsx
 "use client";
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
 import RecipeLayout from "@/layouts/RecipeLayout";
 import ButtonRed from "@/components/ButtonRed";
+import { RECIPE_IMAGES } from "@/images";
 import "./CookModePage.css";
 
 export default function CookModePage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const hasLoadedRef = useRef(false);
 
-  // CookModeAudioPage에서 돌아올 때 currentStepIndex, elapsedTime 유지
-  const passedStepIndex = location.state?.currentStepIndex ?? 0;
-  const passedElapsedTime = location.state?.elapsedTime ?? 0;
+  // localStorage에서 state 복원
+  const [cookState] = useState(() => {
+    const saved = localStorage.getItem("cookState");
+    console.log("[CookMode] localStorage 원본:", saved);
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        console.log("[CookMode] 파싱된 데이터:", parsed);
+        return parsed;
+      } catch (err) {
+        console.error("[CookMode] JSON 파싱 실패:", err);
+      }
+    }
+
+    return {
+      currentStepIndex: 0,
+      elapsedTime: 0,
+      recipe: {
+        name: "레시피 없음",
+        intro: "",
+        time: "0분",
+        level: "초급",
+        servings: "1인분",
+        ingredients: [],
+        steps: [{ no: 1, desc: "레시피 정보가 없습니다." }],
+        image: RECIPE_IMAGES["default_img"],
+      },
+      cookingFinished: false,
+    };
+  });
+
+  // cookState에서 값 추출
+  const passedStepIndex = cookState.currentStepIndex ?? 0;
+  const passedElapsedTime = cookState.elapsedTime ?? 0;
+  const voiceSessionId = cookState.voiceSessionId ?? null;
+  const memberId =
+    cookState.memberId ??
+    (() => {
+      const m = localStorage.getItem("member");
+      return m ? JSON.parse(m).id || 2 : 2;
+    })();
+
+  const recipe = cookState.recipe;
+  const dbSessionId = cookState.dbSessionId ?? null;
+  const generateId = cookState.generateId ?? null;
+  const recipeSteps = recipe.steps || [];
+  const handleBackToResult = () => {
+    navigate({
+      to: "/recipe-result",
+      state: {
+        recipe: {
+          title: recipe.name,
+          intro: recipe.intro,
+          cook_time: recipe.time,
+          level: recipe.level,
+          servings: recipe.servings,
+          ingredients: recipe.ingredients,
+          steps: recipe.steps,
+          image: recipe.image,
+        },
+        imageUrl: recipe.image,
+        dbSessionId,
+        generateId,
+        remainingCount: 0, // 쿡모드에서는 재생성 불가
+        fromMyPage: true, // 쿡모드에서 온 경우
+      },
+    });
+  };
+
   const [currentStepIndex, setCurrentStepIndex] = useState(passedStepIndex);
   const [elapsedTime, setElapsedTime] = useState(passedElapsedTime);
 
-  // RecipeResultPage 또는 CookModeAudioPage에서 전달받은 recipe 데이터
-  const recipe = location.state?.recipe || {
-    name: "레시피 없음",
-    intro: "",
-    time: "0분",
-    level: "초급",
-    servings: "1인분",
-    ingredients: [],
-    steps: [{ step: 1, description: "레시피 정보가 없습니다." }],
+  console.log("[CookMode] 레시피:", recipe);
+  console.log("[CookMode] 조리 단계:", recipeSteps);
+
+  useEffect(() => {
+    return () => {
+      const nextPath = window.location.pathname;
+      if (nextPath === "/cook-complete") {
+        console.log("[CookMode] cook-complete로 이동 - localStorage 삭제");
+        localStorage.removeItem("cookState");
+      } else {
+        console.log("[CookMode] 다른 페이지로 이동 - localStorage 유지");
+      }
+    };
+  }, []);
+
+  const peuImages = [
+    "/peu_banjuk.png",
+    "/peu_chicken.png",
+    "/peu_cook.png",
+    "/peu_gimbab.png",
+    "/peu_hurai.png",
+    "/peu_icecream.png",
+    "/peu_ramen.png",
+    "/peu_pizza.png",
+    "/peu_salad.png",
+    "/peu_wink.png",
+  ];
+
+  const getRandomPeuImage = (exclude) => {
+    if (peuImages.length === 0) return RECIPE_IMAGES["default_img"];
+    if (peuImages.length === 1) return peuImages[0];
+    let next = peuImages[Math.floor(Math.random() * peuImages.length)];
+    while (next === exclude) {
+      next = peuImages[Math.floor(Math.random() * peuImages.length)];
+    }
+    return next;
   };
 
-  const recipeSteps = recipe.steps || [];
+  const [randomPeuImage, setRandomPeuImage] = useState(() =>
+    getRandomPeuImage(),
+  );
 
-  // 타이머
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedTime((prev) => prev + 1);
@@ -44,34 +141,68 @@ export default function CookModePage() {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handlePrev = () =>
-    setCurrentStepIndex((prev) => (prev > 0 ? prev - 1 : prev));
-  const handleNext = () =>
-    setCurrentStepIndex((prev) =>
-      prev < recipeSteps.length - 1 ? prev + 1 : prev
-    );
+  const [slideDir, setSlideDir] = useState("");
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const changeStep = (direction) => {
+    if (isAnimating) return;
+    const next =
+      direction === "next"
+        ? Math.min(currentStepIndex + 1, recipeSteps.length - 1)
+        : Math.max(currentStepIndex - 1, 0);
+    if (next === currentStepIndex) return;
+
+    setIsAnimating(true);
+    setSlideDir(direction === "next" ? "slide-left" : "slide-right");
+    setRandomPeuImage((prev) => getRandomPeuImage(prev));
+
+    setTimeout(() => {
+      setCurrentStepIndex(next);
+      setSlideDir(
+        direction === "next" ? "enter-from-right" : "enter-from-left",
+      );
+
+      setTimeout(() => {
+        setSlideDir("");
+        setIsAnimating(false);
+      }, 300);
+    }, 250);
+  };
+
+  const handlePrev = () => changeStep("prev");
+  const handleNext = () => changeStep("next");
 
   const handleRecordClick = () => {
-    navigate("/cook-audio", {
-      state: {
+    localStorage.setItem(
+      "cookState",
+      JSON.stringify({
         currentStepIndex,
-        recipeSteps,
         recipe,
         elapsedTime,
-      },
-    });
+        voiceSessionId,
+        memberId,
+        dbSessionId,
+        generateId,
+      }),
+    );
+
+    navigate({ to: "/cook-audio" });
   };
 
   const handleFinishCook = () => {
-    navigate("/cook-complete", {
-      state: {
+    localStorage.setItem(
+      "cookCompleteState",
+      JSON.stringify({
         recipe,
         elapsedTime,
-      },
-    });
+        dbSessionId,
+        generateId,
+      }),
+    );
+
+    navigate({ to: "/cook-complete" });
   };
 
-  // RecipeBottomSheet용 steps - 이미 { no, desc } 형태로 옴
   const formattedSteps = recipeSteps.map((step, index) => ({
     no: step.no || index + 1,
     desc: step.desc || "",
@@ -81,21 +212,30 @@ export default function CookModePage() {
     <RecipeLayout
       steps={formattedSteps}
       currentStep={currentStepIndex + 1}
-      onStepClick={(index) => setCurrentStepIndex(index)}
+      onStepClick={(index) => {
+        if (index === currentStepIndex || isAnimating) return;
+        const dir = index > currentStepIndex ? "next" : "prev";
+        setIsAnimating(true);
+        setSlideDir(dir === "next" ? "slide-left" : "slide-right");
+        setRandomPeuImage((prev) => getRandomPeuImage(prev));
+        setTimeout(() => {
+          setCurrentStepIndex(index);
+          setSlideDir(dir === "next" ? "enter-from-right" : "enter-from-left");
+          setTimeout(() => {
+            setSlideDir("");
+            setIsAnimating(false);
+          }, 300);
+        }, 250);
+      }}
     >
-      {/* 레시피 제목 (한 줄) */}
-      <h1 className="cook-recipe-title">{recipe.name}</h1>
-
-      {/* 소요시간 + 녹음 버튼 (한 줄, 6:4) */}
-      <div className="cook-time-record-row">
-        <div className="cook-time-section">
-          <span className="cook-time-text">소요시간 {formatTime(elapsedTime)}</span>
-          <img
-            src="/stopwatch.png"
-            alt="스톱워치"
-            className="cook-stopwatch-icon"
-            onError={(e) => (e.target.style.display = "none")}
-          />
+      <div className="cook-header-row">
+        <div className="cook-header-info">
+          <h1 className="cook-recipe-title">{recipe.name}</h1>
+          <div className="cook-time-section">
+            <span className="cook-time-text">
+              소요시간 {formatTime(elapsedTime)}
+            </span>
+          </div>
         </div>
 
         <div className="cook-record-section">
@@ -108,8 +248,7 @@ export default function CookModePage() {
         </div>
       </div>
 
-      {/* 단계 설명 박스 */}
-      <div className="cook-step-box">
+      <div className={`cook-step-box ${slideDir}`}>
         <span className="cook-step-label">
           STEP {recipeSteps[currentStepIndex]?.no || currentStepIndex + 1}
         </span>
@@ -118,43 +257,48 @@ export default function CookModePage() {
         </p>
       </div>
 
-      {/* 이미지 + 화살표 네비게이션 */}
       <div className="cook-image-nav">
         <button
           className="cook-nav-btn"
           onClick={handlePrev}
-          disabled={currentStepIndex === 0}
+          disabled={currentStepIndex === 0 || isAnimating}
         >
           <span className="cook-arrow">‹</span>
         </button>
 
         <div className="cook-food-image-wrapper">
           <img
-            src={recipeSteps[currentStepIndex]?.image || recipe.image || "/default-food.jpg"}
+            src={randomPeuImage}
             alt="조리 이미지"
             className="cook-food-image"
             onError={(e) => {
-              e.target.src = "https://via.placeholder.com/200?text=No+Image";
+              console.error("[CookMode] 이미지 로드 실패");
+              e.target.src = peuImages[0];
             }}
           />
         </div>
-
         <button
           className="cook-nav-btn"
           onClick={handleNext}
-          disabled={currentStepIndex === recipeSteps.length - 1}
+          disabled={currentStepIndex === recipeSteps.length - 1 || isAnimating}
         >
           <span className="cook-arrow">›</span>
         </button>
       </div>
 
-      {/* 마지막 단계일 때 요리 종료하기 버튼 */}
+      {currentStepIndex !== recipeSteps.length - 1 && (
+        <p className="cook-voice-hint">
+          요리하시느라 손이 바쁘시죠?
+          <br />
+          목소리로 편하게 명령만 내려주세요!
+        </p>
+      )}
+
       {currentStepIndex === recipeSteps.length - 1 && (
         <div className="cook-finish-wrapper">
           <ButtonRed onClick={handleFinishCook}>요리 종료하기</ButtonRed>
         </div>
       )}
-
     </RecipeLayout>
   );
 }

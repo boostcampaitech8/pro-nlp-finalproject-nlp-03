@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import RecipeDetailModal from "./RecipeDetailModal";
 import BottomNav from "@/components/BottomNav";
+import { RECIPE_IMAGES } from "@/images";
 import "./MyRecipesPage.css";
 
 function StarRating({ rating = 0, size = 11 }) {
   const stars = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 3; i++) {
     stars.push(
       <span
         key={i}
@@ -21,7 +22,7 @@ function StarRating({ rating = 0, size = 11 }) {
 }
 
 export default function MyRecipesPage() {
-  const API_URL = import.meta.env.VITE_API_URL || "http://211.188.62.72:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "";
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,9 @@ export default function MyRecipesPage() {
 
   const fetchMyRecipes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/recipe/list?member_id=${memberId}`);
+      const res = await fetch(
+        `${API_URL}/api/recipe/list?member_id=${memberId}`,
+      );
       if (res.ok) {
         const data = await res.json();
         setRecipes(data.recipes || []);
@@ -61,15 +64,34 @@ export default function MyRecipesPage() {
     }
   };
 
+  // 레시피 삭제
+  const handleDeleteRecipe = async (recipeId) => {
+    const res = await fetch(`${API_URL}/api/recipe/${recipeId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      throw new Error("삭제 실패");
+    }
+    // 목록에서 제거
+    setRecipes(recipes.filter((r) => r.id !== recipeId));
+  };
+
   const isEmpty = !loading && recipes.length === 0;
 
   return (
-    <div className="my-recipes-page">
+    <div
+      className="my-recipes-page"
+      style={{ backgroundImage: `url(${RECIPE_IMAGES["cook-bg-brown"]})` }}
+    >
       {/* 내부 스크롤 영역 */}
       <div className={`my-recipes-scroll ${isEmpty ? "is-empty" : ""}`}>
         {/* 클립 이미지 (베이지) */}
         <div className="clipboard-clip">
-          <img src="/my-recipe-clip-beige.png" alt="clip" />
+          <img
+            src={RECIPE_IMAGES["my-recipe-clip-beige"]}
+            alt="clip"
+            loading="lazy"
+          />
         </div>
 
         {/* 클립보드 본체 */}
@@ -89,46 +111,52 @@ export default function MyRecipesPage() {
           )}
 
           {!isEmpty && !loading && (
-            <div className="recipes-grid">
-              {recipes.map((recipe) => (
-                <div
-                  key={recipe.id}
-                  className="recipe-cards"
-                  onClick={() => handleRecipeClick(recipe)}
-                >
-                  <div className="recipe-cards-image">
-                    {recipe.image ? (
-                      <img src={recipe.image} alt={recipe.title} />
-                    ) : (
-                      <div className="recipe-cards-placeholder">
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 32 32"
-                          fill="none"
-                        >
-                          <circle
-                            cx="16"
-                            cy="16"
-                            r="14"
-                            stroke="#C4956A"
-                            strokeWidth="1.5"
+            <div className="recipes-grid-container">
+              <div className="recipes-grid">
+                {recipes.map((recipe) => (
+                  <div
+                    key={recipe.id}
+                    className="recipe-cards"
+                    onClick={() => handleRecipeClick(recipe)}
+                  >
+                    <div className="recipe-cards-image">
+                      {recipe.image ? (
+                        <img
+                          src={recipe.image}
+                          alt={recipe.title}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="recipe-cards-placeholder">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
                             fill="none"
-                          />
-                          <path
-                            d="M10 20C10 20 13 15 16 15C19 15 22 20 22 20"
-                            stroke="#C4956A"
-                            strokeWidth="1.5"
-                          />
-                          <circle cx="12" cy="13" r="1.5" fill="#C4956A" />
-                        </svg>
-                      </div>
-                    )}
-                    <StarRating rating={recipe.rating || 3} size={11} />
+                          >
+                            <circle
+                              cx="16"
+                              cy="16"
+                              r="14"
+                              stroke="#C4956A"
+                              strokeWidth="1.5"
+                              fill="none"
+                            />
+                            <path
+                              d="M10 20C10 20 13 15 16 15C19 15 22 20 22 20"
+                              stroke="#C4956A"
+                              strokeWidth="1.5"
+                            />
+                            <circle cx="12" cy="13" r="1.5" fill="#C4956A" />
+                          </svg>
+                        </div>
+                      )}
+                      <StarRating rating={recipe.rating || 3} size={11} />
+                    </div>
+                    <span className="recipe-cards-title">{recipe.title}</span>
                   </div>
-                  <span className="recipe-cards-title">{recipe.title}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -139,6 +167,7 @@ export default function MyRecipesPage() {
         <RecipeDetailModal
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
+          onDelete={handleDeleteRecipe}
         />
       )}
 

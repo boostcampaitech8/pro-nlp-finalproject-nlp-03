@@ -209,9 +209,10 @@
   padding: 10px 0;
   max-height: 200px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.ingredient-item {
+.ingredient-items {
   display: inline-flex;
   gap: 4px;
   padding: 6px 12px;
@@ -219,6 +220,15 @@
   border-radius: 20px;
   font-size: 13px;
   white-space: nowrap;
+  white-space: normal;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 3px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .ingredient-name {

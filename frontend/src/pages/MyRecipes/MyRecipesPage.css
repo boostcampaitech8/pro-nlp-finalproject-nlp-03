@@ -1,4 +1,6 @@
 /* src/pages/MyRecipes/MyRecipesPage.css */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
+
 @font-face {
   font-family: "EF_jejudoldam";
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2")
@@ -25,20 +27,12 @@
   left: 0;
   right: 0;
   bottom: 80px;
-  overflow-y: auto;
+  overflow: hidden;
   padding-top: 14px;
   padding-bottom: 20px;
-
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.my-recipes-scroll::-webkit-scrollbar {
-  display: none;
 }
 
 .my-recipes-scroll.is-empty {
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -59,20 +53,23 @@
 .clipboard-board {
   position: relative;
   margin: 0 16px;
-  min-height: 660px;
-  padding: 24px 16px 24px;
-  background-image: url("/my-recipe-board.png");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  height: calc(100vh - 80px - 28px - 160px);
+  padding: 24px 16px;
+  background-color: transparent;
+  border: 6px solid #ffcf94;
   border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .clipboard-board.is-empty {
-  flex: 1;
+  justify-content: flex-start;
 }
 
 /* ===============================
-   제목
+   제목 (고정)
 ================================ */
 .clipboard-title {
   font-family: "EF_jejudoldam", sans-serif;
@@ -83,46 +80,59 @@
   text-decoration: underline;
   text-underline-offset: 6px;
   text-decoration-thickness: 3px;
+  flex-shrink: 0;
 }
 
 .recipes-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300px;
-  color: #fff;
+  flex: 1;
+  color: #666;
   font-size: 16px;
 }
 
 .recipes-empty {
-  min-height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding-top: 0;
+  align-items: flex-start;
+  flex: 1;
+  padding-top: 40px;
 }
 
 .empty-message {
   font-family: "EF_jejudoldam", sans-serif;
   font-size: 20px;
-  color: #8B6914;
+  color: #8b6914;
   text-align: center;
+}
+
+.recipes-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.recipes-grid-container::-webkit-scrollbar {
+  display: none;
 }
 
 .recipes-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  padding-bottom: 16px;
 }
 
 .recipe-cards {
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
   border-radius: 10px;
-  padding: 6px;
   cursor: pointer;
   transition: transform 0.15s ease;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  overflow: hidden;
+  overflow: visible;
+  padding: 0;
+  position: relative;
 }
 
 .recipe-cards:active {
@@ -133,9 +143,11 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: #b8856a;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .recipe-cards-image img {
@@ -159,10 +171,14 @@
 
 .card-star-overlay {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
   display: flex;
-  gap: 1px;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 6px;
+  border-radius: 12px;
+  z-index: 2;
 }
 
 .star {
@@ -171,22 +187,36 @@
 
 .star-filled {
   color: #ffd700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .star-empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .recipe-cards-title {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 85%;
   display: block;
-  font-family: "EF_jejudoldam", sans-serif;
-  font-size: 11px;
-  color: #ffffff;
-  background: #d35400;
-  padding: 5px 8px;
-  border-radius: 0 0 6px 6px;
+  font-family:
+    "Pretendard",
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d35400;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 17px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: -2px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
