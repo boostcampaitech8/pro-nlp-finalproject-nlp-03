@@ -91,9 +91,9 @@ export default function SplashPage() {
         🥔 퓨로 체험해보기
       </button>
       {/* 로그인 없이 사용해보기 */}
-      {/* <button className="splash-guest-btn" onClick={goHome}>
+      <button className="splash-guest-btn" onClick={goHome}>
         로그인 없이 사용해보기
-      </button>       */}
+      </button>
     </div>
   );
 }

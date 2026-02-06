@@ -19,22 +19,27 @@ export default function NaverCallbackPage() {
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/auth/naver/callback`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ code, state }),
-        });
+        const callbackUrl = `${window.location.origin}/naver-callback`;
+        
+        const response = await fetch(
+          `${API_URL}/api/auth/callback?code=${code}&state=${state}&callback_url=${encodeURIComponent(callbackUrl)}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         const data = await response.json();
 
         if (response.ok) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("userId", data.userId);
+          // 회원 정보 저장
+          localStorage.setItem("member", JSON.stringify(data.member));
+          localStorage.setItem("userId", data.member.id);
           navigate({ to: "/home" });
         } else {
-          setError(data.message || "로그인 실패");
+          setError(data.detail || "로그인 실패");
         }
       } catch (err) {
         console.error("네이버 로그인 에러:", err);
@@ -46,8 +51,20 @@ export default function NaverCallbackPage() {
   }, [searchParams, navigate]);
 
   if (error) {
-    return <div>에러: {error}</div>;
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <h2>로그인 실패</h2>
+        <p>{error}</p>
+        <button onClick={() => navigate({ to: "/" })}>
+          로그인 페이지로 돌아가기
+        </button>
+      </div>
+    );
   }
 
-  return <div>네이버 로그인 처리 중...</div>;
+  return (
+    <div style={{ padding: "20px", textAlign: "center" }}>
+      <h2>네이버 로그인 처리 중...</h2>
+    </div>
+  );
 }
