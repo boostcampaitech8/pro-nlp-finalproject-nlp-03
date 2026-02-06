@@ -531,8 +531,8 @@ export default function MyPage() {
                     />
                   )}
                 </div>
-                <button
-                  className="add-btn"
+                <button 
+                  className="add-btn" 
                   onClick={() => setShowInput(true)}
                   disabled={profiles.length >= 5}
                 >

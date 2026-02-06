@@ -125,7 +125,6 @@ export default function RankingRecipesPage() {
             </div>
           )}
 
-          {/* ✅ 스크롤 컨테이너로 감싸기 */}
           {!loading && !error && recipes.length > 0 && (
             <div className="ranking-recipes-grid-container">
               <div className="ranking-recipes-grid">

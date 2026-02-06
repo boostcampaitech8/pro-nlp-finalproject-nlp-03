@@ -31,12 +31,7 @@ export default function HomePage() {
 
   // 홈페이지 진입 시 로컬스토리지 정리 (필수 키 제외)
   useEffect(() => {
-    const keysToKeep = [
-      "member",
-      "userLocation",
-      "recipesMyCache",
-      "recipesRankingCache",
-    ];
+    const keysToKeep = ["member", "userLocation", "recipesMyCache", "recipesRankingCache"];
     const allKeys = Object.keys(localStorage);
     allKeys.forEach((key) => {
       if (!keysToKeep.includes(key)) {

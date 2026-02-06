@@ -612,3 +612,12 @@
 .guest-login-btn:hover {
     background: #e04e2a;
 }
+
+.add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.add-btn:disabled img {
+  opacity: 0.5;
+}
