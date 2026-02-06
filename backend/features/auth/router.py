@@ -92,4 +92,15 @@ async def naver_callback(code: str = Query(...), state: str = Query(...),
     # 4. member 테이블 upsert
     member = upsert_member(member_data)
 
-    return {"member": member}
+    # 5. 프론트엔드에 필요한 형식으로 응답 구성
+    response_member = {
+        "id": member["id"],
+        "nickname": member["nickname"],
+        "email": member["email"],
+        "name": member["nickname"],  # 프론트엔드에서 name 필드도 사용
+        "birthday": member.get("birthday", ""),  # 생일 필드 명시적 포함
+        "mem_photo": member.get("mem_photo", ""),
+        "profile_image": member.get("mem_photo", None),  # 호환성을 위해 추가
+    }
+
+    return {"member": response_member}

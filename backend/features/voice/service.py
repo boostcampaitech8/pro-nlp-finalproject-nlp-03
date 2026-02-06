@@ -24,11 +24,14 @@ from features.voice.text_analyzer import analyze_completeness
 # ============================================================================
 # 외부 API 엔드포인트 (백엔드에서만 관리)
 # ============================================================================
-LLM_BASE_URL = "http://213.173.102.218:17064"
-TTS_BASE_URL = "http://213.173.102.218:17063"
+LLM_BASE_URL = "http://213.173.107.104:12172"
+TTS_BASE_URL = "http://213.173.107.104:12171"
 
 LLM_ENDPOINT = "/classify"
 TTS_ENDPOINT = "/synthesize/stream"
+
+# API Key 헤더 (RunPod 서버 인증용)
+API_KEY_HEADER = "X-API-Key"
 
 
 # ============================================================================
@@ -125,6 +128,8 @@ async def transcribe_and_analyze(audio_bytes: bytes) -> Dict[str, Any]:
 async def classify_intent(
     user_text: str,
     current_step: str,
+    current_cook: str = "",
+    recipe_context: str = "",
     history: List[Dict[str, str]] = None
 ) -> Dict[str, Any]:
     """
@@ -134,14 +139,28 @@ async def classify_intent(
       {"Intent": "Next", "Response": null}
       {"Intent": "Missing Ingredient", "Response": "대체재료는 ..."}
     """
-    payload = {"text": user_text, "current_step": current_step}
+    payload = {
+        "text": user_text,
+        "current_step": current_step,
+        "current_cook": current_cook,
+        "recipe_context": recipe_context,
+    }
+    history_preview = f"{len(history)} turns" if history else "none"
+    print(
+        f"[LLM 요청] text='{user_text[:80]}...', current_step='{current_step[:80]}...', "
+        f"current_cook='{current_cook}', recipe_context='{recipe_context}', "
+        f"history={history_preview}"
+    )
     if history:
         payload["history"] = history
+
+    headers = {API_KEY_HEADER: settings.RECIPEU_API_KEY}
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             f"{LLM_BASE_URL}{LLM_ENDPOINT}",
-            json=payload
+            json=payload,
+            headers=headers
         )
         response.raise_for_status()
         result = response.json()
@@ -186,6 +205,8 @@ async def synthesize_speech_stream(
     speed_factor: float = 1.0
 ) -> AsyncGenerator[Dict[str, Any], None]:
     """TTS: 텍스트 → 음성 스트림 (청크 단위로 yield)"""
+    headers = {API_KEY_HEADER: settings.RECIPEU_API_KEY}
+
     async with httpx.AsyncClient(timeout=60.0) as client:
         async with client.stream(
             "POST",
@@ -195,7 +216,8 @@ async def synthesize_speech_stream(
                 "tone": tone,
                 "text_lang": text_lang,
                 "speed_factor": speed_factor
-            }
+            },
+            headers=headers
         ) as response:
             response.raise_for_status()
 
@@ -355,6 +377,8 @@ async def _process_intent(
 async def process_text_pipeline(
     user_text: str,
     current_step: str,
+    current_cook: str = "",
+    recipe_context: str = "",
     step_index: int = 0,
     total_steps: int = 1,
     history: List[Dict[str, str]] = None
@@ -365,7 +389,13 @@ async def process_text_pipeline(
     """
     # ── 1. LLM ──
     try:
-        llm_result = await classify_intent(user_text, current_step, history=history)
+        llm_result = await classify_intent(
+            user_text,
+            current_step,
+            current_cook=current_cook,
+            recipe_context=recipe_context,
+            history=history
+        )
         intent = llm_result["intent"]
         llm_text = llm_result["response_text"]
 
@@ -385,6 +415,8 @@ async def process_text_pipeline(
 async def process_voice_pipeline(
     audio_bytes: bytes,
     current_step: str,
+    current_cook: str = "",
+    recipe_context: str = "",
     step_index: int = 0,
     total_steps: int = 1
 ) -> AsyncGenerator[Dict[str, Any], None]:
@@ -409,5 +441,12 @@ async def process_voice_pipeline(
         return
 
     # ── 2. LLM → TTS ──
-    async for event in process_text_pipeline(user_text, current_step, step_index, total_steps):
+    async for event in process_text_pipeline(
+        user_text,
+        current_step,
+        current_cook=current_cook,
+        recipe_context=recipe_context,
+        step_index=step_index,
+        total_steps=total_steps
+    ):
         yield event

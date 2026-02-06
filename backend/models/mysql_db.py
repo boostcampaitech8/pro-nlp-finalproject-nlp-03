@@ -63,28 +63,30 @@ def init_all_tables():
         # 1. member 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS member (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                naver_id VARCHAR(100) UNIQUE,
-                email VARCHAR(255),
-                nickname VARCHAR(100),
-                birthday VARCHAR(20),
-                mem_photo VARCHAR(500),
-                mem_type VARCHAR(50) DEFAULT 'NAVER',
-                to_cnt INT DEFAULT 1,
-                first_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                member_del TINYINT DEFAULT 0
-            )
+                id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '회원고유번호(내부 PK)',
+                naver_id VARCHAR(255) NOT NULL COMMENT '네이버 response/id (앱 단위 유니크)',
+                email VARCHAR(255) NOT NULL COMMENT '이메일',
+                nickname VARCHAR(50) NOT NULL COMMENT '별명',
+                birthday CHAR(5) NOT NULL COMMENT '생일(MM-DD)',
+                mem_photo VARCHAR(2048) NOT NULL COMMENT '프로필 사진 URL',
+                mem_type VARCHAR(20) DEFAULT NULL COMMENT '회원 종류',
+                to_cnt BIGINT NOT NULL DEFAULT 0 COMMENT '총 방문 수',
+                first_visit DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '가입일',
+                last_visit DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '마지막 방문일(로그인 성공 시 갱신)',
+                member_del TINYINT(1) NOT NULL DEFAULT 0 COMMENT '탈퇴 유무',
+                UNIQUE KEY uk_member_naver_id (naver_id),
+                UNIQUE KEY uk_member_email (email),
+                INDEX idx_member_last_visit (last_visit)
+            ) COMMENT='회원 정보'
         """)
 
         # 2. family 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS family (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
-                relationship VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_member_id (member_id),
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                member_id BIGINT NOT NULL,
+                relationship VARCHAR(20) NOT NULL DEFAULT '',
+                INDEX idx_family_member_id (member_id),
                 CONSTRAINT fk_family_member FOREIGN KEY (member_id)
                     REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE
             )
@@ -93,16 +95,15 @@ def init_all_tables():
         # 3. personalization 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS personalization (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
-                family_id INT,
-                scope ENUM('MEMBER', 'FAMILY') NOT NULL DEFAULT 'MEMBER',
-                allergies JSON,
-                dislikes JSON,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_member_id (member_id),
-                INDEX idx_family_id (family_id),
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                family_id BIGINT DEFAULT NULL,
+                member_id BIGINT NOT NULL,
+                scope ENUM('MEMBER', 'FAMILY') NOT NULL,
+                allergies JSON DEFAULT NULL,
+                dislikes JSON DEFAULT NULL,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_p_member_id (member_id),
+                INDEX idx_p_family_id (family_id),
                 CONSTRAINT fk_p_member FOREIGN KEY (member_id)
                     REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 CONSTRAINT fk_p_family FOREIGN KEY (family_id)
@@ -114,97 +115,133 @@ def init_all_tables():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS utensil (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(100) NOT NULL UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                name VARCHAR(50) NOT NULL,
+                UNIQUE KEY uk_utensil_name (name)
             )
         """)
 
         # 5. member_utensil 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS member_utensil (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
+                id BIGINT NOT NULL AUTO_INCREMENT,
+                member_id BIGINT NOT NULL,
                 utensil_id INT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_member_utensil (member_id, utensil_id)
+                PRIMARY KEY (id),
+                UNIQUE KEY uk_member_utensil (member_id, utensil_id),
+                KEY idx_mu_member_id (member_id),
+                KEY idx_mu_utensil_id (utensil_id),
+                CONSTRAINT fk_mu_member FOREIGN KEY (member_id)
+                    REFERENCES member (id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_mu_utensil FOREIGN KEY (utensil_id)
+                    REFERENCES utensil (id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
+
 
         # 6. session 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS session (
-                session_id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_member_id (member_id)
+                session_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                member_id BIGINT NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_session_member_id (member_id),
+                CONSTRAINT fk_session_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
 
         # 7. chatbot 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS chatbot (
-                chat_id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
-                session_id INT NOT NULL,
-                role ENUM('user', 'assistant') NOT NULL,
+                chat_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                member_id BIGINT NOT NULL,
+                session_id BIGINT NOT NULL,
+                role ENUM('USER', 'AGENT') NOT NULL,
                 text TEXT,
-                type VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_session_id (session_id),
-                INDEX idx_member_id (member_id)
+                type ENUM('GENERATE', 'VOICE') NOT NULL DEFAULT 'GENERATE',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_chatbot_member_id (member_id),
+                INDEX idx_chatbot_session_time (session_id, created_at),
+                CONSTRAINT fk_chatbot_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_chatbot_session FOREIGN KEY (session_id)
+                    REFERENCES session(session_id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
 
         # 8. generate 테이블
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS generate (
-                generate_id INT AUTO_INCREMENT PRIMARY KEY,
-                session_id INT NOT NULL,
-                member_id INT NOT NULL,
-                recipe_name VARCHAR(255),
-                ingredients JSON,
-                steps JSON,
-                gen_type VARCHAR(50),
-                gen_order INT DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_session_id (session_id),
-                INDEX idx_member_id (member_id)
+            CREATE TABLE IF NOT EXISTS `generate` (
+                generate_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                session_id BIGINT DEFAULT NULL,
+                member_id BIGINT NOT NULL,
+                recipe_name VARCHAR(100) NOT NULL DEFAULT '',
+                ingredients JSON NOT NULL,
+                steps JSON NOT NULL,
+                gen_type ENUM('FIRST', 'RETRY') NOT NULL DEFAULT 'FIRST',
+                gen_order INT NOT NULL DEFAULT 1,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_generate_member_id (member_id),
+                INDEX idx_generate_session_id (session_id),
+                INDEX idx_generate_created_at (created_at),
+                CONSTRAINT fk_generate_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_generate_session FOREIGN KEY (session_id)
+                    REFERENCES session(session_id) ON DELETE SET NULL ON UPDATE CASCADE
             )
         """)
 
         # 9. my_recipe 테이블
         cur.execute("""
             CREATE TABLE IF NOT EXISTS my_recipe (
-                my_recipe_id INT AUTO_INCREMENT PRIMARY KEY,
-                member_id INT NOT NULL,
-                session_id INT,
-                generate_id INT,
-                recipe_name VARCHAR(255),
-                ingredients JSON,
-                steps JSON,
-                rating INT DEFAULT 0,
-                image_url VARCHAR(500),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_member_id (member_id)
+                my_recipe_id BIGINT NOT NULL AUTO_INCREMENT,
+                member_id BIGINT NOT NULL,
+                session_id BIGINT DEFAULT NULL,
+                generate_id BIGINT DEFAULT NULL,
+                recipe_name VARCHAR(100) NOT NULL DEFAULT '',
+                ingredients JSON NOT NULL,
+                steps JSON NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                rating TINYINT DEFAULT NULL,
+                image_url VARCHAR(2048) DEFAULT NULL,
+                cook_time VARCHAR(50) DEFAULT NULL COMMENT '조리 시간(원문: 예 10분 이내)',
+                elapsed_time INT DEFAULT NULL COMMENT '실제 소요 시간(초 단위)',
+                level VARCHAR(30) DEFAULT NULL COMMENT '난이도(원문: 예 아무나/초급)',
+                PRIMARY KEY (my_recipe_id),
+                KEY idx_my_recipe_member_id (member_id),
+                KEY idx_my_recipe_session_id (session_id),
+                KEY idx_my_recipe_generate_id (generate_id),
+                KEY idx_my_recipe_created_at (created_at),
+                CONSTRAINT fk_my_recipe_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_my_recipe_session FOREIGN KEY (session_id)
+                    REFERENCES session(session_id) ON DELETE SET NULL ON UPDATE CASCADE,
+                CONSTRAINT fk_my_recipe_generate FOREIGN KEY (generate_id)
+                    REFERENCES `generate`(generate_id) ON DELETE SET NULL ON UPDATE CASCADE
             )
         """)
 
-        # 10. voice 테이블
+
+        # 10. voice 테이블 (현재 미사용, 테이블만 유지)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS voice (
-                voice_id INT AUTO_INCREMENT PRIMARY KEY,
-                chat_id INT NOT NULL,
-                member_id INT NOT NULL,
-                voice_type VARCHAR(50),
+                voice_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                chat_id BIGINT NOT NULL,
+                member_id BIGINT NOT NULL,
                 context TEXT,
-                voice_file VARCHAR(500),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_chat_voice (chat_id, voice_type),
-                INDEX idx_chat_id (chat_id),
-                INDEX idx_member_id (member_id)
+                voice_type ENUM('STT', 'TTS') NOT NULL,
+                voice_file VARCHAR(2048) DEFAULT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_voice_chat_type (chat_id, voice_type),
+                INDEX idx_voice_member_id (member_id),
+                INDEX idx_voice_created_at (created_at),
+                CONSTRAINT fk_voice_chatbot FOREIGN KEY (chat_id)
+                    REFERENCES chatbot(chat_id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_voice_member FOREIGN KEY (member_id)
+                    REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE
             )
         """)
+
 
     logger.info("🔧 [init] 모든 테이블 생성 완료!")
 
@@ -539,12 +576,16 @@ def get_member_sessions(member_id: int, limit: int = 20) -> list:
 def add_chat_message(
     member_id: int,
     session_id: int,
-    role: str,  # 'USER' or 'AGENT'
+    role: str,  # 'user'/'assistant' → 'USER'/'AGENT'
     text: str,
-    msg_type: str = "DEFAULT"  # 'GENERATE' or 'DEFAULT'
+    msg_type: str = "GENERATE"  # 'GENERATE' or 'VOICE'
 ) -> dict:
     """채팅 메시지 추가"""
-    logger.info(f"💬 [chatbot] INSERT - session_id: {session_id}, role: {role}, type: {msg_type}")
+    # role 매핑: 소문자 → 대문자, assistant → AGENT
+    role_map = {"user": "USER", "assistant": "AGENT"}
+    db_role = role_map.get(role.lower(), role.upper())
+
+    logger.info(f"💬 [chatbot] INSERT - session_id: {session_id}, role: {db_role}, type: {msg_type}")
     logger.debug(f"   text: {text[:50]}..." if len(text) > 50 else f"   text: {text}")
     with mysql_cursor() as cur:
         cur.execute(
@@ -552,7 +593,7 @@ def add_chat_message(
             INSERT INTO chatbot (member_id, session_id, role, text, type)
             VALUES (%s, %s, %s, %s, %s)
             """,
-            (member_id, session_id, role, text, msg_type),
+            (member_id, session_id, db_role, text, msg_type),
         )
         chat_id = cur.lastrowid
         logger.info(f"💬 [chatbot] INSERT 완료 - chat_id: {chat_id}")
@@ -656,15 +697,18 @@ def save_my_recipe(
     session_id: Optional[int] = None,
     generate_id: Optional[int] = None,
     rating: Optional[int] = None,
-    image_url: Optional[str] = None
+    image_url: Optional[str] = None,
+    cook_time: Optional[str] = None,
+    level: Optional[str] = None,
+    elapsed_time: Optional[int] = None
 ) -> dict:
     """내 레시피 저장"""
     logger.info(f"📖 [my_recipe] INSERT - member_id: {member_id}, recipe: {recipe_name}")
     with mysql_cursor() as cur:
         cur.execute(
             """
-            INSERT INTO my_recipe (member_id, session_id, generate_id, recipe_name, ingredients, steps, rating, image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO my_recipe (member_id, session_id, generate_id, recipe_name, ingredients, steps, rating, image_url, cook_time, level, elapsed_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 member_id,
@@ -675,6 +719,9 @@ def save_my_recipe(
                 json.dumps(steps, ensure_ascii=False),
                 rating,
                 image_url,
+                cook_time,
+                level,
+                elapsed_time,
             ),
         )
         my_recipe_id = cur.lastrowid
@@ -821,4 +868,3 @@ def load_mypage_data(member_id: int) -> dict:
         "utensils": utensils,
         "member_utensil_ids": member_utensil_ids,
     }
-

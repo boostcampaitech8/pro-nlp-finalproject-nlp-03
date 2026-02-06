@@ -16,4 +16,5 @@ __pycache__/
 # frontend
 frontend/
 
+venv
 nul
