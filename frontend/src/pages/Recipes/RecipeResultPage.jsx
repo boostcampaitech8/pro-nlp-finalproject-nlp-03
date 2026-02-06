@@ -238,7 +238,7 @@ export default function RecipeResultPage() {
               <div className="ingredients-list">
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   recipe.ingredients.map((ingredient, idx) => (
-                    <div key={idx} className="ingredient-item">
+                    <div key={idx} className="ingredient-items">
                       <span className="ingredient-name">
                         {ingredient.name || ingredient}
                       </span>

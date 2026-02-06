@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RecipeResultRouteImport } from './routes/recipe-result'
 import { Route as OutChatRouteImport } from './routes/out-chat'
+import { Route as NaverCallbackRouteImport } from './routes/naver-callback'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoadingRouteImport } from './routes/loading'
 import { Route as HomeRouteImport } from './routes/home'
@@ -31,6 +32,11 @@ const RecipeResultRoute = RecipeResultRouteImport.update({
 const OutChatRoute = OutChatRouteImport.update({
   id: '/out-chat',
   path: '/out-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NaverCallbackRoute = NaverCallbackRouteImport.update({
+  id: '/naver-callback',
+  path: '/naver-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MypageRoute = MypageRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/loading': typeof LoadingRoute
   '/mypage': typeof MypageRoute
+  '/naver-callback': typeof NaverCallbackRoute
   '/out-chat': typeof OutChatRoute
   '/recipe-result': typeof RecipeResultRoute
   '/recipes/my': typeof RecipesMyRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/loading': typeof LoadingRoute
   '/mypage': typeof MypageRoute
+  '/naver-callback': typeof NaverCallbackRoute
   '/out-chat': typeof OutChatRoute
   '/recipe-result': typeof RecipeResultRoute
   '/recipes/my': typeof RecipesMyRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/loading': typeof LoadingRoute
   '/mypage': typeof MypageRoute
+  '/naver-callback': typeof NaverCallbackRoute
   '/out-chat': typeof OutChatRoute
   '/recipe-result': typeof RecipeResultRoute
   '/recipes/my': typeof RecipesMyRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/loading'
     | '/mypage'
+    | '/naver-callback'
     | '/out-chat'
     | '/recipe-result'
     | '/recipes/my'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/loading'
     | '/mypage'
+    | '/naver-callback'
     | '/out-chat'
     | '/recipe-result'
     | '/recipes/my'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/loading'
     | '/mypage'
+    | '/naver-callback'
     | '/out-chat'
     | '/recipe-result'
     | '/recipes/my'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoadingRoute: typeof LoadingRoute
   MypageRoute: typeof MypageRoute
+  NaverCallbackRoute: typeof NaverCallbackRoute
   OutChatRoute: typeof OutChatRoute
   RecipeResultRoute: typeof RecipeResultRoute
   RecipesMyRoute: typeof RecipesMyRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/out-chat'
       fullPath: '/out-chat'
       preLoaderRoute: typeof OutChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/naver-callback': {
+      id: '/naver-callback'
+      path: '/naver-callback'
+      fullPath: '/naver-callback'
+      preLoaderRoute: typeof NaverCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mypage': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoadingRoute: LoadingRoute,
   MypageRoute: MypageRoute,
+  NaverCallbackRoute: NaverCallbackRoute,
   OutChatRoute: OutChatRoute,
   RecipeResultRoute: RecipeResultRoute,
   RecipesMyRoute: RecipesMyRoute,

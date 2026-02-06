@@ -240,7 +240,7 @@ export default function ChatPage() {
         const familyData = await familyRes.json();
         const families = familyData.family_members || [];
 
-        // ✅ 가족이 있으면 선택 모드, 없으면 "나"만 자동 선택
+        // 가족이 있으면 선택 모드, 없으면 "나"만 자동 선택
         if (families.length > 0) {
           // 가족 선택 모드
           const membersObj = {};
