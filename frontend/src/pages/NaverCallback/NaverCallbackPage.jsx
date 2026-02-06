@@ -1,70 +1,53 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function NaverCallbackPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const searchParams = useSearch({ from: '/naver-callback' });
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const handleNaverCallback = async () => {
+      const code = searchParams.code;
+      const state = searchParams.state;
 
-    if (!code || !state) {
-      setError("네이버 로그인 응답이 올바르지 않습니다.");
-      return;
-    }
+      if (!code || !state) {
+        setError("인증 정보가 없습니다.");
+        return;
+      }
 
-    // CSRF state 검증
-    const savedState = sessionStorage.getItem("naver_oauth_state");
-    if (savedState && savedState !== state) {
-      setError("인증 상태가 일치하지 않습니다. 다시 시도해주세요.");
-      return;
-    }
-    sessionStorage.removeItem("naver_oauth_state");
+      try {
+        const response = await fetch(`${API_URL}/api/auth/naver/callback`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code, state }),
+        });
 
-    // 백엔드에 code 전달 → 토큰 교환 + 회원 upsert
-    const callbackUrl = `${window.location.origin}/naver-callback`;
-    const params = new URLSearchParams({
-      code,
-      state,
-      callback_url: callbackUrl,
-    });
+        const data = await response.json();
 
-    fetch(`${API_URL}/api/auth/callback?${params.toString()}`, {
-      method: "POST",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("로그인 처리 실패");
-        return res.json();
-      })
-      .then((data) => {
-        // 회원 정보를 로컬스토리지에 저장
-        localStorage.setItem("member", JSON.stringify(data.member));
-        navigate({ to: "/home" });
-      })
-      .catch((err) => {
-        console.error("네이버 로그인 콜백 처리 실패:", err);
+        if (response.ok) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userId", data.userId);
+          navigate({ to: "/home" });
+        } else {
+          setError(data.message || "로그인 실패");
+        }
+      } catch (err) {
+        console.error("네이버 로그인 에러:", err);
         setError("로그인 처리 중 오류가 발생했습니다.");
-      });
+      }
+    };
+
+    handleNaverCallback();
   }, [searchParams, navigate]);
 
   if (error) {
-    return (
-      <div style={{ padding: 32, textAlign: "center" }}>
-        <p>{error}</p>
-        <button onClick={() => navigate({ to: "/" })} style={{ marginTop: 16 }}>
-          돌아가기
-        </button>
-      </div>
-    );
+    return <div>에러: {error}</div>;
   }
 
-  return (
-    <div style={{ padding: 32, textAlign: "center" }}>
-      <p>로그인 처리 중...</p>
-    </div>
-  );
+  return <div>네이버 로그인 처리 중...</div>;
 }
