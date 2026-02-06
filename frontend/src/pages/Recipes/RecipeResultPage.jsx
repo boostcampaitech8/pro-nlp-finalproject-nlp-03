@@ -84,8 +84,32 @@ export default function RecipeResultPage() {
 
     console.log("[RecipeResult] sessionId:", sessionId);
 
+    // 세션 ID가 없는 경우 - 새로운 세션 생성
     if (!sessionId) {
-      alert("세션 정보가 없습니다.");
+      console.log("[RecipeResult] 세션 없음 -> 새 채팅");
+
+      const newSessionId = crypto.randomUUID();
+
+      await fetch(`${API_URL}/api/chat/init-with-recipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: newSessionId,
+          recipe: recipe,
+        }),
+      });
+
+      navigate({
+        to: "/chat",
+        state: {
+          sessionId: newSessionId,
+          recipe: recipe,
+          skipToChat: true,
+        },
+      });
+
       return;
     }
 
@@ -145,9 +169,20 @@ export default function RecipeResultPage() {
     console.log("[RecipeResult] imageUrl:", imageUrl);
 
     const recipeImage =
-      imageUrl || recipe?.image || recipe?.img_url || "/default-food.jpg";
+      imageUrl ||
+      recipe?.image ||
+      recipe?.img_url ||
+      "https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp";
 
     console.log("[RecipeResult] 최종 이미지:", recipeImage);
+
+    // steps 정규화: 문자열 배열을 객체 배열로 변환
+    const normalizedSteps = (recipe.steps || []).map((step, index) => {
+      if (typeof step === "string") {
+        return { desc: step, order: index + 1 };
+      }
+      return step;
+    });
 
     const cookState = {
       recipe: {
@@ -155,9 +190,9 @@ export default function RecipeResultPage() {
         intro: recipe.intro || "",
         time: recipe.cook_time || "30분",
         level: recipe.level || "중급",
-        servings: recipe.servings || "2인분",
+        servings: recipe.servings || recipe.portion || "2인분",
         ingredients: recipe.ingredients || [],
-        steps: recipe.steps || [],
+        steps: normalizedSteps,
         image: recipeImage,
       },
       currentStepIndex: 0,
@@ -189,9 +224,13 @@ export default function RecipeResultPage() {
     recipe?.img_url ||
     "https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp";
 
-  if (!recipe) {
-    return null; // useEffect에서 리다이렉트 처리
-  }
+  // steps 정규화: 문자열을 그대로 표시 또는 객체에서 추출
+  const normalizedSteps = (recipe.steps || []).map((step) => {
+    if (typeof step === "string") {
+      return step;
+    }
+    return step.desc || step.content || step;
+  });
 
   return (
     <RecipeLayout steps={recipe.steps || []} currentStep={0}>
@@ -257,9 +296,11 @@ export default function RecipeResultPage() {
                 {recipe.ingredients && recipe.ingredients.length > 0 ? (
                   recipe.ingredients.map((ingredient, idx) => (
                     <div key={idx} className="ingredient-item">
-                      <span className="ingredient-name">{ingredient.name}</span>
+                      <span className="ingredient-name">
+                        {ingredient.name || ingredient}
+                      </span>
                       <span className="ingredient-amount">
-                        {ingredient.amount}
+                        {ingredient.amount || ""}
                       </span>
                     </div>
                   ))

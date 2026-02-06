@@ -102,22 +102,72 @@ export default function RecipeDetailModal({ recipe, onClose, onDelete }) {
       }
     }
 
+    // 기본 레시피 데이터
+    let finalRecipeData = {
+      title: title,
+      intro: recipeData.intro || "",
+      cook_time: cookTime,
+      level: level,
+      servings: recipeData.servings || recipeData.portion || "2인분",
+      ingredients: ingredients,
+      steps: steps,
+      image: imageUrl,
+    };
+
+    // API에서 최신 레시피 데이터 가져오기 시도
+    try {
+      let url = "";
+
+      // 마이 레시피 router 이용
+      if (recipe.id) {
+        console.log("마이 레시피 ID:", recipe.id);
+        url = `${API_URL}/api/recipe/${recipe.id}`;
+      }
+      // 랭킹 레시피 router 이용
+      else if (recipe.recipe_id) {
+        console.log("랭킹 레시피 ID:", recipe.recipe_id);
+        url = `${API_URL}/api/rankings/recipes/${recipe.recipe_id}`;
+      }
+
+      if (url) {
+        console.log("요청 URL:", url);
+        const res = await fetch(url);
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log("API 응답 데이터:", data);
+
+          const apiRecipeData = data.recipe || data;
+
+          // API 응답으로 업데이트
+          finalRecipeData = {
+            title: apiRecipeData.title || title,
+            intro: apiRecipeData.intro || "",
+            cook_time: apiRecipeData.cook_time || cookTime,
+            level: apiRecipeData.level || level,
+            servings:
+              apiRecipeData.servings || apiRecipeData.portion || "2인분",
+            ingredients: apiRecipeData.ingredients || ingredients,
+            steps: apiRecipeData.steps || steps,
+            image: apiRecipeData.image || apiRecipeData.img_url || imageUrl,
+          };
+
+          console.log("최종 레시피 데이터 (API 응답):", finalRecipeData);
+        } else {
+          console.log("API 호출 실패, 기본 데이터 사용");
+        }
+      }
+    } catch (err) {
+      console.error("API 호출 오류, 기본 데이터 사용:", err);
+    }
+
     navigate({
       to: "/recipe-result",
       state: {
-        recipe: {
-          title: title,
-          intro: recipeData.intro || "",
-          cook_time: cookTime,
-          level: level,
-          servings: recipeData.servings || "2인분",
-          ingredients: ingredients,
-          steps: steps,
-          image: imageUrl,
-        },
-        imageUrl: imageUrl,
+        recipe: finalRecipeData,
+        imageUrl: finalRecipeData.image,
         userId: memberId || null,
-        title: title,
+        title: finalRecipeData.title,
         constraints: null,
         sessionId: newSessionId,
         dbSessionId: dbSessionId,

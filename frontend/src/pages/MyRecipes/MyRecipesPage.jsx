@@ -95,12 +95,7 @@ export default function MyRecipesPage() {
         </div>
 
         {/* 클립보드 본체 */}
-        <div
-          className={`clipboard-board ${isEmpty ? "is-empty" : ""}`}
-          style={{
-            backgroundImage: `url(${RECIPE_IMAGES["my-recipe-board"]})`,
-          }}
-        >
+        <div className={`clipboard-board ${isEmpty ? "is-empty" : ""}`}>
           <h1 className="clipboard-title">마이레시피</h1>
 
           {loading && (
