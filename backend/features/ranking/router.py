@@ -1,4 +1,5 @@
 import os
+import re
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import APIRouter, HTTPException, Query
 from typing import List
@@ -213,6 +214,13 @@ async def get_recipe_detail(recipe_id: str):
     if not recipe:
         raise HTTPException(404, "Recipe not found")
 
+    steps = recipe.get("steps", [])
+    cleaned_steps = []
+    for step in steps:
+        # "11. " 같은 패턴 제거
+        cleaned_step = re.sub(r'^\d+\.\s*', '', step)
+        cleaned_steps.append(cleaned_step)
+        
     return RecipeDetail(
         recipe_id=recipe["recipe_id"],
         title=recipe["title"],
@@ -224,5 +232,5 @@ async def get_recipe_detail(recipe_id: str):
         level=recipe.get("level", ""),
         detail_url=recipe.get("detail_url", ""),
         ingredients=recipe.get("ingredients", []),
-        steps=recipe.get("steps", []),
+        steps=cleaned_steps,
     )

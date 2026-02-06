@@ -325,11 +325,10 @@ class RecipeRAGLangChain:
         self,
         query: str,
         k: int = 3,
-        use_rerank: bool = None
+        use_rerank: bool = False
     ) -> List[Dict]:
         """레시피 검색 (with optional CLOVA Studio reranking + image)"""
 
-        print(f"\n  📍 [search_recipes] 시작 (k={k}, rerank={use_rerank})")
         t_total_start = _t()
 
         use_rerank = use_rerank if use_rerank is not None else self.use_reranker

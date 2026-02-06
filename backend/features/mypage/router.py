@@ -25,6 +25,9 @@ from models.mysql_db import (
 
 router = APIRouter()
 
+# 게스트 계정 ID (개인화/마이레시피 저장 불가)
+GUEST_MEMBER_ID = 2
+
 
 # ── 요청 스키마 ──
 
@@ -95,9 +98,9 @@ async def get_guest_defaults():
 async def get_mypage(member_id: int):
     """
     마이페이지 전체 데이터 조회
-    - member_id가 0이면 게스트 모드 응답
+    - member_id가 0 또는 게스트(2)이면 게스트 모드 응답
     """
-    if member_id == 0:
+    if member_id in [0, GUEST_MEMBER_ID]:
         return await get_guest_defaults()
 
     try:
@@ -111,7 +114,7 @@ async def get_mypage(member_id: int):
 @router.post("/{member_id}/family")
 async def create_family(member_id: int, body: FamilyCreate):
     """가족 추가"""
-    if member_id == 0:
+    if member_id in [0, GUEST_MEMBER_ID]:
         raise HTTPException(status_code=400, detail="게스트는 가족을 추가할 수 없습니다. 로그인해주세요.")
 
     try:
@@ -144,7 +147,7 @@ async def remove_family(family_id: int):
 @router.put("/{member_id}/personalization")
 async def update_member_personalization(member_id: int, body: PersonalizationUpdate):
     """회원 본인 알레르기/비선호 수정"""
-    if member_id == 0:
+    if member_id in [0, GUEST_MEMBER_ID]:
         raise HTTPException(status_code=400, detail="게스트는 서버에 저장할 수 없습니다. 로그인해주세요.")
 
     try:
@@ -157,7 +160,7 @@ async def update_member_personalization(member_id: int, body: PersonalizationUpd
 @router.put("/{member_id}/family/{family_id}/personalization")
 async def update_family_personalization(member_id: int, family_id: int, body: PersonalizationUpdate):
     """가족 알레르기/비선호 수정"""
-    if member_id == 0:
+    if member_id in [0, GUEST_MEMBER_ID]:
         raise HTTPException(status_code=400, detail="게스트는 서버에 저장할 수 없습니다. 로그인해주세요.")
 
     try:
@@ -181,7 +184,7 @@ async def get_utensils(member_id: int):
 @router.put("/{member_id}/utensils")
 async def update_utensils(member_id: int, body: UtensilUpdate):
     """회원 조리도구 갱신"""
-    if member_id == 0:
+    if member_id in [0, GUEST_MEMBER_ID]:
         raise HTTPException(status_code=400, detail="게스트는 서버에 저장할 수 없습니다. 로그인해주세요.")
 
     try:

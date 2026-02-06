@@ -46,21 +46,18 @@ async def get_profile(member_id: int = Query(default=0)):
             "allergies": [],
             "dislikes": []
         }
-
     member = get_member_by_id(member_id)
     if not member:
         raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다")
-
     psnl = get_member_personalization(member_id)
-
     return {
         "id": member.get("id"),
         "name": member.get("nickname", "사용자"),
         "email": member.get("email"),
+        "birthday": member.get("birthday", ""),
         "allergies": psnl.get("allergies", []) if psnl else [],
         "dislikes": psnl.get("dislikes", []) if psnl else []
     }
-
 
 @router.get("/family")
 async def get_family_info(member_id: int = Query(default=0)):
@@ -296,3 +293,5 @@ async def update_member_utensils(
     except Exception as e:
         print(f"[User API] 조리도구 수정 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+    

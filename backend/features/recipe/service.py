@@ -3,9 +3,11 @@
 Recipe 비즈니스 로직
 """
 import os
+import re
 from pymongo import MongoClient
 from typing import List, Dict, Any
 from .prompts import RECIPE_QUERY_EXTRACTION_PROMPT, RECIPE_GENERATION_PROMPT
+
 
 class RecipeService:
     def __init__(self, rag_system, recipe_db, user_profile=None):
@@ -34,9 +36,12 @@ class RecipeService:
         print(f"[RecipeService] 생성된 검색 쿼리: {search_query}")
         
         # 2. RAG 검색
-        retrieved_docs = self.rag.search_recipes(search_query, k=10, use_rerank=True)
+        retrieved_docs = self.rag.search_recipes(search_query, k=3, use_rerank=False)
         
         print(f"[RecipeService] RAG 검색 결과: {len(retrieved_docs)}개")
+        
+        # 웹 검색 여부 판단
+        from_web_search = not retrieved_docs or len(retrieved_docs) == 0
         
         # 3. 알레르기/비선호 필터링
         filtered_docs = self._filter_by_constraints(retrieved_docs, member_info)
@@ -52,19 +57,25 @@ class RecipeService:
         
         print(f"[RecipeService] 레시피 생성 완료: {recipe_json.get('title')}")
         
-        # 5. 생성된 레시피 제목으로 MongoDB에서 직접 이미지 검색!
+        # 5. 이미지 찾기
         recipe_title = recipe_json.get('title', '')
         best_image = ""
         
-        if recipe_title:
-            best_image = self._find_image_by_title(recipe_title)
+        if from_web_search:
+            # 웹 검색이면 기본 이미지
+            print(f"[RecipeService] 웹 검색 레시피 → 기본 이미지 사용")
+            best_image = 'https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp'
+        else:
+            # RAG 검색이면 MongoDB에서 찾기 (미사여구 제거)
+            if recipe_title:
+                best_image = self._find_image_by_title(recipe_title)
+            
+            # MongoDB에서도 못 찾으면 원본 검색 결과에서
+            if not best_image:
+                print(f"[RecipeService] 제목 검색 실패 → 원본 검색 결과 사용")
+                best_image = self._get_best_image(filtered_docs)
         
-        # 실패하면 원본 검색 결과에서
-        if not best_image:
-            print(f"[RecipeService] 제목 검색 실패 → 원본 검색 결과 사용")
-            best_image = self._get_best_image(filtered_docs)
-        
-        print(f"[RecipeService] 선택된 이미지: {best_image or '없음'}")
+        print(f"[RecipeService] 선택된 이미지: {best_image or '기본 이미지'}")
         
         # 6. 이미지 URL 추가
         recipe_json['image'] = best_image
@@ -82,24 +93,36 @@ class RecipeService:
         return recipe_json
     
     def _find_image_by_title(self, title: str) -> str:
-        """MongoDB에서 제목으로 이미지 직접 검색 (빠름!)"""
+        """
+        MongoDB에서 제목으로 이미지 직접 검색
+        미사여구 제거하고 핵심 요리명만으로 검색
+        """
         try:
-            # 정확한 매칭 시도
+            # ✅ 미사여구 제거
+            clean_title = title
+            clean_title = re.sub(r'\([^)]*\)', '', clean_title)  # 괄호 안 내용 제거
+            clean_title = re.sub(r'\[[^\]]*\]', '', clean_title)  # 대괄호 안 내용 제거
+            clean_title = re.sub(r'[~!@#$%^&*()_+|<>?:{}]', '', clean_title)  # 특수문자 제거
+            clean_title = re.sub(r'\s+', ' ', clean_title)  # 연속 공백 제거
+            clean_title = clean_title.strip()
+            
+            print(f"[RecipeService] 정제된 제목: '{title}' → '{clean_title}'")
+            
+            # 정확한 매칭 시도 (정제된 제목)
             recipe = self.recipes_collection.find_one(
-                {"title": {"$regex": title, "$options": "i"}}, 
-                {"image": 1, "recipe_id": 1, "_id": 0}
+                {"title": {"$regex": re.escape(clean_title), "$options": "i"}}, 
+                {"image": 1, "recipe_id": 1, "title": 1, "_id": 0}
             )
             
             if recipe and "image" in recipe:
                 image_url = recipe["image"]
-                recipe_id = recipe.get("recipe_id", "")
-                print(f"[RecipeService] MongoDB 제목 매칭: {title} → {recipe_id}")
+                matched_title = recipe.get("title", "")
+                print(f"[RecipeService] MongoDB 제목 매칭: {matched_title}")
                 print(f"[RecipeService] 이미지: {image_url[:60]}...")
                 return image_url
             
-            # 부분 매칭 시도 (예: "두쫀쿠" → "두바이 쫀득 쿠키")
-            # 제목의 주요 키워드 추출
-            keywords = [word for word in title.split() if len(word) > 1]
+            # 부분 매칭 시도 (키워드)
+            keywords = [word for word in clean_title.split() if len(word) > 1]
             
             if keywords:
                 # 키워드로 검색
@@ -111,11 +134,11 @@ class RecipeService:
                 if recipe and "image" in recipe:
                     image_url = recipe["image"]
                     matched_title = recipe.get("title", "")
-                    print(f"[RecipeService] MongoDB 키워드 매칭: {title} → {matched_title}")
+                    print(f"[RecipeService] MongoDB 키워드 매칭: {matched_title}")
                     print(f"[RecipeService] 이미지: {image_url[:60]}...")
                     return image_url
             
-            print(f"[RecipeService] MongoDB 제목 검색 실패: {title}")
+            print(f"[RecipeService] MongoDB에서 '{clean_title}' 찾지 못함")
             return ""
             
         except Exception as e:
@@ -143,24 +166,12 @@ class RecipeService:
             return ""
     
     def _get_best_image(self, filtered_docs: List[Dict]) -> str:
-        """필터링된 레시피 중 이미지 선택 (MongoDB 우선)"""
-        for doc in filtered_docs:
-            recipe_id = doc.get('recipe_id', '')
-            
-            if recipe_id:
-                # MongoDB에서 이미지 조회
-                image_url = self._get_image_from_mongo(recipe_id)
-                if image_url:
-                    return image_url
-            
-            # fallback: RAG 메타데이터에서
-            image_url = doc.get('image_url', '')
-            if image_url:
-                print(f"[RecipeService] RAG 메타데이터 이미지 사용")
-                return image_url
-        
-        print("[RecipeService] 이미지 없음")
-        return ""
+        """
+        필터링된 레시피 중 이미지 선택
+        제목 검색 실패 후 여기 온 거면 그냥 기본 이미지 사용
+        """
+        print("[RecipeService] 제목 검색 실패 → 기본 이미지 사용")
+        return "https://kr.object.ncloudstorage.com/recipu-bucket/assets/default_img.webp"
     
     def _extract_search_query_with_llm(
         self, 
@@ -296,7 +307,6 @@ class RecipeService:
             
             # JSON 추출
             import json
-            import re
             
             # 마크다운 코드 블록 제거
             response_text = re.sub(r'```json\s*|\s*```', '', response_text)

@@ -24,15 +24,18 @@ class Settings(BaseSettings):
     ]
     
     # CLOVA Studio
-    CLOVASTUDIO_API_KEY: str
+    CLOVASTUDIO_API_KEY: str = ""
     CLOVA_INVOKE_URL: str = ""
     CLOVA_SECRET_KEY: str = ""
     CLOVA_TTS_CLIENT_ID: str = ""
     CLOVA_TTS_CLIENT_SECRET: str = ""
 
-    # CLOVA Speech (STT)
+    # Clova Speech STT (Voice 모듈용)
     CLOVA_STT_INVOKE_URL: str = ""
     CLOVA_STT_SECRET_KEY: str = ""
+
+    # RunPod API (LLM/TTS 서버)
+    RECIPEU_API_KEY: str = ""
 
     # NAVER
     NAVER_CLIENT_ID: Optional[str] = None
