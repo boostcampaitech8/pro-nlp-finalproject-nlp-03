@@ -84,83 +84,26 @@ export default function RecipeResultPage() {
 
     console.log("[RecipeResult] sessionId:", sessionId);
 
-    // 세션 ID가 없는 경우 - 새로운 세션 생성
     if (!sessionId) {
-      console.log("[RecipeResult] 세션 없음 -> 새 채팅");
-
-      const newSessionId = crypto.randomUUID();
-
-      await fetch(`${API_URL}/api/chat/init-with-recipe`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          session_id: newSessionId,
-          recipe: recipe,
-        }),
-      });
-
-      navigate({
-        to: "/chat",
-        state: {
-          sessionId: newSessionId,
-          recipe: recipe,
-          skipToChat: true,
-        },
-      });
-
+      alert("세션 정보가 없습니다.");
       return;
     }
 
-    if (fromMyPage) {
-      console.log(
-        "[RecipeResult] 마이페이지 출처 - 레시피 전체로 ChatPage 이동",
-      );
+    // 이미 location.state로 chatHistory, memberInfo를 받았으므로 API 호출 불필요
+    console.log("[RecipeResult] ChatPage로 이동 (fromMyPage:", fromMyPage, ")");
 
-      navigate({
-        to: "/chat",
-        state: {
-          recipe: recipe,
-          memberInfo: memberInfo,
-          skipToChat: true,
-          fromRegenerate: true,
-          fromMyPage: true,
-        },
-      });
-      return;
-    }
-
-    try {
-      console.log(
-        "[RecipeResult] 채팅 출처 - 세션 복원:",
-        `${API_URL}/api/chat/session/${sessionId}`,
-      );
-
-      const response = await fetch(`${API_URL}/api/chat/session/${sessionId}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const sessionData = await response.json();
-      console.log("[RecipeResult] 세션 복원 성공:", sessionData);
-
-      navigate({
-        to: "/chat",
-        state: {
-          sessionId: sessionId,
-          existingMessages: sessionData.messages,
-          memberInfo: sessionData.user_constraints || memberInfo,
-          recipe: recipe,
-          skipToChat: true,
-          fromRegenerate: true,
-        },
-      });
-    } catch (error) {
-      console.error("[RecipeResult] 세션 복원 실패:", error);
-      alert("대화 복원 중 오류가 발생했습니다.");
-    }
+    navigate({
+      to: "/chat",
+      state: {
+        sessionId: sessionId,
+        existingMessages: chatHistory || [],
+        memberInfo: memberInfo,
+        recipe: recipe,
+        skipToChat: true,
+        fromRegenerate: true,
+        fromMyPage: fromMyPage || false,
+      },
+    });
   };
 
   const handleStartCooking = () => {
@@ -233,7 +176,7 @@ export default function RecipeResultPage() {
   });
 
   return (
-    <RecipeLayout steps={recipe.steps || []} currentStep={0}>
+    <RecipeLayout steps={normalizedSteps} currentStep={0}>
       <div className="result-title-section">
         <p className="result-subtitle">오늘의 추천 레시피는</p>
         <h1 className="result-title">

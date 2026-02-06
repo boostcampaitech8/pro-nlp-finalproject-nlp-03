@@ -37,7 +37,7 @@ export default function LoadingPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ currentTipIndex 상태 선언
+  // currentTipIndex 상태 선언
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   const { memberInfo, chatHistory, sessionId, isRegeneration } =
