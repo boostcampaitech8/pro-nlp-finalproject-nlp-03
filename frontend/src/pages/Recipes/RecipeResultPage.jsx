@@ -25,6 +25,7 @@ export default function RecipeResultPage() {
     remainingCount: initialCount,
     imageUrl,
     fromMyPage,
+    modificationHistory,  // ✅ 수정 이력 받기
   } = location.state || {};
 
   const [remainingCount, setRemainingCount] = useState(
@@ -91,6 +92,7 @@ export default function RecipeResultPage() {
 
     // 이미 location.state로 chatHistory, memberInfo를 받았으므로 API 호출 불필요
     console.log("[RecipeResult] ChatPage로 이동 (fromMyPage:", fromMyPage, ")");
+    console.log("[RecipeResult] 수정 이력 전달:", modificationHistory);
 
     navigate({
       to: "/chat",
@@ -102,6 +104,7 @@ export default function RecipeResultPage() {
         skipToChat: true,
         fromRegenerate: true,
         fromMyPage: fromMyPage || false,
+        modificationHistory: modificationHistory || [],  // ✅ 수정 이력 전달
       },
     });
   };
@@ -154,6 +157,11 @@ export default function RecipeResultPage() {
     console.log("[RecipeResult] cookState 저장:", cookState);
 
     localStorage.setItem("cookState", JSON.stringify(cookState));
+
+    // ✅ 조리 모드로 넘어가면 수정 이력 삭제
+    localStorage.removeItem("recipeModifications");
+    console.log("[RecipeResult] 수정 이력 삭제 (조리 모드 진입)");
+
     navigate({ to: "/cook" });
   };
 

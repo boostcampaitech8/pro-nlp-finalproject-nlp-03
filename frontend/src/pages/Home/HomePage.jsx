@@ -38,6 +38,9 @@ export default function HomePage() {
         localStorage.removeItem(key);
       }
     });
+    // 수정 이력 명시적으로 삭제
+    localStorage.removeItem("recipeModifications");
+    console.log("[HomePage] 수정 이력 초기화 완료");
   }, []);
 
   useEffect(() => {

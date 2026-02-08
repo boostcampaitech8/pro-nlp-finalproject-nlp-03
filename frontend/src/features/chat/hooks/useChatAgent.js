@@ -44,6 +44,20 @@ export const useChatAgent = (sessionId) => {
 
         setIsThinking(false);
         setCurrentProgress("");
+      } else if (data.type === "chat_external") {
+        // 외부 챗봇 리다이렉트
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.content,
+            isExternal: true,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+
+        setIsThinking(false);
+        setCurrentProgress("");
       } else if (data.type === "thinking") {
         setIsThinking(true);
         setCurrentProgress("생각 중...");

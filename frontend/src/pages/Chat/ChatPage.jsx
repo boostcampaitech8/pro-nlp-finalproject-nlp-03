@@ -18,6 +18,7 @@ export default function ChatPage() {
     fromRegenerate,
     recipe: passedRecipe,
     fromMyPage,
+    modificationHistory: passedModificationHistory,  // ✅ 수정 이력 받기
   } = location.state || {};
 
   const [messages, setMessages] = useState(() => {
@@ -65,6 +66,18 @@ export default function ChatPage() {
   const [hasRecipeGenerated, setHasRecipeGenerated] = useState(
     messages.length > 0 || skipToChat,
   );
+
+  // ✅ 레시피 수정 이력 관리
+  const [modificationHistory, setModificationHistory] = useState(() => {
+    // 재생성으로 돌아온 경우 전달된 이력 사용
+    if (passedModificationHistory && passedModificationHistory.length > 0) {
+      console.log("[ChatPage] 전달된 수정 이력 복원:", passedModificationHistory);
+      return passedModificationHistory;
+    }
+
+    const saved = localStorage.getItem("recipeModifications");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const wsRef = useRef(null);
   const wsInitializedRef = useRef(false);
@@ -180,6 +193,42 @@ export default function ChatPage() {
     }
   }, [isThinking, flowState, isConnected]);
 
+  // 개인화 정보 메시지 생성 헬퍼 함수
+  const buildPersonalizationInfoMessage = (names, combinedInfo) => {
+    const namesText = Array.isArray(names) ? names.join(", ") : names;
+    let infoLines = [`[ ${namesText} ]님을 위한 요리 정보\n`];
+
+    if (combinedInfo.allergies && combinedInfo.allergies.length > 0) {
+      infoLines.push(`- 알레르기: ${combinedInfo.allergies.join(", ")}`);
+    }
+    if (combinedInfo.dislikes && combinedInfo.dislikes.length > 0) {
+      infoLines.push(`- 싫어하는 음식: ${combinedInfo.dislikes.join(", ")}`);
+    }
+    if (combinedInfo.cooking_tools && combinedInfo.cooking_tools.length > 0) {
+      infoLines.push(
+        `- 사용 가능한 조리도구: ${combinedInfo.cooking_tools.join(", ")}`,
+      );
+    }
+
+    const hasPersonalization =
+      (combinedInfo.allergies && combinedInfo.allergies.length > 0) ||
+      (combinedInfo.dislikes && combinedInfo.dislikes.length > 0) ||
+      (combinedInfo.cooking_tools && combinedInfo.cooking_tools.length > 0);
+
+    if (!hasPersonalization) {
+      infoLines.push(
+        `\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`,
+      );
+    } else {
+      infoLines.push(`\n이 정보가 맞나요?`);
+    }
+
+    return {
+      text: infoLines.join("\n"),
+      hasPersonalization: hasPersonalization,
+    };
+  };
+
   // 가족 선택 또는 "나" 자동 선택
   useEffect(() => {
     if (passedRecipe || skipToChat || fromRegenerate) {
@@ -291,36 +340,12 @@ export default function ChatPage() {
 
           setCombinedMemberInfo(combined);
 
-          let infoLines = [`[ ${memberNickname} ]님을 위한 요리 정보\n`];
-
-          if (combined.allergies.length > 0) {
-            infoLines.push(`- 알레르기: ${combined.allergies.join(", ")}\n`);
-          }
-          if (combined.dislikes.length > 0) {
-            infoLines.push(
-              `- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`,
-            );
-          }
-          if (combined.cooking_tools.length > 0) {
-            infoLines.push(
-              `- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`,
-            );
-          }
-
-          const hasPersonalization =
-            combined.allergies.length > 0 ||
-            combined.dislikes.length > 0 ||
-            combined.cooking_tools.length > 0;
-
-          if (!hasPersonalization) {
-            infoLines.push(
-              `\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`,
-            );
-          } else {
-            infoLines.push(`\n이 정보가 맞나요?`);
-          }
-
-          const infoText = infoLines.join("\n");
+          const infoMessage = buildPersonalizationInfoMessage(
+            memberNickname,
+            combined,
+          );
+          const infoText = infoMessage.text;
+          const hasPersonalization = infoMessage.hasPersonalization;
 
           setMessages([
             {
@@ -403,6 +428,7 @@ export default function ChatPage() {
             type: "init_context",
             member_info: combinedMemberInfo,
             initial_history: [recipeMessage],
+            modification_history: modificationHistory,  // ✅ 수정 이력 전달
           }),
         );
       } else {
@@ -410,6 +436,7 @@ export default function ChatPage() {
           JSON.stringify({
             type: "init_context",
             member_info: combinedMemberInfo,
+            modification_history: modificationHistory,  // ✅ 수정 이력 전달
           }),
         );
       }
@@ -474,7 +501,17 @@ export default function ChatPage() {
         ]);
         setIsThinking(false);
         setHasRecipeGenerated(true);
-      } else if (data.type === "not_recipe_related") {
+
+        // ✅ 수정 이력이 있으면 localStorage에 저장
+        if (data.modification_history) {
+          console.log("[ChatPage] 수정 이력 수신:", data.modification_history);
+          setModificationHistory(data.modification_history);
+          localStorage.setItem("recipeModifications", JSON.stringify(data.modification_history));
+        }
+      } else if (
+        data.type === "chat_external" ||
+        data.type === "not_recipe_related"
+      ) {
         setMessages((prev) => [
           ...prev,
           {
@@ -486,6 +523,64 @@ export default function ChatPage() {
         ]);
         setIsThinking(false);
         setHasRecipeGenerated(false);
+      } else if (data.type === "allergy_dislike_detected") {
+        // 알러지/비선호 음식 감지
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.content,
+            timestamp: new Date().toISOString(),
+            allergyDislikeData: {
+              type: data.detected_type,
+              items: data.detected_items,
+              showButton: data.show_button,
+            },
+          },
+        ]);
+        setIsThinking(false);
+      } else if (data.type === "allergy_block") {
+        // 알레르기 재료 차단 (레시피 수정 시)
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.content,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        setIsThinking(false);
+      } else if (data.type === "allergy_warning") {
+        // 알러지/비선호 경고 (레시피 검색 전 확인)
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.content,
+            timestamp: new Date().toISOString(),
+            allergyWarning: {
+              matched_allergies: data.matched_allergies || [],
+              matched_dislikes: data.matched_dislikes || [],
+              showConfirmation: data.show_confirmation,
+            },
+          },
+        ]);
+        setIsThinking(false);
+      } else if (data.type === "constraint_warning") {
+        // 제약사항 충돌 경고 (수정 이력과 검색어 충돌)
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.content,
+            timestamp: new Date().toISOString(),
+            constraintWarning: {
+              conflicted_ingredients: data.conflicted_ingredients || [],
+              showConfirmation: data.show_confirmation,
+            },
+          },
+        ]);
+        setIsThinking(false);
       } else if (data.type === "thinking") {
         setIsThinking(true);
       } else if (data.type === "progress") {
@@ -599,34 +694,12 @@ export default function ChatPage() {
       setCombinedMemberInfo(combined);
 
       const namesText = selectedMembers.join(", ");
-      let infoLines = [`[ ${namesText} ]님을 위한 요리 정보\n`];
-
-      if (combined.allergies.length > 0) {
-        infoLines.push(`- 알레르기: ${combined.allergies.join(", ")}\n`);
-      }
-      if (combined.dislikes.length > 0) {
-        infoLines.push(`- 싫어하는 음식: ${combined.dislikes.join(", ")}\n`);
-      }
-      if (combined.cooking_tools.length > 0) {
-        infoLines.push(
-          `- 사용 가능한 조리도구: ${combined.cooking_tools.join(", ")}\n`,
-        );
-      }
-
-      const hasPersonalization =
-        combined.allergies.length > 0 ||
-        combined.dislikes.length > 0 ||
-        combined.cooking_tools.length > 0;
-
-      if (!hasPersonalization) {
-        infoLines.push(
-          `\n아직 등록된 개인화 정보가 없어요.\n마이페이지에서 알레르기, 비선호 음식 등을 등록해보세요!`,
-        );
-      } else {
-        infoLines.push(`\n이 정보가 맞나요?`);
-      }
-
-      const infoText = infoLines.join("\n");
+      const infoMessage = buildPersonalizationInfoMessage(
+        selectedMembers,
+        combined,
+      );
+      const infoText = infoMessage.text;
+      const hasPersonalization = infoMessage.hasPersonalization;
 
       setMessages((prev) => [
         ...prev,
@@ -672,6 +745,190 @@ export default function ChatPage() {
     } else {
       console.log("[ChatPage] 마이페이지로 이동");
       navigate({ to: "/mypage" });
+    }
+  };
+
+  // 알러지 경고 확인 처리 (예/아니오)
+  const handleAllergyConfirmation = (confirmed) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("[ChatPage] WebSocket not connected");
+      return;
+    }
+
+    console.log(`[ChatPage] 알러지 경고 응답: ${confirmed ? "예" : "아니오"}`);
+
+    // 사용자 선택 메시지 추가
+    const userResponse = confirmed ? "예" : "아니오";
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: userResponse,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    // 레시피 생성 진행 시 thinking 상태 표시
+    if (confirmed) {
+      setIsThinking(true);
+    }
+
+    // WebSocket으로 확인 응답 전송
+    wsRef.current.send(
+      JSON.stringify({
+        type: "allergy_confirmation",
+        confirmation: confirmed ? "yes" : "no",
+      }),
+    );
+
+    // 버튼 숨기기 (메시지 업데이트)
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.allergyWarning && msg.allergyWarning.showConfirmation) {
+          return {
+            ...msg,
+            allergyWarning: {
+              ...msg.allergyWarning,
+              showConfirmation: false,
+            },
+          };
+        }
+        return msg;
+      }),
+    );
+  };
+
+  // 제약사항 충돌 확인 처리
+  const handleConstraintConfirmation = (confirmed) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error("[ChatPage] WebSocket not connected");
+      return;
+    }
+
+    console.log(`[ChatPage] 제약사항 충돌 응답: ${confirmed ? "예" : "아니오"}`);
+
+    // 사용자 선택 메시지 추가
+    const userResponse = confirmed ? "예" : "아니오";
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: userResponse,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    // 레시피 생성 진행 시 thinking 상태 표시
+    if (confirmed) {
+      setIsThinking(true);
+    }
+
+    // WebSocket으로 확인 응답 전송
+    wsRef.current.send(
+      JSON.stringify({
+        type: "constraint_confirmation",
+        confirmation: confirmed ? "yes" : "no",
+      }),
+    );
+
+    // 버튼 숨기기 (메시지 업데이트)
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.constraintWarning && msg.constraintWarning.showConfirmation) {
+          return {
+            ...msg,
+            constraintWarning: {
+              ...msg.constraintWarning,
+              showConfirmation: false,
+            },
+          };
+        }
+        return msg;
+      }),
+    );
+  };
+
+  // 알러지/비선호 음식 추가
+  const handleAddAllergyDislike = async (type, items) => {
+    try {
+      const memberStr = localStorage.getItem("member");
+      const member = memberStr ? JSON.parse(memberStr) : null;
+      const memberId = member?.id || 0;
+
+      if (memberId === 0) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      console.log(
+        `[ChatPage] 알러지/비선호 추가: type=${type}, items=${items.join(", ")}`,
+      );
+
+      const response = await fetch(
+        `${API_URL}/api/user/personalization/add?member_id=${memberId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: type,
+            items: items,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("알러지/비선호 음식 추가 실패");
+      }
+
+      const data = await response.json();
+      console.log("[ChatPage] 알러지/비선호 추가 성공:", data);
+
+      // 로컬 상태 업데이트 (현재 세션에서도 즉시 반영)
+      setCombinedMemberInfo((prev) => {
+        if (!prev) return prev;
+
+        const updated = {
+          ...prev,
+          allergies: data.personalization.allergies || [],
+          dislikes: data.personalization.dislikes || [],
+        };
+
+        // localStorage에도 업데이트
+        localStorage.setItem("chatMemberInfo", JSON.stringify(updated));
+
+        return updated;
+      });
+
+      // 버튼 숨기기 (메시지 업데이트)
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.allergyDislikeData && msg.allergyDislikeData.showButton) {
+            return {
+              ...msg,
+              allergyDislikeData: {
+                ...msg.allergyDislikeData,
+                showButton: false,
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+
+      // 성공 메시지 추가
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `${type === "allergy" ? "알러지" : "비선호 음식"}에 추가되었습니다. 다음 레시피 추천부터 반영됩니다.`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } catch (error) {
+      console.error("[ChatPage] 알러지/비선호 추가 실패:", error);
+      alert("알러지/비선호 음식 추가에 실패했습니다.");
     }
   };
 
@@ -725,6 +982,7 @@ export default function ChatPage() {
         chatHistory: validMessages,
         sessionId: sessionId,
         isRegeneration: !!fromRegenerate,
+        modificationHistory: modificationHistory,  // ✅ 수정 이력 전달
       },
     });
 
@@ -735,6 +993,7 @@ export default function ChatPage() {
         chatHistory: validMessages,
         sessionId: sessionId,
         isRegeneration: !!fromRegenerate,
+        modificationHistory: modificationHistory,  // ✅ 수정 이력 저장
       }),
     );
   };
@@ -806,6 +1065,56 @@ export default function ChatPage() {
                       onClick={() => navigate({ to: "/out-chat" })}
                     >
                       외부 챗봇으로 이동
+                    </button>
+                  </div>
+                )}
+                {msg.allergyDislikeData &&
+                  msg.allergyDislikeData.showButton && (
+                    <div className="allergy-dislike-button-wrapper">
+                      <button
+                        className="btn-confirm-selection"
+                        onClick={() =>
+                          handleAddAllergyDislike(
+                            msg.allergyDislikeData.type,
+                            msg.allergyDislikeData.items,
+                          )
+                        }
+                      >
+                        {msg.allergyDislikeData.type === "allergy"
+                          ? "알러지로 추가하기"
+                          : "비선호 음식으로 추가하기"}
+                      </button>
+                    </div>
+                  )}
+                {msg.allergyWarning && msg.allergyWarning.showConfirmation && (
+                  <div className="button-group confirm-group">
+                    <button
+                      className="btn-option btn-confirm"
+                      onClick={() => handleAllergyConfirmation(true)}
+                    >
+                      예
+                    </button>
+                    <button
+                      className="btn-option btn-edit"
+                      onClick={() => handleAllergyConfirmation(false)}
+                    >
+                      아니오
+                    </button>
+                  </div>
+                )}
+                {msg.constraintWarning && msg.constraintWarning.showConfirmation && (
+                  <div className="button-group confirm-group">
+                    <button
+                      className="btn-option btn-confirm"
+                      onClick={() => handleConstraintConfirmation(true)}
+                    >
+                      예
+                    </button>
+                    <button
+                      className="btn-option btn-edit"
+                      onClick={() => handleConstraintConfirmation(false)}
+                    >
+                      아니오
                     </button>
                   </div>
                 )}

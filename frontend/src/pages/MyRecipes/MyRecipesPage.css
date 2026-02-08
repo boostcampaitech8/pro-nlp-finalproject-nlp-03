@@ -53,7 +53,7 @@
 .clipboard-board {
   position: relative;
   margin: 0 16px;
-  height: calc(100vh - 80px - 28px - 160px);
+  height: calc(100vh - 25vh);
   padding: 24px 16px;
   background-color: transparent;
   border: 6px solid #ffcf94;

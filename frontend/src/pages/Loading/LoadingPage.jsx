@@ -40,7 +40,7 @@ export default function LoadingPage() {
   // currentTipIndex 상태 선언
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
-  const { memberInfo, chatHistory, sessionId, isRegeneration } =
+  const { memberInfo, chatHistory, sessionId, isRegeneration, modificationHistory } =
     location.state || {};
 
   const API_URL = import.meta.env.VITE_API_URL || "";
@@ -109,6 +109,7 @@ export default function LoadingPage() {
               chatHistory: chatHistory,
               imageUrl: imageUrl,
               remainingCount: isRegeneration ? 0 : 1,
+              modificationHistory: modificationHistory || [],  // ✅ 수정 이력 전달
             },
             replace: true,
           });
