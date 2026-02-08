@@ -43,7 +43,7 @@ async def external_chat_websocket(websocket: WebSocket, session_id: str):
         
         chat_model = ChatClovaX(
             model="HCX-DASH-001",
-            temperature=0.01,
+            temperature=0.2,
             max_tokens=500,
         )
         logger.info("[External WS] ChatClovaX 초기화 완료")

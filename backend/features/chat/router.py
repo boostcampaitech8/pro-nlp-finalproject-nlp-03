@@ -150,7 +150,7 @@ async def handle_recipe_modification(websocket: WebSocket, session: Dict, user_i
 
 답변:"""
     
-    llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=800)
+    llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=800)
 
     try:
         result = llm.invoke(modification_prompt)
@@ -836,24 +836,31 @@ async def chat_websocket(
                         logger.info(f"[WS] 알러지/비선호 감지 완료 (총 {total_sec:.1f}초)")
                         continue
 
-                # 1. 요리 무관 질문 → 외부 챗봇으로 리다이렉트
+                # 1. 요리 무관 질문 → RAG 검색으로 재확인 후 외부 챗봇으로 리다이렉트
                 if user_intent == Intent.NOT_COOKING:
-                    logger.info(f"[WS] 요리 무관 질문 감지")
-                    redirect_msg = "레시피 외의 질문은 외부 챗봇을 이용해 주세요."
+                    logger.info(f"[WS] 요리 무관 질문 감지 → RAG 검색으로 재확인")
+                    # RAG 검색해서 결과가 있으면 음식 줄임말/신조어일 수 있으므로 RECIPE_SEARCH로 변경
+                    rag_check = rag_system.search_recipes(content, k=1)
+                    if rag_check and len(rag_check) > 0:
+                        logger.info(f"[WS] RAG 검색 결과 있음 → RECIPE_SEARCH로 변경 (줄임말/신조어 가능)")
+                        user_intent = Intent.RECIPE_SEARCH
+                    else:
+                        logger.info(f"[WS] RAG 검색 결과 없음 → 외부 챗봇 리다이렉트")
+                        redirect_msg = "레시피 외의 질문은 외부 챗봇을 이용해 주세요."
 
-                    chat_sessions[session_id]["messages"].append({
-                        "role": "assistant",
-                        "content": redirect_msg
-                    })
+                        chat_sessions[session_id]["messages"].append({
+                            "role": "assistant",
+                            "content": redirect_msg
+                        })
 
-                    await websocket.send_json({
-                        "type": "chat_external",
-                        "content": redirect_msg
-                    })
+                        await websocket.send_json({
+                            "type": "chat_external",
+                            "content": redirect_msg
+                        })
 
-                    total_sec = (time.time() - start_time)
-                    logger.info(f"[WS] 외부 챗봇 리다이렉트 (총 {total_sec:.1f}초)")
-                    continue
+                        total_sec = (time.time() - start_time)
+                        logger.info(f"[WS] 외부 챗봇 리다이렉트 (총 {total_sec:.1f}초)")
+                        continue
 
                 # 2. 요리 관련 질문 → LLM 답변 (레시피 없이)
                 if user_intent == Intent.COOKING_QUESTION:
@@ -883,7 +890,7 @@ async def chat_websocket(
 답변:"""
 
                     try:
-                        llm = ChatClovaX(model="HCX-DASH-001", temperature=0.01, max_tokens=200)
+                        llm = ChatClovaX(model="HCX-DASH-001", temperature=0.2, max_tokens=200)
                         result = llm.invoke(question_prompt)
                         answer = result.content.strip()
 

@@ -43,7 +43,7 @@ def detect_intent(text: str) -> str:
 출력:"""
 
     try:
-        llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=20)
+        llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=20)
         result = llm.invoke([HumanMessage(content=prompt)])
         decision = result.content.strip().upper()
 
@@ -153,7 +153,7 @@ def extract_allergy_dislike(text: str, chat_history: list = None) -> dict:
 재료: 재료1, 재료2 (없으면 "없음")"""
 
     try:
-        llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=50)
+        llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=50)
         result = llm.invoke([HumanMessage(content=prompt)])
         response = result.content.strip()
 
@@ -310,7 +310,7 @@ def extract_ingredients_from_modification(text: str, mod_type: str = "remove") -
 출력:"""
 
         try:
-            llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=50)
+            llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=50)
             result = llm.invoke([HumanMessage(content=prompt)])
             response = result.content.strip()
 
@@ -372,7 +372,7 @@ def extract_ingredients_from_modification(text: str, mod_type: str = "remove") -
 재료:"""
 
         try:
-            llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=50)
+            llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=50)
             result = llm.invoke([HumanMessage(content=prompt)])
             response = result.content.strip()
 
@@ -480,7 +480,7 @@ def detect_chat_intent(text: str, chat_history: list = None) -> str:
 출력:"""
 
     try:
-        llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=20)
+        llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=20)
         result = llm.invoke([HumanMessage(content=prompt)])
         decision = result.content.strip().upper().replace(" ", "")
 

@@ -215,7 +215,7 @@ def create_chat_agent(rag_system):
 
         try:
             from langchain_naver import ChatClovaX
-            llm = ChatClovaX(model="HCX-DASH-001", temperature=0.01, max_tokens=50)
+            llm = ChatClovaX(model="HCX-DASH-001", temperature=0.2, max_tokens=50)
             chain = REWRITE_PROMPT | llm | StrOutputParser()
             better_question = chain.invoke({
                 "history": formatted_history,
@@ -225,6 +225,11 @@ def create_chat_agent(rag_system):
 
             print(f"   원본: {question}")
             print(f"   재작성: {better_question}")
+
+            # 재작성 결과가 원본보다 3배 이상 길거나 문장형이면 원본 사용
+            if len(better_question) > len(question) * 3 or any(kw in better_question for kw in ["확인되지", "않습니다", "말씀하신", "궁금하신"]):
+                print(f"   재작성 결과 이상 → 원본 사용")
+                better_question = question
 
             return {
                 "question": better_question,
@@ -334,7 +339,7 @@ def create_chat_agent(rag_system):
             ])
 
             from langchain_naver import ChatClovaX
-            llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=10)
+            llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=10)
             chain = GRADE_PROMPT | llm | StrOutputParser()
             score = chain.invoke({
                 "question": question,
@@ -395,7 +400,7 @@ def create_chat_agent(rag_system):
 
                 from langchain_naver import ChatClovaX
                 from langchain_core.messages import HumanMessage
-                llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=300)
+                llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=300)
                 result = llm.invoke([HumanMessage(content=summarize_prompt)])
                 summary = result.content.strip()
 
@@ -543,7 +548,7 @@ def create_chat_agent(rag_system):
 
             # max_tokens 명시적 설정 (토큰 절약)
             from langchain_naver import ChatClovaX
-            llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=1000)
+            llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=1000)
             chain = GENERATE_PROMPT | llm | StrOutputParser()
             answer = chain.invoke({
                 "context": context_text,

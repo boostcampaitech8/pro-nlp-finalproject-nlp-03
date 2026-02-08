@@ -29,7 +29,7 @@ def get_rag_system() -> Optional[RecipeRAGLangChain]:
                 milvus_port=settings.MILVUS_PORT,
                 collection_name=settings.COLLECTION_NAME,
                 use_reranker=settings.USE_RERANKER,
-                temperature=0.01,
+                temperature=0.2,
                 max_tokens=2000,
             )
         except Exception as e:

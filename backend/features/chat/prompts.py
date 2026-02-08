@@ -83,7 +83,12 @@ REWRITE_PROMPT = PromptTemplate(
 [질문]
 {question}
 
-**요리명 1-5단어 (조사 제거):**""",
+**규칙:**
+- 요리명만 1-5단어로 추출 (조사 제거)
+- 모르는 단어, 줄임말, 신조어는 그대로 출력
+- 설명하지 말고 단어만 출력
+
+**요리명:**""",
     input_variables=["history", "question"]
 )
 

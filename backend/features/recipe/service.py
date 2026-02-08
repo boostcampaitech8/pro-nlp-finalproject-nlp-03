@@ -352,7 +352,7 @@ class RecipeService:
         )
 
         from langchain_naver import ChatClovaX
-        llm = ChatClovaX(model="HCX-003", temperature=0.01, max_tokens=2000)
+        llm = ChatClovaX(model="HCX-003", temperature=0.2, max_tokens=2000)
 
         try:
             result = llm.invoke(prompt)
@@ -490,7 +490,7 @@ class RecipeService:
         )
         
         from langchain_naver import ChatClovaX
-        llm = ChatClovaX(model="HCX-DASH-001", temperature=0.01, max_tokens=50)
+        llm = ChatClovaX(model="HCX-DASH-001", temperature=0.2, max_tokens=50)
         
         try:
             result = llm.invoke(prompt)
@@ -593,7 +593,7 @@ class RecipeService:
         )
         
         from langchain_naver import ChatClovaX
-        llm = ChatClovaX(model="HCX-DASH-003", temperature=0.01, max_tokens=2000)
+        llm = ChatClovaX(model="HCX-DASH-003", temperature=0.2, max_tokens=2000)
         
         try:
             result = llm.invoke(prompt)
