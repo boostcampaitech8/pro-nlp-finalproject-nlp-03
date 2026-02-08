@@ -590,6 +590,12 @@ def create_chat_agent(rag_system):
             for pattern in allergy_patterns:
                 cleaned_answer = re.sub(pattern, '', cleaned_answer, flags=re.IGNORECASE)
 
+            # 볼드 없는 형식을 볼드 형식으로 통일 (웹 검색 결과 대응)
+            if '소개:' in cleaned_answer and '**소개:**' not in cleaned_answer:
+                cleaned_answer = re.sub(r'(?<!\*)소개:\s*', '**소개:** ', cleaned_answer, count=1)
+            if '재료:' in cleaned_answer and '**재료:**' not in cleaned_answer:
+                cleaned_answer = re.sub(r'(?<!\*)재료:\s*', '**재료:** ', cleaned_answer, count=1)
+
             # 소개 문구 정제: 이모티콘, 캐주얼 표현 제거
             if '**소개:**' in cleaned_answer:
                 # 소개 섹션 추출 (같은 줄만, DOTALL 사용하지 않음)

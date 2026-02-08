@@ -159,6 +159,12 @@ async def handle_recipe_modification(websocket: WebSocket, session: Dict, user_i
         # 후처리: 재료 형식 정리 및 애매한 표현 제거
         import re
 
+        # 볼드 없는 형식을 볼드 형식으로 통일
+        if '소개:' in modified_recipe and '**소개:**' not in modified_recipe:
+            modified_recipe = re.sub(r'(?<!\*)소개:\s*', '**소개:** ', modified_recipe, count=1)
+        if '재료:' in modified_recipe and '**재료:**' not in modified_recipe:
+            modified_recipe = re.sub(r'(?<!\*)재료:\s*', '**재료:** ', modified_recipe, count=1)
+
         # 재료 형식 정리: 줄바꿈 제거, 쉼표로 변환
         if '**재료:**' in modified_recipe:
             parts = modified_recipe.split('**재료:**')

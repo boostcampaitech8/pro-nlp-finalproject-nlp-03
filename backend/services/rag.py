@@ -274,24 +274,72 @@ class RecipeRAGLangChain:
             print(f"[RAG] MongoDB 조회 실패: {e}")
             return ""
 
+    def _milvus_title_search(self, query: str, k: int) -> List[tuple]:
+        """title 필드 기반 키워드 매칭 검색 (벡터 검색 보완용)"""
+        try:
+            collection = self.vectorstore.col
+            output_fields = ["text", "title", "level", "cook_time", "source", "recipe_id"]
+
+            # title에 쿼리 포함된 문서 필터 검색
+            safe_query = query.replace('"', '\\"')
+            expr = f'title like "%{safe_query}%"'
+
+            t_title_start = _t()
+            title_results = collection.query(
+                expr=expr,
+                output_fields=output_fields,
+                limit=k
+            )
+            _log_step("Milvus title 검색", t_title_start, _t())
+
+            if not title_results:
+                return []
+
+            print(f"  🎯 [title 매칭] {len(title_results)}개 발견!")
+            docs_with_scores = []
+            for hit in title_results:
+                doc = Document(
+                    page_content=hit.get("text", ""),
+                    metadata={
+                        "title": hit.get("title", "N/A"),
+                        "level": hit.get("level", "N/A"),
+                        "cook_time": hit.get("cook_time", "N/A"),
+                        "source": hit.get("source", "N/A"),
+                        "recipe_id": hit.get("recipe_id", ""),
+                        "image_url": "",
+                    }
+                )
+                docs_with_scores.append((doc, 0.0))  # title 매칭은 최고 점수
+                print(f"    - {hit.get('title', 'N/A')}")
+
+            return docs_with_scores
+
+        except Exception as e:
+            print(f"  [WARNING] title 검색 실패: {e}")
+            return []
+
     def _milvus_search(self, query: str, k: int) -> List[tuple]:
-        """pymilvus 직접 호출 - 이미지 조회 안 함!"""
+        """pymilvus 직접 호출 - title 매칭 우선, 부족하면 벡터 검색 보완"""
         from pymilvus import Collection
-        
-        # ── 타이밍: 쿼리 embedding ──
+
+        collection = self.vectorstore.col
+        output_fields = ["text", "title", "level", "cook_time", "source", "recipe_id"]
+
+        # ── 1단계: title 키워드 매칭 먼저 시도 ──
+        title_results = self._milvus_title_search(query, k)
+
+        if len(title_results) >= k:
+            # title 매칭으로 충분하면 벡터 검색 스킵
+            return title_results[:k]
+
+        # ── 2단계: 벡터 검색 (title 매칭 부족할 때) ──
         t_emb_start = _t()
         query_embedding = self.embeddings.embed_query(query)
         _log_step("Embedding 생성", t_emb_start, _t())
 
-        collection = self.vectorstore.col
-        
         ef = max(k * 2, 50)
         search_params = {"metric_type": "L2", "params": {"ef": ef}}
-        
-        # 이미지 필드 체크 안 함, MongoDB 조회 안 함!
-        output_fields = ["text", "title", "level", "cook_time", "source", "recipe_id"]
-        
-        # ── 타이밍: Milvus ANN 검색 ──
+
         t_search_start = _t()
         results = collection.search(
             data=[query_embedding],
@@ -301,11 +349,10 @@ class RecipeRAGLangChain:
             output_fields=output_fields
         )
         _log_step("Milvus ANN 검색", t_search_start, _t())
-        
-        docs_with_scores = []
+
+        vector_results = []
         for hit in results[0]:
             recipe_id = hit.entity.get("recipe_id", "")
-            
             doc = Document(
                 page_content=hit.entity.get("text", ""),
                 metadata={
@@ -314,12 +361,20 @@ class RecipeRAGLangChain:
                     "cook_time": hit.entity.get("cook_time", "N/A"),
                     "source": hit.entity.get("source", "N/A"),
                     "recipe_id": recipe_id,
-                    "image_url": "", 
+                    "image_url": "",
                 }
             )
-            docs_with_scores.append((doc, hit.score))
-        
-        return docs_with_scores
+            vector_results.append((doc, hit.score))
+
+        # ── title 결과 + 벡터 결과 합치기 (중복 제거) ──
+        seen_titles = {doc.metadata.get("title") for doc, _ in title_results}
+        merged = list(title_results)
+        for doc, score in vector_results:
+            if doc.metadata.get("title") not in seen_titles and len(merged) < k:
+                merged.append((doc, score))
+                seen_titles.add(doc.metadata.get("title"))
+
+        return merged
 
     def search_recipes(
         self,
