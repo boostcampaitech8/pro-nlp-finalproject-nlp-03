@@ -287,12 +287,16 @@ def create_chat_agent(rag_system):
         question_lower = question.lower()
         warning_parts = []
 
+        import re
         for allergy in allergies:
-            if allergy.lower() in question_lower:
+            # 단어 단위 매칭: "게" → "게"만 매칭, "맵게"는 매칭 안 됨
+            pattern = r'(?<![가-힣])' + re.escape(allergy.lower()) + r'(?![가-힣])'
+            if re.search(pattern, question_lower):
                 warning_parts.append(f"**{allergy}**는 알레르기 재료입니다!")
-        
+
         for dislike in dislikes:
-            if dislike.lower() in question_lower:
+            pattern = r'(?<![가-힣])' + re.escape(dislike.lower()) + r'(?![가-힣])'
+            if re.search(pattern, question_lower):
                 warning_parts.append(f"**{dislike}**는 싫어하는 음식입니다.")
     
         if warning_parts:

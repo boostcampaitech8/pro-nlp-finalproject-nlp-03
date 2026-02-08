@@ -794,6 +794,49 @@ async def chat_websocket(
 
                 start_time = time.time()
 
+                # AI Safety 필터 (의도 분류 전에 먼저 처리)
+                # PII(개인정보) + 욕설/비속어 + 유해 입력 감지
+                try:
+                    from langchain_core.messages import HumanMessage as _HM
+                    safety_llm = ChatClovaX(model="HCX-DASH-001", temperature=0.1, max_tokens=10)
+                    safety_result = safety_llm.invoke([_HM(content=f"""입력의 유해성을 판단하세요.
+
+입력: "{content}"
+
+**감지 대상:**
+1. PII(개인정보): 전화번호, 주민번호, 이메일, 주소, 계좌번호, 비밀번호, 이름+연락처 조합
+2. 욕설/비속어: 비하, 혐오, 성적 표현, 폭언
+3. 유해 요청: 폭력, 불법 행위, 차별, 자해 관련
+
+**예외 (감지하지 않음):**
+- 음식 재료명, 요리명, 조리 용어
+- 단순 이름만("홍길동")은 PII 아님
+
+유해하면 YES, 안전하면 NO (한 단어만):""")])
+                    safety_answer = safety_result.content.strip().upper()
+                    logger.info(f"[WS] AI Safety 감지 LLM 응답: {safety_answer}")
+
+                    if "YES" in safety_answer:
+                        logger.info(f"[WS] AI Safety 감지 → 차단: {content[:50]}")
+                        block_msg = "해당 내용에는 응답할 수 없습니다. 적절한 내용으로 다시 질문해주세요."
+
+                        chat_sessions[session_id]["messages"].append({
+                            "role": "assistant",
+                            "content": block_msg
+                        })
+
+                        await websocket.send_json({
+                            "type": "safety_block",
+                            "content": block_msg
+                        })
+
+                        total_sec = (time.time() - start_time)
+                        logger.info(f"[WS] AI Safety 차단 완료 (총 {total_sec:.1f}초)")
+                        continue
+
+                except Exception as e:
+                    logger.warning(f"[WS] AI Safety 감지 실패 (무시하고 진행): {e}")
+
                 # 사용자 메시지 히스토리에 추가
                 chat_sessions[session_id]["messages"].append({
                     "role": "user",
@@ -842,13 +885,13 @@ async def chat_websocket(
                         logger.info(f"[WS] 알러지/비선호 감지 완료 (총 {total_sec:.1f}초)")
                         continue
 
-                # 1. 요리 무관 질문 → RAG 검색으로 재확인 후 외부 챗봇으로 리다이렉트
+                # 1. 요리 무관 질문 → title 검색으로 재확인 후 외부 챗봇으로 리다이렉트
                 if user_intent == Intent.NOT_COOKING:
-                    logger.info(f"[WS] 요리 무관 질문 감지 → RAG 검색으로 재확인")
-                    # RAG 검색해서 결과가 있으면 음식 줄임말/신조어일 수 있으므로 RECIPE_SEARCH로 변경
-                    rag_check = rag_system.search_recipes(content, k=1)
-                    if rag_check and len(rag_check) > 0:
-                        logger.info(f"[WS] RAG 검색 결과 있음 → RECIPE_SEARCH로 변경 (줄임말/신조어 가능)")
+                    logger.info(f"[WS] 요리 무관 질문 감지 → title 검색으로 재확인")
+                    # title 매칭만 사용 (벡터 검색은 아무거나 반환하므로 제외)
+                    title_check = rag_system._milvus_title_search(content, k=1)
+                    if title_check and len(title_check) > 0:
+                        logger.info(f"[WS] title 매칭 결과 있음 → RECIPE_SEARCH로 변경 (줄임말/신조어 가능)")
                         user_intent = Intent.RECIPE_SEARCH
                     else:
                         logger.info(f"[WS] RAG 검색 결과 없음 → 외부 챗봇 리다이렉트")

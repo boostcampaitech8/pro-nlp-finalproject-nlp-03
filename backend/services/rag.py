@@ -561,7 +561,6 @@ class RecipeRAGLangChain:
     {{{{"no": 1, "desc": "구체적이고 상세한 설명"}}}},
     {{{{"no": 2, "desc": "..."}}}}
 ],
-"tips": ["팁1", "팁2", "팁3"]
 }}}}
 
 {{context}}"""
