@@ -34,6 +34,12 @@ class FamilyUpdate(BaseModel):
 class UtensilsUpdate(BaseModel):
     utensil_ids: List[int] = []
 
+
+class AddAllergyDislikeRequest(BaseModel):
+    type: str  # "allergy" or "dislike"
+    items: List[str]
+
+
 router = APIRouter()
 
 
@@ -181,6 +187,54 @@ async def update_personalization(
         }
     except Exception as e:
         print(f"[User API] 개인화 수정 실패: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/personalization/add")
+async def add_allergy_dislike(
+    data: AddAllergyDislikeRequest,
+    member_id: int = Query(...)
+):
+    """채팅에서 감지된 알러지/비선호 음식 추가"""
+    if member_id == 0:
+        raise HTTPException(status_code=400, detail="로그인이 필요합니다")
+
+    try:
+        # 기존 데이터 가져오기
+        psnl = get_member_personalization(member_id)
+        current_allergies = psnl.get("allergies", []) if psnl else []
+        current_dislikes = psnl.get("dislikes", []) if psnl else []
+
+        # 중복 제거하면서 추가
+        if data.type == "allergy":
+            new_allergies = list(set(current_allergies + data.items))
+            new_dislikes = current_dislikes
+        elif data.type == "dislike":
+            new_allergies = current_allergies
+            new_dislikes = list(set(current_dislikes + data.items))
+        else:
+            raise HTTPException(status_code=400, detail="type은 'allergy' 또는 'dislike'여야 합니다")
+
+        # 업데이트
+        result = upsert_member_personalization(
+            member_id=member_id,
+            allergies=new_allergies,
+            dislikes=new_dislikes
+        )
+
+        print(f"[User API] 알러지/비선호 추가 완료: member_id={member_id}, type={data.type}, items={data.items}")
+
+        return {
+            "success": True,
+            "personalization": {
+                "allergies": result.get("allergies", []),
+                "dislikes": result.get("dislikes", [])
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[User API] 알러지/비선호 추가 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

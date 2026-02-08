@@ -52,9 +52,6 @@ async def stt_with_analysis(
         result = await transcribe_and_analyze(audio_bytes)
         return JSONResponse(content=result)
     except Exception as e:
-        import traceback
-        logger.error(f"[STT] 에러 발생: {e}")
-        logger.error(traceback.format_exc())
         return JSONResponse(
             content={"text": "", "completeness": "INCOMPLETE", "error": str(e)},
             status_code=500,

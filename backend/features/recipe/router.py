@@ -2,14 +2,17 @@
 """
 Recipe REST API 라우터
 """
+import os
 import json
 import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from pymongo import MongoClient
 
 from core.dependencies import get_rag_system
 from core.exceptions import RAGNotAvailableError
 from features.recipe.service import RecipeService
 from features.recipe.schemas import RecipeGenerateRequest
+from .prompts import RECIPE_QUERY_EXTRACTION_PROMPT, RECIPE_GENERATION_PROMPT
 from models.mysql_db import (
     save_my_recipe, get_my_recipes, get_my_recipe, delete_my_recipe, update_my_recipe,
     get_member_personalization, get_member_by_id,
@@ -17,6 +20,165 @@ from models.mysql_db import (
 )
 
 router = APIRouter()
+
+
+# ─────────────────────────────────────────────
+# 토큰 사용량 추적 헬퍼 함수
+# ─────────────────────────────────────────────
+# 요청별 토큰 누적 (요청당 초기화됨)
+_token_accumulator: dict = {"prompt": 0, "completion": 0, "total": 0}
+# 단계별 토큰 정보 저장 (단계명 -> {prompt, completion, total})
+_step_tokens: dict = {}
+# 단계별 시간 추적 (단계명 -> 시간(ms))
+_step_timings: dict = {}
+def print_token_usage(response, context_name: str = "LLM"):
+    """LLM 응답에서 실제 토큰 사용량 출력 (개선 버전)"""
+    print(f"\n{'='*60}")
+    print(f"[{context_name}] HCX API 토큰 사용량 (실측)")
+    print(f"{'='*60}")
+
+    # 개선: usage_metadata 우선 확인 (LangChain 표준)
+    usage = None
+    source = ""
+
+    if hasattr(response, 'usage_metadata'):
+        usage = response.usage_metadata
+        source = "usage_metadata"
+    elif hasattr(response, 'response_metadata'):
+        usage = response.response_metadata.get('token_usage')
+        source = "response_metadata.token_usage"
+
+    if usage:
+        # 개선: 소스에 따라 필드명 분기
+        if source == "usage_metadata":
+            prompt_tokens = usage.get('input_tokens', 0)
+            completion_tokens = usage.get('output_tokens', 0)
+            total_tokens = usage.get('total_tokens', 0)
+        else:
+            prompt_tokens = usage.get('prompt_tokens', 0)
+            completion_tokens = usage.get('completion_tokens', 0)
+            total_tokens = usage.get('total_tokens', 0)
+
+        # Fallback: total_tokens이 없으면 계산
+        if total_tokens == 0:
+            total_tokens = prompt_tokens + completion_tokens
+
+        # 전체 누적
+        _token_accumulator["prompt"] += prompt_tokens
+        _token_accumulator["completion"] += completion_tokens
+        _token_accumulator["total"] += total_tokens
+
+        # 단계별 저장 (누적)
+        if context_name not in _step_tokens:
+            _step_tokens[context_name] = {"prompt": 0, "completion": 0, "total": 0}
+        _step_tokens[context_name]["prompt"] += prompt_tokens
+        _step_tokens[context_name]["completion"] += completion_tokens
+        _step_tokens[context_name]["total"] += total_tokens
+
+        print(f"📥 입력 토큰 (prompt):     {prompt_tokens:,} tokens")
+        print(f"📤 출력 토큰 (completion): {completion_tokens:,} tokens")
+        print(f"📊 총 토큰 (total):        {total_tokens:,} tokens")
+        print(f"🔍 토큰 소스: {source}")
+    else:
+        print(f"⚠️  토큰 사용량 정보를 찾을 수 없습니다.")
+        print(f"응답 객체 속성: {dir(response)}")
+        if hasattr(response, 'response_metadata'):
+            print(f"response_metadata: {response.response_metadata}")
+        if hasattr(response, 'usage_metadata'):
+            print(f"usage_metadata: {response.usage_metadata}")
+
+    print(f"{'='*60}\n")
+
+def print_recipe_token_brief():
+    """레시피 생성 토큰 사용량 간단 요약 (🔷 박스)"""
+    has_tokens = _token_accumulator["total"] > 0
+
+    if not has_tokens:
+        return
+
+    print(f"\n{'🔷'*30}")
+    print(f"{'  '*10}📊 레시피 생성 토큰 사용량 요약")
+    print(f"{'🔷'*30}")
+    print(f"📥 총 입력 토큰 (prompt):     {_token_accumulator['prompt']:,} tokens")
+    print(f"📤 총 출력 토큰 (completion): {_token_accumulator['completion']:,} tokens")
+    print(f"📊 총합 (total):              {_token_accumulator['total']:,} tokens")
+    print(f"{'🔷'*30}\n")
+
+
+def print_recipe_token_detail():
+    """레시피 생성 토큰 사용량 상세 표 출력"""
+    has_tokens = _token_accumulator["total"] > 0
+    has_timings = len(_step_timings) > 0
+
+    if not has_tokens and not has_timings:
+        return
+
+    # 1) 단계별 토큰 요약 표 (마크다운)
+    if has_tokens:
+        print("\n" + "="*100)
+        print("- 📋 단계별 상세 요약\n")
+        print("| Step | 설명 | Prompt Tokens | Completion Tokens | Total Tokens |")
+        print("|------|------|---------------|-------------------|--------------|")
+
+        # 단계 순서 정의
+        step_order = ["검색 쿼리 추출", "레시피 생성"]
+        step_metadata = {
+            "검색 쿼리 추출": {"step": "1", "desc": "검색 쿼리 추출"},
+            "레시피 생성": {"step": "2", "desc": "레시피 생성"},
+        }
+
+        # 단계 순서대로 출력
+        for step_name in step_order:
+            tokens = _step_tokens.get(step_name, {"prompt": 0, "completion": 0, "total": 0})
+            meta = step_metadata.get(step_name, {"step": "-", "desc": step_name})
+
+            if tokens["total"] > 0:
+                prompt_str = str(tokens["prompt"]) if tokens["prompt"] > 0 else "-"
+                completion_str = str(tokens["completion"]) if tokens["completion"] > 0 else "-"
+                total_str = str(tokens["total"]) if tokens["total"] > 0 else "-"
+                print(f"| {meta['step']} | {meta['desc']} | {prompt_str} | {completion_str} | {total_str} |")
+
+        # 2) 전체 합계 요약 표 (마크다운)
+        print("\n- 📊 전체 합계 요약\n")
+        print("| 구분 | Prompt Tokens | Completion Tokens | Total Tokens |")
+        print("|------|---------------|-------------------|--------------|")
+        print(f"| 합계 | {_token_accumulator['prompt']:,} | {_token_accumulator['completion']:,} | {_token_accumulator['total']:,} |")
+
+    # 3) 성능 병목 표: 동작 플로우 순서대로 (마크다운)
+    if has_timings:
+        print("\n- ⚡ 성능 병목 분석\n")
+        print("| 동작 | 단계 | Latency(s) | 비율 |")
+        print("|------|------|------------|------|")
+
+        # 동작 순서 정의 (플로우 순서)
+        step_order = ["검색 쿼리 추출", "레시피 생성"]
+        total_time = sum(_step_timings.values())
+
+        for order, step_name in enumerate(step_order, 1):
+            ms = _step_timings.get(step_name, 0)
+            if ms > 0:
+                sec = ms / 1000
+                ratio = (ms / total_time * 100) if total_time > 0 else 0
+                print(f"| {order} | {step_name} | {sec:.1f} | ~{ratio:.0f}% |")
+
+        # 총 소요 시간 추가
+        total_sec = total_time / 1000
+        print(f"| - | **TOTAL** | **{total_sec:.1f}** | **100%** |")
+
+    print("="*100 + "\n")
+
+    # 초기화
+    _token_accumulator["prompt"] = 0
+    _token_accumulator["completion"] = 0
+    _token_accumulator["total"] = 0
+    _step_tokens.clear()
+    _step_timings.clear()
+
+def print_recipe_token_summary():
+    """레시피 생성 토큰 사용량 요약 출력 (하위 호환성 유지)"""
+    print_recipe_token_brief()
+    print_recipe_token_detail()
+
 
 
 def _format_elapsed_time(seconds) -> str:
@@ -175,13 +337,34 @@ async def generate_recipe_from_chat(
     service = RecipeService(rag_system, None, user_profile)
 
     try:
-        # 레시피 생성 (RAG + LLM + MongoDB 이미지)
-        last_agent_msg = [m for m in messages if m.get("role") in ("assistant", "AGENT")]
-        chat_for_recipe = last_agent_msg[-1:] if last_agent_msg else messages[-1:]
-        recipe_json = await service.generate_recipe(
-            chat_history=chat_for_recipe,
-            member_info=user_constraints
-        )
+        # 대화 히스토리에서 마지막 레시피 찾기
+        existing_recipe = None
+        for msg in reversed(messages):
+            if msg.get("role") in ("assistant", "AGENT"):
+                content = msg.get("content", "")
+                # 레시피 감지: "재료" + 이모지 마커
+                if "재료" in content and ("⏱️" in content or "📊" in content):
+                    existing_recipe = content
+                    print(f"[Recipe API] 기존 레시피 발견 (길이: {len(content)} 자)")
+                    print(f"[Recipe API] 레시피 일부: {content[:150]}...")
+                    break
+
+        if existing_recipe:
+            # 기존 레시피로부터 상세 조리 과정 생성 (RAG 없이)
+            print(f"[Recipe API] 기존 레시피 사용 → RAG 검색 생략")
+            recipe_json = await service.generate_recipe_from_existing(
+                recipe_content=existing_recipe,
+                member_info=user_constraints
+            )
+        else:
+            # 레시피가 없으면 RAG로 검색 후 생성
+            print(f"[Recipe API] 기존 레시피 없음 → RAG 검색 진행")
+            last_agent_msg = [m for m in messages if m.get("role") in ("assistant", "AGENT")]
+            chat_for_recipe = last_agent_msg[-1:] if last_agent_msg else messages[-1:]
+            recipe_json = await service.generate_recipe(
+                chat_history=chat_for_recipe,
+                member_info=user_constraints
+            )
 
         print(f"[Recipe API] 레시피 생성 완료: {recipe_json.get('title')}")
         print(f"[Recipe API] 이미지: {recipe_json.get('image', 'None')[:60]}...")

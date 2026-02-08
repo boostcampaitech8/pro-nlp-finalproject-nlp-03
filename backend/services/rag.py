@@ -111,7 +111,7 @@ class RecipeRAGLangChain:
     """
     LangChain + CLOVA X 기반 레시피 RAG 시스템
     - ClovaXEmbeddings (bge-m3) for vector search
-    - ChatClovaX (HCX-003) for answer generation
+    - ChatClovaX (HCX-DASH-001) for answer generation
     - CLOVA Studio Reranker API
     """
 
@@ -121,9 +121,9 @@ class RecipeRAGLangChain:
         milvus_port: str,
         collection_name: str,
         use_reranker: bool = True,
-        chat_model: str = "HCX-003",
+        chat_model: str = "HCX-DASH-001",
         embedding_model: str = "bge-m3",
-        temperature: float = 0.2,
+        temperature: float = 0,
         max_tokens: int = 2000,
     ):
         self.milvus_host = milvus_host
@@ -591,7 +591,6 @@ class RecipeRAGLangChain:
             "servings": "N/A",
             "ingredients": [],
             "steps": [],
-            "tips": []
         }
 
     def query(
