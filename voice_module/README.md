@@ -64,14 +64,15 @@ voice_module/
 
 ## 인텐트 분류
 
-| Intent | 설명 | 예시 |
-|--------|------|------|
-| NEXT | 다음 단계 이동 | "다음" |
-| PREV | 이전 단계 이동 | "이전" |
-| SUB_ING | 재료 대체 요청 | "양파가 없는데 대체할 수 있어?" |
-| SUB_TOOL | 도구 대체 요청 | "냄비가 없어" |
-| FAILURE | 요리 실패 대응 | "음식이 탔어 어떡해?" |
-| UNKNOWN | 범위 밖 요청 | - |
+| LLM 출력 (Intent) | 매핑 키 | 설명 | 예시 |
+|-------------------|---------|------|------|
+| Next | next_step | 다음 단계 이동 | "다음" |
+| Prev | prev_step | 이전 단계 이동 | "이전" |
+| Finish | finish | 음성 종료 | "음성모드 끌래" |
+| Missing Ingredient | substitute_ingredient | 재료 대체 요청 | "양파가 없는데 대체할 수 있어?" |
+| Missing Tool | substitute_tool | 도구 대체 요청 | "냄비가 없어" |
+| Failure | failure | 요리 실패 대응 | "음식이 탔어 어떡해?" |
+| Out of Scope | unknown | 범위 밖 요청 | - |
 
 ## 실행 방법
 
