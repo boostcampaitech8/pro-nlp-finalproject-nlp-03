@@ -63,8 +63,8 @@ tmux send-keys -t $SESSION "source $VENV_LLM/bin/activate" C-m
 # tmux send-keys -t $SESSION 'vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4 --max-model-len 4096' C-m
 # tmux send-keys -t $SESSION 'vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.8 --max-model-len 4096' C-m
 # tmux send-keys -t $SESSION 'vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4 --max-model-len 1024' C-m
-tmux send-keys -t $SESSION 'vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.6 --max-model-len 2048' C-m
-# tmux send-keys -t $SESSION 'vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.4 --max-model-len 4096' C-m
+# tmux send-keys -t $SESSION 'vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.6 --max-model-len 2048' C-m
+tmux send-keys -t $SESSION 'vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.6 --max-model-len 4096' C-m
 
 # [Pane 2: 좌측] STT (대기)
 tmux split-window -h

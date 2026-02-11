@@ -30,7 +30,7 @@ curl http://localhost:8012/health
 
 vLLM 서버:
 ```bash
-vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4
+vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.4
 ```
 
 LLM 서버:
@@ -105,7 +105,7 @@ DEVICE = "cpu"  # GPU → CPU로 변경
 
 ### 문제 3: LLM 로딩이 너무 느림
 ```
-[INFO] LLM 모델 로드 시작: Qwen/Qwen3-4B-Instruct-2507
+[INFO] LLM 모델 로드 시작: jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ
 # 30초 ~ 1분 정도 대기 (정상)
 ```
 

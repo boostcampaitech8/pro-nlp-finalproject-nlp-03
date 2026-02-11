@@ -75,7 +75,7 @@ EOF
 ### 터미널 0: vLLM 서버 (5000번) ⭐ 필수
 
 ```bash
-vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4
+vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.6
 ```
 
 ### 터미널 1: LLM 서버 (8013번, venv_llm) ⭐

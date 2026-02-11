@@ -94,7 +94,7 @@ pip install -r venv_llm_requirements.txt
 
 ```bash
 # 터미널 0: vLLM 서버
-vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4
+vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.6
 
 # 터미널 1: LLM 서버 (venv_llm 환경)
 source venv_llm/bin/activate
@@ -162,7 +162,7 @@ print(f"음성 파일: {tts_path}")
 | STT_SERVER_URL | localhost:8011 | STT 서버 |
 | TTS_SERVER_URL | localhost:8012 | TTS 서버 |
 | LLM_SERVER_URL | localhost:8013 | LLM 서버 |
-| LLM_MODEL_NAME | Qwen/Qwen3-4B-Instruct-2507 | LLM 모델 |
+| LLM_MODEL_NAME | jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ | LLM 모델 |
 | TTS_DEFAULT_TONE | kiwi | TTS 레퍼런스 톤 |
 | API_TIMEOUT | 30초 | STT/TTS 타임아웃 |
 | LLM_API_TIMEOUT | 60초 | LLM 타임아웃 |
@@ -172,7 +172,7 @@ print(f"음성 파일: {tts_path}")
 | 항목 | 시간 |
 |------|------|
 | STT (Whisper) | ~2-4초 |
-| LLM (Qwen 4B) | ~1-2초 |
+| LLM (Qwen 4B) | ~0.7초 |
 | TTS (GPT-SoVITS) | ~1-3초 |
 | E2E 전체 | ~4-9초 |
 
