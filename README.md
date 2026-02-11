@@ -78,65 +78,248 @@
 
 ```
 recipeu/
-├── frontend/                    # React 프론트엔드
-│   ├── src/
-│   │   ├── app/                # 앱 엔트리 포인트
-│   │   ├── components/         # 재사용 가능한 UI 컴포넌트
-│   │   │   ├── BottomNav/      # 하단 네비게이션
-│   │   │   ├── Button/         # 버튼 컴포넌트
-│   │   │   ├── Header/         # 헤더 컴포넌트
-│   │   │   └── Modal/          # 모달 컴포넌트
-│   │   ├── features/           # 기능별 모듈
-│   │   │   └── chat/           # 채팅 기능 (ChatBubble, ChatInput 등)
-│   │   ├── layouts/            # 레이아웃 래퍼
-│   │   │   ├── MobileLayout/   # 모바일 전체 화면
-│   │   │   ├── ScrollLayout/   # 스크롤 가능한 컨텐츠
-│   │   │   └── RecipeLayout/   # 레시피 전용 레이아웃
-│   │   ├── pages/              # 페이지 컴포넌트
-│   │   │   ├── home/           # 홈 페이지
-│   │   │   ├── chat/           # 채팅 페이지
-│   │   │   ├── cook/           # 조리 모드
-│   │   │   ├── mypage/         # 마이 페이지
-│   │   │   └── recipes/        # 레시피 관리
-│   │   ├── routes/             # TanStack Router 라우트
-│   │   ├── style/              # 글로벌 스타일
-│   │   ├── utils/              # 유틸리티 함수
-│   │   └── images.js           # CDN 이미지 매핑
-│   ├── public/                 # 정적 파일
-│   ├── Dockerfile              # Docker 설정
-│   ├── vite.config.js          # Vite 설정
-│   └── nginx.conf              # Nginx 설정
-│
-├── backend/                     # FastAPI 백엔드
-│   ├── app/
-│   │   ├── routers/            # API 라우터
-│   │   │   ├── chat.py         # WebSocket 채팅
-│   │   │   ├── recipe.py       # 레시피 REST API
-│   │   │   ├── voice.py        # STT/TTS 음성 서비스
-│   │   │   ├── user.py         # 사용자 관리
-│   │   │   ├── auth.py         # OAuth 인증
-│   │   │   ├── mypage.py       # 마이페이지
-│   │   │   └── rankings.py     # 레시피 랭킹
-│   │   ├── services/           # 비즈니스 로직
-│   │   │   ├── agent/          # LangGraph RAG 에이전트
-│   │   │   ├── llm/            # LLM 통합
-│   │   │   ├── rag/            # RAG 파이프라인
-│   │   │   └── voice/          # 음성 처리
-│   │   ├── models/             # Pydantic 모델
-│   │   ├── database/           # 데이터베이스 연결
-│   │   │   ├── mysql.py        # MySQL 설정
-│   │   │   ├── milvus.py       # Milvus 설정
-│   │   │   └── mongodb.py      # MongoDB 설정
-│   │   ├── utils/              # 헬퍼 함수
-│   │   └── main.py             # FastAPI 앱 엔트리
-│   ├── requirements.txt        # Python 의존성
-│   └── Dockerfile              # Docker 설정
-│
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          # GitHub Actions CI/CD
-│
-└── README.md                    # 프로젝트 문서 (현재 파일)
+├── airflow
+│   ├── dags
+│   │   ├── lib
+│   │   │   ├── chunking.py
+│   │   │   ├── embed_and_upsert.py
+│   │   │   ├── embedding_pipeline.py
+│   │   │   ├── mongo_utils.py
+│   │   │   ├── page_crawling.py
+│   │   │   ├── ranking_crawling.py
+│   │   │   └── recipe_to_doc.py
+│   │   ├── recipe_collection.py
+│   │   ├── recipe_embedding.py
+│   │   └── recipe_ranking.py
+│   ├── docker-compose.yml
+│   └── Dockerfile
+├── Architecture.png
+├── backend
+│   ├── app
+│   │   ├── config.py
+│   │   └── main.py
+│   ├── core
+│   │   ├── dependencies.py
+│   │   ├── exceptions.py
+│   │   └── websocket.py
+│   ├── Dockerfile
+│   ├── features
+│   │   ├── auth
+│   │   │   ├── __init__.py
+│   │   │   └── router.py
+│   │   ├── chat
+│   │   │   ├── agent.py
+│   │   │   ├── prompts.py
+│   │   │   ├── router.py
+│   │   │   └── schemas.py
+│   │   ├── chat_external
+│   │   │   └── router.py
+│   │   ├── cooking
+│   │   │   ├── agent.py
+│   │   │   ├── router.py
+│   │   │   ├── schemas.py
+│   │   │   └── session.py
+│   │   ├── mypage
+│   │   │   ├── __init__.py
+│   │   │   └── router.py
+│   │   ├── ranking
+│   │   │   ├── router.py
+│   │   │   └── schemas.py
+│   │   ├── recipe
+│   │   │   ├── __init__.py
+│   │   │   ├── prompts.py
+│   │   │   ├── router.py
+│   │   │   ├── schemas.py
+│   │   │   └── service.py
+│   │   ├── user
+│   │   │   ├── router.py
+│   │   │   └── schemas.py
+│   │   ├── voice
+│   │   │   ├── __init__.py
+│   │   │   ├── clova_speech_client.py
+│   │   │   ├── router.py
+│   │   │   ├── service.py
+│   │   │   └── text_analyzer.py
+│   │   ├── weather
+│   │   │   ├── korea_lat_lon.csv
+│   │   │   └── router.py
+│   │   └── whether
+│   │       └── router.py
+│   ├── models
+│   │   └── mysql_db.py
+│   ├── new_token_summary.py
+│   ├── recipe_token_summary_func.py
+│   ├── requirements.txt
+│   ├── run.py
+│   ├── services
+│   │   ├── __init__.py
+│   │   ├── audio.py
+│   │   ├── llm.py
+│   │   ├── rag.py
+│   │   └── search.py
+│   ├── temp_token_summary.py
+│   ├── test_hcx_token.py
+│   ├── token_validation_report.md
+│   └── utils
+│       ├── helpers.py
+│       ├── intent.py
+│       └── parser.py
+├── frontend
+│   ├── directory_structure.txt
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── nginx.conf
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── favicon.ico
+│   │   ├── loading-bg-phone.png
+│   │   ├── loading-motion.gif
+│   │   ├── peu_banjuk.png
+│   │   ├── peu_chicken.png
+│   │   ├── peu_cook.png
+│   │   ├── peu_gimbab.png
+│   │   ├── peu_hurai.png
+│   │   ├── peu_icecream.png
+│   │   ├── peu_pizza.png
+│   │   ├── peu_ramen.png
+│   │   ├── peu_salad.png
+│   │   └── peu_wink.png
+│   ├── src
+│   │   ├── app
+│   │   │   ├── App.jsx
+│   │   │   └── main.jsx
+│   │   ├── components
+│   │   │   ├── BottomNav.css
+│   │   │   ├── BottomNav.jsx
+│   │   │   ├── Button.jsx
+│   │   │   ├── ButtonRed.css
+│   │   │   ├── ButtonRed.jsx
+│   │   │   ├── ButtonWhite.css
+│   │   │   ├── ButtonWhite.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   ├── PageTransition.jsx
+│   │   │   ├── RecipeBottomSheet.css
+│   │   │   └── RecipeBottomSheet.jsx
+│   │   ├── data
+│   │   │   └── weatherComments.json
+│   │   ├── features
+│   │   │   └── chat
+│   │   │       ├── components
+│   │   │       │   ├── ChatAvatar.jsx
+│   │   │       │   ├── ChatBubble.jsx
+│   │   │       │   ├── ChatInput.jsx
+│   │   │       │   └── ChatList.jsx
+│   │   │       └── hooks
+│   │   │           ├── useChatAgent.js
+│   │   │           ├── useChatSocket.js
+│   │   │           └── useCookingAgent.js
+│   │   ├── images.js
+│   │   ├── layouts
+│   │   │   ├── FixedLayout.jsx
+│   │   │   ├── MobileLayout.jsx
+│   │   │   ├── RecipeLayout.css
+│   │   │   ├── RecipeLayout.jsx
+│   │   │   └── ScrollLayout.jsx
+│   │   ├── pages
+│   │   │   ├── Chat
+│   │   │   │   ├── ChatPage.css
+│   │   │   │   ├── ChatPage.jsx
+│   │   │   │   ├── ChatPageOut.css
+│   │   │   │   └── ChatPageOut.jsx
+│   │   │   ├── Cook
+│   │   │   │   ├── CookCompletePage.css
+│   │   │   │   ├── CookCompletePage.jsx
+│   │   │   │   ├── CookModeAudioPage.css
+│   │   │   │   ├── CookModeAudioPage.jsx
+│   │   │   │   ├── CookModePage.css
+│   │   │   │   ├── CookModePage.jsx
+│   │   │   │   ├── CookStartPage.css
+│   │   │   │   └── CookStartPage.jsx
+│   │   │   ├── Home
+│   │   │   │   ├── HomePage.css
+│   │   │   │   └── HomePage.jsx
+│   │   │   ├── Loading
+│   │   │   │   ├── LoadingPage.css
+│   │   │   │   └── LoadingPage.jsx
+│   │   │   ├── MyPages
+│   │   │   │   ├── MyPage.css
+│   │   │   │   └── MyPage.jsx
+│   │   │   ├── MyRecipes
+│   │   │   │   ├── MyRecipesPage.css
+│   │   │   │   ├── MyRecipesPage.jsx
+│   │   │   │   ├── RecipeDetailModal.css
+│   │   │   │   └── RecipeDetailModal.jsx
+│   │   │   ├── NaverCallback
+│   │   │   │   └── NaverCallbackPage.jsx
+│   │   │   ├── Rankings
+│   │   │   │   ├── RankingRecipesPage.css
+│   │   │   │   └── RankingRecipesPage.jsx
+│   │   │   ├── Recipes
+│   │   │   │   ├── RecipeResultPage.css
+│   │   │   │   └── RecipeResultPage.jsx
+│   │   │   └── Splash
+│   │   │       ├── SplashPage.css
+│   │   │       └── SplashPage.jsx
+│   │   ├── routes
+│   │   │   ├── __root.jsx
+│   │   │   ├── chat.jsx
+│   │   │   ├── cook-audio.jsx
+│   │   │   ├── cook-complete.jsx
+│   │   │   ├── cook-start.jsx
+│   │   │   ├── cook.jsx
+│   │   │   ├── home.jsx
+│   │   │   ├── index.jsx
+│   │   │   ├── loading.jsx
+│   │   │   ├── mypage.jsx
+│   │   │   ├── naver-callback.jsx
+│   │   │   ├── out-chat.jsx
+│   │   │   ├── recipe-result.jsx
+│   │   │   ├── recipes.index.jsx
+│   │   │   └── recipes.my.jsx
+│   │   ├── routeTree.gen.ts
+│   │   ├── style
+│   │   │   └── global.css
+│   │   └── utils
+│   │       └── textFormatter.js
+│   ├── tree.txt
+│   └── vite.config.js
+├── README.md
+└── voice_module
+    ├── README.md
+    └── voice_module
+        ├── 1_ready_vllm.sh
+        ├── 2_go_others.sh
+        ├── agents
+        │   └── cooking_session.py
+        ├── config
+        │   ├── prompts.yaml
+        │   └── settings.py
+        ├── core
+        │   ├── api_client.py
+        │   ├── llm_engine.py
+        │   ├── text_processor.py
+        │   ├── types.py
+        │   └── vad_audio.py
+        ├── main.py
+        ├── MSA_GUIDE.md
+        ├── QUICKSTART.md
+        ├── README.md
+        ├── recipe_sample.jsonl
+        ├── servers
+        │   ├── llm_server.py
+        │   ├── stt_server.py
+        │   ├── tts_inference.py
+        │   └── tts_server.py
+        ├── start_servers.sh
+        ├── start_servers(expired).sh
+        ├── test_tts_endpoints.py
+        ├── test_vllm_stream.py
+        ├── test_vllm.py
+        ├── utils
+        │   └── audio_utils.py
+        └── venv_llm_requirements.txt
 ```
 
 ## 🎯 주요 서비스
