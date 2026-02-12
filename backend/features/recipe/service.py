@@ -304,8 +304,36 @@ class RecipeService:
         self.db = recipe_db
         self.user_profile = user_profile or {}
     
+    # ──────────────────────────────────────────────────────────────────
+    # [코드리뷰 질문 3] async 함수 내 동기 블로킹 호출
+    #
+    # generate_recipe는 async def로 선언되어 있지만, 내부에서 호출하는
+    # _extract_search_query_with_llm, _generate_final_recipe_with_llm,
+    # _find_image_by_title 등은 모두 동기(sync) 함수입니다.
+    # 특히 LLM 호출(llm.invoke())은 수 초가 걸리고,
+    # _find_image_by_title은 동기 PyMongo로 MongoDB를 조회합니다.
+    #
+    # FastAPI async 엔드포인트 안에서 동기 블로킹 호출 시
+    # 이벤트 루프가 차단되어 다른 요청 처리가 지연될 수 있습니다.
+    #
+    # 호출 흐름:
+    #   async router → async generate_recipe
+    #     → sync _extract_search_query_with_llm (LLM 호출, 수 초)
+    #     → sync _filter_by_constraints
+    #     → sync _generate_final_recipe_with_llm (LLM 호출, 수 초)
+    #     → sync _find_image_by_title (MongoDB 조회)
+    #
+    # 개선 옵션:
+    #   A (현재): 구현 간단하지만 이벤트 루프 차단
+    #   B: asyncio.to_thread()로 동기 함수를 별도 스레드에서 실행
+    #      예) recipe_json = await asyncio.to_thread(self._generate_final_recipe_with_llm, ...)
+    #   C: 비동기 드라이버 사용 (Motor for MongoDB, ainvoke for LangChain)
+    #
+    # Q: 현재 프로젝트 규모에서 이 부분이 문제가 되는지,
+    #    개선이 필요하다면 어떤 방식이 적절한지 의견 부탁드립니다.
+    # ──────────────────────────────────────────────────────────────────
     async def generate_recipe(
-        self, 
+        self,
         chat_history: List[Dict[str, str]],
         member_info: Dict[str, Any] = None
     ) -> Dict[str, Any]:
@@ -621,6 +649,24 @@ class RecipeService:
         
         return ' '.join(food_keywords[:5]) if food_keywords else "한식 요리"
     
+    # ──────────────────────────────────────────────────────────────────
+    # [코드리뷰 질문 1] 알레르기/비선호 필터링의 단순 문자열 매칭 한계
+    #
+    # 현재 allergen.lower() in content 방식으로 단순 포함 여부만 체크합니다.
+    #
+    # 문제 1 (동의어): "계란" 알레르기 등록 시 "달걀"로 표기된 레시피는 필터링 안 됨
+    # 문제 2 (부분 매칭): "게"를 필터링하면 "된장찌개"도 걸릴 수 있음
+    #
+    # 참고: chat/agent.py의 check_constraints (line 291-299)에서는
+    #       한글 단어 경계 정규식 (?<![가-힣])새우(?![가-힣])을 사용하여
+    #       동일한 목적을 다른 방식으로 구현하고 있습니다.
+    #
+    # 개선안 A: 동의어 사전 구축 ({"계란": ["달걀", "에그", "egg"]})
+    # 개선안 B: chat/agent.py와 동일한 한글 단어 경계 정규식 적용으로 일관성 확보
+    #
+    # Q: 이 방식의 한계에 대해 실무에서는 어떤 방식으로 보완하는지,
+    #    현재 프로젝트 규모에서 이 정도면 충분한지 의견 부탁드립니다.
+    # ──────────────────────────────────────────────────────────────────
     def _filter_by_constraints(
         self,
         recipes: List[Dict],
@@ -664,6 +710,26 @@ class RecipeService:
         
         return filtered
     
+    # ──────────────────────────────────────────────────────────────────
+    # [코드리뷰 질문 2] LLM JSON 파싱 실패 시 Fallback 레시피의 사용자 경험
+    #
+    # LLM 응답 파싱 실패 시 _parse_recipe_response (line 286-294)에서
+    # ingredients: [], steps: []인 빈 Fallback 레시피를 반환합니다.
+    # 이 경우 프론트엔드에서 재료와 조리법이 빈 레시피가 그대로 표시됩니다.
+    #
+    # 동일 패턴이 _expand_recipe_with_llm (line 463-497)에서도 사용됩니다.
+    #
+    # 옵션 A (현재): 빈 Fallback 반환 → 서버 에러 없이 항상 응답
+    #   단점: "추천 레시피"라는 제목에 빈 재료/빈 조리법 → 사용자 혼란
+    # 옵션 B: HTTPException(500) 발생 → 프론트에서 재시도 유도
+    #   단점: 사용자가 에러 화면을 보게 됨
+    # 옵션 C: 재시도 로직 추가 (1~2회 LLM 재호출) → 일시적 파싱 실패 대응
+    #   단점: LLM 호출 비용 증가, 응답 시간 길어짐
+    #
+    # Q: Fallback 처리 시 빈 레시피를 반환하는 것이 적절한지,
+    #    아니면 에러를 발생시켜 "다시 시도" 안내를 하는 것이 나은지
+    #    의견 부탁드립니다.
+    # ──────────────────────────────────────────────────────────────────
     def _generate_final_recipe_with_llm(
         self,
         chat_history: List[Dict],
