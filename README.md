@@ -36,8 +36,8 @@
       </a>
     </td>
     <td align="center">
-      <img src="https://github.com/shihtzu-918.png" alt="곽나영" width="100" height="100" style="border-radius: 50%;"/><br>
-      <a href="https://github.com/shihtzu-918">
+      <img src="https://github.com/nay0ng.png" alt="곽나영" width="100" height="100" style="border-radius: 50%;"/><br>
+      <a href="https://github.com/nay0ng">
         <img src="https://img.shields.io/badge/곽나영-grey?style=for-the-badge&logo=github" alt="badge 곽나영"/>
       </a>
     </td>
