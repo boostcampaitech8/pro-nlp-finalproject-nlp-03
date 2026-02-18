@@ -168,20 +168,22 @@ print(f"음성 파일: {tts_path}")
 | API_TIMEOUT      | 30초                        | STT/TTS 타임아웃 |
 | LLM_API_TIMEOUT  | 60초                        | LLM 타임아웃     |
 
-## 성능
+## 성능 (Performance)
 
-| 항목             | 시간   | |
-| ---------------- | ------ | |
-| STT    | -      | 최종 서비스는 CLOVA Speech API 사용 (Whisper는 속도/품질 문제로 미채택) |
-| LLM (Qwen 4B)    | ~1-2초 | |
-| TTS (GPT-SoVITS) | ~2-4초 | |
-| E2E 전체         | ~3-6초 | STT 제외 기준 |
+| 항목 (Component) | 소요 시간 (Latency) | 비고 |
+| :--- | :--- | :--- |
+| **STT** | - | 최종 서비스는 CLOVA Speech API 사용 (Whisper는 속도/품질 이슈로 미채택) |
+| **LLM** (Qwen 4B) | ~1-2초 | |
+| **TTS** (GPT-SoVITS) | ~2-4초 | |
+| **E2E 전체** | **~3-6초** | *STT 제외 기준* |
 
-### 리소스 요구사항
+### 리소스 요구사항 (Resource Requirements)
 
-- GPU 메모리: ~8-12GB (Whisper + Qwen + TTS 동시)
-- CPU: 4코어 이상
-- RAM: 16GB 이상
+| 하드웨어 | 최소 사양 | 비고 |
+| :--- | :--- | :--- |
+| **GPU Memory** | ~8-12GB | Whisper + Qwen + TTS 동시 구동 기준 |
+| **CPU** | 4코어 이상 | |
+| **RAM** | 16GB 이상 | |
 
 ## API 문서
 
