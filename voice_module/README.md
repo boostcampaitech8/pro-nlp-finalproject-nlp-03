@@ -1,13 +1,13 @@
 # Voice Module - 요리 세션 음성 파이프라인
 
-STT(Whisper) → LLM(Qwen via vLLM) → TTS(GPT-SoVITS) 파이프라인을 통한 요리 세션 음성 인터랙션 시스템
+CLOVA Speech(STT) → LLM(Qwen Korean-AWQ via vLLM) → TTS(GPT-SoVITS) 파이프라인을 통한 요리 세션 음성 인터랙션 시스템
 
 ## 프로젝트 구조
 
 ```
 voice_module/
 ├── servers/                      # MSA 서버
-│   ├── stt_server.py             # Whisper STT FastAPI 서버 (8011)
+│   ├── stt_server.py             # Whisper STT FastAPI 서버 (8011) ⚠️ 개발용 - 최종 서비스는 CLOVA Speech API 사용
 │   ├── llm_server.py             # Qwen LLM FastAPI 서버 (8013, vLLM 5000)
 │   ├── tts_server.py             # GPT-SoVITS TTS FastAPI 서버 (8012)
 │   └── tts_inference.py          # TTS 추론 로직
@@ -64,15 +64,15 @@ voice_module/
 
 ## 인텐트 분류
 
-| LLM 출력 (Intent) | 매핑 키 | 설명 | 예시 |
-|-------------------|---------|------|------|
-| Next | next_step | 다음 단계 이동 | "다음" |
-| Prev | prev_step | 이전 단계 이동 | "이전" |
-| Finish | finish | 음성 종료 | "음성모드 끌래" |
+| LLM 출력 (Intent)  | 매핑 키               | 설명           | 예시                            |
+| ------------------ | --------------------- | -------------- | ------------------------------- |
+| Next               | next_step             | 다음 단계 이동 | "다음"                          |
+| Prev               | prev_step             | 이전 단계 이동 | "이전"                          |
+| Finish             | finish                | 요리 완료      | "다 됐어"                       |
 | Missing Ingredient | substitute_ingredient | 재료 대체 요청 | "양파가 없는데 대체할 수 있어?" |
-| Missing Tool | substitute_tool | 도구 대체 요청 | "냄비가 없어" |
-| Failure | failure | 요리 실패 대응 | "음식이 탔어 어떡해?" |
-| Out of Scope | unknown | 범위 밖 요청 | - |
+| Missing Tool       | substitute_tool       | 도구 대체 요청 | "냄비가 없어"                   |
+| Failure            | failure               | 요리 실패 대응 | "음식이 탔어 어떡해?"           |
+| Out of Scope       | unknown               | 범위 밖 요청   | -                               |
 
 ## 실행 방법
 
@@ -94,7 +94,7 @@ pip install -r venv_llm_requirements.txt
 
 ```bash
 # 터미널 0: vLLM 서버
-vllm serve Qwen/Qwen3-4B-Instruct-2507 --port 5000 --gpu-memory-utilization 0.4
+vllm serve jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ --port 5000 --gpu-memory-utilization 0.4 --max-model-len 4096
 
 # 터미널 1: LLM 서버 (venv_llm 환경)
 source venv_llm/bin/activate
@@ -110,6 +110,7 @@ python servers/tts_server.py
 ```
 
 또는 스크립트 사용:
+
 ```bash
 bash 1_ready_vllm.sh   # vLLM 준비
 bash 2_go_others.sh    # STT/TTS/LLM 서버 시작
@@ -157,26 +158,27 @@ print(f"음성 파일: {tts_path}")
 
 `config/settings.py`에서 변경 가능:
 
-| 설정 | 기본값 | 설명 |
-|------|--------|------|
-| STT_SERVER_URL | localhost:8011 | STT 서버 |
-| TTS_SERVER_URL | localhost:8012 | TTS 서버 |
-| LLM_SERVER_URL | localhost:8013 | LLM 서버 |
-| LLM_MODEL_NAME | Qwen/Qwen3-4B-Instruct-2507 | LLM 모델 |
-| TTS_DEFAULT_TONE | kiwi | TTS 레퍼런스 톤 |
-| API_TIMEOUT | 30초 | STT/TTS 타임아웃 |
-| LLM_API_TIMEOUT | 60초 | LLM 타임아웃 |
+| 설정             | 기본값                      | 설명             |
+| ---------------- | --------------------------- | ---------------- |
+| STT_SERVER_URL   | localhost:8011              | STT 서버         |
+| TTS_SERVER_URL   | localhost:8012              | TTS 서버         |
+| LLM_SERVER_URL   | localhost:8013              | LLM 서버         |
+| LLM_MODEL_NAME   | jjjunho/Qwen3-4B-Instruct-2507-Korean-AWQ | LLM 모델 (Korean AWQ 양자화) |
+| TTS_DEFAULT_TONE | kiwi                        | TTS 레퍼런스 톤  |
+| API_TIMEOUT      | 30초                        | STT/TTS 타임아웃 |
+| LLM_API_TIMEOUT  | 60초                        | LLM 타임아웃     |
 
 ## 성능
 
-| 항목 | 시간 |
-|------|------|
-| STT (Whisper) | ~2-4초 |
-| LLM (Qwen 4B) | ~1-2초 |
-| TTS (GPT-SoVITS) | ~1-3초 |
-| E2E 전체 | ~4-9초 |
+| 항목             | 시간   |
+| ---------------- | ------ |
+| STT              | -      | 최종 서비스는 CLOVA Speech API 사용 (Whisper는 속도/품질 문제로 미채택) |
+| LLM (Qwen 4B)    | ~1-2초 | |
+| TTS (GPT-SoVITS) | ~2-4초 | |
+| E2E 전체         | ~3-6초 | STT 제외 기준 |
 
 ### 리소스 요구사항
+
 - GPU 메모리: ~8-12GB (Whisper + Qwen + TTS 동시)
 - CPU: 4코어 이상
 - RAM: 16GB 이상
@@ -185,17 +187,17 @@ print(f"음성 파일: {tts_path}")
 
 각 서버 시작 후 Swagger UI 접근 가능:
 
-| 서버 | Swagger UI | 주요 엔드포인트 |
-|------|-----------|----------------|
-| STT | localhost:8011/docs | `POST /transcribe` |
-| TTS | localhost:8012/docs | `POST /synthesize` |
-| LLM | localhost:8013/docs | `POST /classify` |
+| 서버 | Swagger UI          | 주요 엔드포인트    |
+| ---- | ------------------- | ------------------ |
+| STT  | localhost:8011/docs | `POST /transcribe` |
+| TTS  | localhost:8012/docs | `POST /synthesize` |
+| LLM  | localhost:8013/docs | `POST /classify`   |
 
 ## 트러블슈팅
 
-| 문제 | 해결 |
-|------|------|
-| STT/TTS/LLM 서버 연결 실패 | `curl http://localhost:{port}/health`로 확인 후 재시작 |
-| CUDA out of memory | `nvidia-smi`로 GPU 확인, `settings.py`에서 `DEVICE = "cpu"` 변경 |
-| 포트 충돌 | `lsof -i :{port}`로 확인 후 `kill -9 <PID>` |
-| transformers 버전 충돌 | STT/TTS는 venv, LLM은 venv_llm 분리 사용 |
+| 문제                       | 해결                                                             |
+| -------------------------- | ---------------------------------------------------------------- |
+| STT/TTS/LLM 서버 연결 실패 | `curl http://localhost:{port}/health`로 확인 후 재시작           |
+| CUDA out of memory         | `nvidia-smi`로 GPU 확인, `settings.py`에서 `DEVICE = "cpu"` 변경 |
+| 포트 충돌                  | `lsof -i :{port}`로 확인 후 `kill -9 <PID>`                      |
+| transformers 버전 충돌     | STT/TTS는 venv, LLM은 venv_llm 분리 사용                         |
