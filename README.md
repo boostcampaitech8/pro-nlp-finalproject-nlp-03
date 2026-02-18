@@ -170,9 +170,9 @@ print(f"음성 파일: {tts_path}")
 
 ## 성능
 
-| 항목             | 시간   |
-| ---------------- | ------ |
-| STT              | -      | 최종 서비스는 CLOVA Speech API 사용 (Whisper는 속도/품질 문제로 미채택) |
+| 항목             | 시간   | |
+| ---------------- | ------ | |
+| STT    | -      | 최종 서비스는 CLOVA Speech API 사용 (Whisper는 속도/품질 문제로 미채택) |
 | LLM (Qwen 4B)    | ~1-2초 | |
 | TTS (GPT-SoVITS) | ~2-4초 | |
 | E2E 전체         | ~3-6초 | STT 제외 기준 |
