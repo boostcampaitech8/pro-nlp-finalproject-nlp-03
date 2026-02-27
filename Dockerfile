@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     beautifulsoup4 \
     lxml \
-    pymilvus
+    pymilvus \ 
+    neo4j
 
 
