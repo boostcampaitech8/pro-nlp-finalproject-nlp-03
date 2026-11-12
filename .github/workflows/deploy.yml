@@ -5,11 +5,8 @@ on:
     branches:
       - main
 
-# fork에서는 배포를 기본 비활성화합니다.
-# 저장소 변수 NCP_DEPLOY_ENABLED=true 이고 NCP_* secrets가 있을 때만 배포합니다.
 jobs:
   deploy:
-    if: vars.NCP_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,8 +23,8 @@ jobs:
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.NCP_HOST }}
-          username: ${{ secrets.NCP_USERNAME }}
+          host: 211.188.62.72
+          username: root
           key: ${{ secrets.NCP_SSH_KEY }}
           script: |
             cd ~/recipe-app
