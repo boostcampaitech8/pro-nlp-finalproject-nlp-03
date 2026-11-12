@@ -296,7 +296,7 @@ def _parse_recipe_response(response_text: str, servings: int = 1) -> dict:
 
 class RecipeService:
     def __init__(self, rag_system, recipe_db, user_profile=None):
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://root:RootPassword123@136.113.251.237:27017/admin")
+        mongo_uri = os.getenv("MONGO_URI")
         self.mongo_client = MongoClient(mongo_uri)
         self.recipe_db = self.mongo_client["recipe_db"]
         self.recipes_collection = self.recipe_db["recipes"]

@@ -9,12 +9,13 @@ from datetime import datetime
 from pymongo import MongoClient, ASCENDING
 from pymongo.errors import DuplicateKeyError
 
+from lib.mongo_utils import get_mongo_uri
+
 from lib.page_crawling import crawl_recipe_detail
 
 RANKING_URL = "https://www.10000recipe.com/ranking/home_new.html"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 
-MONGO_URI = "mongodb://root:RootPassword123@mongodb:27017/admin"
 DB_NAME = "recipe_db"
 DB_RANKING_COLLECTION = "ranking_id"
 DB_RECIPE_COLLECTION = "recipes"
@@ -39,7 +40,7 @@ def get_recipe_ids_by_ranking():
 
 
 def save_ranking_to_mongo(recipe_ids):
-    client = MongoClient(MONGO_URI)
+    client = MongoClient(get_mongo_uri())
     db = client[DB_NAME]
     col = db[DB_RANKING_COLLECTION]
 
@@ -73,7 +74,7 @@ def get_existing_recipe_ids(col, recipe_ids):
 
 
 def process_ranking_to_recipes():
-    client = MongoClient(MONGO_URI)
+    client = MongoClient(get_mongo_uri())
     db = client[DB_NAME]
     recipe_col = db[DB_RECIPE_COLLECTION]
 

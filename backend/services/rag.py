@@ -176,7 +176,7 @@ class RecipeRAGLangChain:
 
         # 4. MongoDB 연결
         print("\n[5/5] MongoDB 연결 중")
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://root:RootPassword123@136.113.251.237:27017/admin")
+        mongo_uri = os.getenv("MONGO_URI")
         self.mongo_client = MongoClient(mongo_uri)
         self.recipe_db = self.mongo_client["recipe_db"]
         self.recipes_collection = self.recipe_db["recipes"]
