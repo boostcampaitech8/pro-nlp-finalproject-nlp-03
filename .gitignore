@@ -1,0 +1,11 @@
+# 환경변수 (접속 정보·API 키)
+.env
+**/.env
+!**/.env.example
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store

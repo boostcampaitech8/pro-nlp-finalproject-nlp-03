@@ -61,7 +61,7 @@
 | ------ | ------------------------------------------------------------------------------------------------------------ |
 | 최&#8288;준&#8288;호 | LLM 모델링 및 양자화, 프롬프트 엔지니어링, 프론트엔드, 요리 Agent 구축 및 최적화, 요리 관련 학습 데이터셋 구성 |
 | 김&#8288;윤&#8288;희 | 음성 파이프라인 구축, 음성 VAD 고도화, 서비스 비용/속도 최적화, 프롬프트 엔지니어링, Streamlit 기반 테스트 환경 구축, Fast API/React 개발 |
-| 박&#8288;서&#8288;진 | 레시피 데이터 DB & VectorDB 구축, 프론트엔드, 데이터 수집 및 임베딩 자동화, 레시피 Agent 구축, CI/CD 구축, 서버 인프라 구축 |
+| 박&#8288;서&#8288;진 | 레시피 데이터 DB & VectorDB 구축, 프론트엔드, 데이터 수집 및 임베딩 자동화(Airflow), 레시피 Agent 구축, 데이터 파이프라인 CI/CD 구축, 데이터 서버 인프라 구축(GCP) |
 | 곽&#8288;나&#8288;영 | 레시피 Agent 설계 및 최적화, Agent 평가, MySQL DB 구축 및 CRUD 구성, Fast API/React 개발 |
 | 김&#8288;이&#8288;슬 | 레시피 Agent 구축 및 최적화, 프롬프트 엔지니어링, 서버 인프라 구축 및 CI/CD 자동화, HCX API 및 FastAPI 백엔드 개발, WebSocket 기반 실시간 스트리밍 구현, React 개발 |
 | 우&#8288;혜&#8288;진 | RunPod GPU 환경 구성, 모델 서빙 (Qwen LLM, GPT-SoVITS 기반 커스텀 TTS), 음성 (STT/LLM/TTS) 파이프라인 설계, SSE 기반 실시간 청크 스트리밍, FastAPI/React 개발 |
@@ -91,6 +91,7 @@ recipeu/
 │   │   ├── recipe_collection.py
 │   │   ├── recipe_embedding.py
 │   │   └── recipe_ranking.py
+│   ├── .env.example
 │   ├── docker-compose.yml
 │   └── Dockerfile
 ├── Architecture.png
@@ -444,7 +445,7 @@ recipeu/
 - **Python**: 3.11
 - **Docker**: 최신 버전
 - **MySQL**: 8.x
-- **Milvus**: 2.6.6
+- **Milvus**: 2.6.9
 - **MongoDB**: 최신 버전
 
 ### Frontend 설치 및 실행

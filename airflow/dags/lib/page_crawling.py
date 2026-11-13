@@ -6,6 +6,8 @@ from datetime import datetime
 from pymongo import MongoClient, ASCENDING
 from pymongo.errors import DuplicateKeyError
 
+from lib.mongo_utils import get_mongo_uri
+
 
 BASE_URL = "https://www.10000recipe.com"
 LIST_URL = "https://www.10000recipe.com/recipe/list.html"
@@ -15,7 +17,6 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 REQUEST_DELAY = 0.7
 MAX_PAGES = 100
 
-MONGO_URI = "mongodb://root:RootPassword123@mongodb:27017/admin"
 DB_NAME = "recipe_db"
 RECIPE_COL = "recipes"
 META_COL = "crawl_meta"
@@ -33,7 +34,7 @@ session.headers.update(HEADERS)
 
 # MongoDB
 def get_mongo():
-    mongo = MongoClient(MONGO_URI)
+    mongo = MongoClient(get_mongo_uri())
     db = mongo[DB_NAME]
     recipes = db[RECIPE_COL]
     meta = db[META_COL]

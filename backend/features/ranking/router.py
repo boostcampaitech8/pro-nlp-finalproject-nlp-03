@@ -9,9 +9,7 @@ from features.ranking.schemas import RecipeDetail, RecipePreview, RankingRespons
 router = APIRouter()
 
 # MongoDB 연결
-MONGODB_URL = os.getenv(
-    "MONGODB_URL", "mongodb://root:RootPassword123@136.113.251.237:27017"
-)
+MONGODB_URL = os.getenv("MONGODB_URL")  # 접속 정보는 .env로 주입
 DATABASE_NAME = os.getenv("DATABASE_NAME", "recipe_db")
 
 client = AsyncIOMotorClient(MONGODB_URL)

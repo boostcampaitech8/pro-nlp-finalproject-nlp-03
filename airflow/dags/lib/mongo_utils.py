@@ -1,14 +1,25 @@
+import os
 from datetime import datetime, timezone
 from pymongo import MongoClient, ASCENDING
 
-MONGO_URI = "mongodb://root:RootPassword123@mongodb:27017/admin"
 DB_NAME = "recipe_db"
 RECIPE_COL = "recipes"
 
 
+def get_mongo_uri() -> str:
+    """
+    MongoDB 접속 URI를 환경변수(MONGO_URI)에서 읽는다.
+    DAG 파싱 시점이 아니라 태스크 실행 시점에 호출해, 값이 없으면 명확한 오류를 낸다.
+    """
+    uri = os.environ.get("MONGO_URI")
+    if not uri:
+        raise RuntimeError("환경변수 MONGO_URI가 설정되지 않았습니다. airflow/.env를 확인하세요.")
+    return uri
+
+
 # MongoDB
 def get_mongo_collections():
-    mongo = MongoClient(MONGO_URI)
+    mongo = MongoClient(get_mongo_uri())
     db = mongo[DB_NAME]
     recipes = db[RECIPE_COL]
 
