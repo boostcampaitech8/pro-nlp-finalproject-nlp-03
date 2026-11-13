@@ -1,0 +1,48 @@
+name: Deploy to NCP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # 이전 커밋과 비교용
+
+      - name: Check changed files
+        id: changes
+        run: |
+          echo "frontend=$(git diff --name-only HEAD~1 HEAD | grep '^frontend/' || echo '')" >> $GITHUB_OUTPUT
+          echo "backend=$(git diff --name-only HEAD~1 HEAD | grep '^backend/' || echo '')" >> $GITHUB_OUTPUT
+
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: 211.188.62.72
+          username: root
+          key: ${{ secrets.NCP_SSH_KEY }}
+          script: |
+            cd ~/recipe-app
+            git pull origin main
+            
+            # 변경된 부분만 빌드
+            if [ -n "${{ steps.changes.outputs.frontend }}" ]; then
+              echo "🔨 Frontend 빌드 중..."
+              sudo docker compose build frontend
+            fi
+            
+            if [ -n "${{ steps.changes.outputs.backend }}" ]; then
+              echo "🔨 Backend 빌드 중..."
+              sudo docker compose build backend
+            fi
+            
+            # 재시작
+            sudo docker compose up -d
+            
+            echo "📋 Backend 로그:"
+            sudo docker compose logs backend --tail 30
