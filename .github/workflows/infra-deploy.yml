@@ -2,7 +2,7 @@ name: Airflow CI / Deploy to GCP
 
 # 데이터 파이프라인(Airflow) CI/CD
 # - build : DAG 문법 검사 + 변경 경로 감지 (push·PR마다 실행)
-# - deploy: DAG만 바뀌면 스케줄러·웹서버 재시작, 인프라가 바뀌면 이미지 재빌드
+# - deploy: DAG만 바뀌면 파일만 갱신(스케줄러가 주기적으로 다시 읽음), 인프라가 바뀌면 이미지 재빌드
 #
 # fork에서는 배포를 기본 비활성화합니다.
 # 배포 단계는 저장소 변수 GCP_DEPLOY_ENABLED=true 이고 GCP_* secrets가 있을 때만 실행됩니다.
@@ -68,8 +68,6 @@ jobs:
           script: |
             cd ~/pro-nlp-finalproject-nlp-03
             git pull origin main
-            cd airflow
-            sudo docker compose restart airflow-scheduler airflow-webserver
 
       - name: Deploy infra changes
         if: needs.build.outputs.infra_changed == 'true'
